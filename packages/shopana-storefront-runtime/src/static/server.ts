@@ -1,28 +1,26 @@
 /**
  * The server of a React Router storefront (`storefront-runtime start`): the browser build, the
- * public settings, the static site and the server render, in that order.
+ * static site and the server render, in that order.
  *
  * 1. `/assets/*` and the files of `public/` from `build/client` (assets immutable); an asset of
  *    an earlier build, which a static page may still name, from the static store.
- * 2. `/__env.js` from this process's environment.
- * 3. Past the static site: methods other than `GET` and `HEAD`, `/auth/*`, React Router's
+ * 2. Past the static site: methods other than `GET` and `HEAD`, `/auth/*`, React Router's
  *    data requests (`*.data`), `/__builder/*`. The builder's render header is the builder's
  *    alone: a request from outside loses it.
- * 4. `/__static/data/*.json` from the store, or 404: never rendered.
- * 5. The HTML of an address from its key (`staticKeyForPath`). A query string of campaign
+ * 3. The HTML of an address from its key (`staticKeyForPath`). A query string of campaign
  *    and analytics parameters only is the address without it; any other parameter (`sort`,
  *    `filter.*`, `variant`) may change the page, so the server renders it (`miss`).
- * 6. A file: 200 (its own status for `404.html`), its ETag, revalidated on every load,
+ * 4. A file: 200 (its own status for `404.html`), its ETag, revalidated on every load,
  *    `x-shopana-static: hit`; 304 for `If-None-Match`. No cookie is read: the HTML is a
  *    guest's, the browser personalizes it. The statuses and languages come from the small
  *    index of the site (`__static/server.json`), never its whole manifest.
- * 7. No file: the server render, as without a static site (`x-shopana-static: miss`). The
+ * 5. No file: the server render, as without a static site (`x-shopana-static: miss`). The
  *    builder's coordinator, when there is one, hears every 30 s how often each page was served
  *    and which pages of a generated family had no file while the server rendered them
  *    (`POST /__builder/api/hits`).
- * 8. A store that fails: the server render, and a warning. A bucket down is never a 5xx.
+ * 6. A store that fails: the server render, and a warning. A bucket down is never a 5xx.
  *
- * `staticOnly` renders nothing: a missing page gets the shell of its family or `404.html`.
+ * `staticOnly` renders nothing: a missing page gets `404.html`.
  */
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -35,29 +33,20 @@ import { createRequestHandler } from '@react-router/express';
 import type { ServerBuild } from 'react-router';
 import type { StaticServerIndex } from '@shopana/storefront-sdk/static';
 import {
-  PUBLIC_ENV_PATH,
-  publicEnvironmentSource,
-} from '../react-router/public-env';
-import {
   STATIC_RENDER_HEADER,
   STATIC_RENDER_KEY_HEADER,
 } from '../react-router/static-render';
 import {
   isStaticQuery,
   STATIC_ASSETS_PREFIX,
-  STATIC_DATA_PREFIX,
   STATIC_NOT_FOUND_KEY,
   STATIC_SERVER_INDEX_KEY,
   staticKeyForPath,
-  staticShellKeyForPath,
 } from './keys';
 import { createCachedStore } from './memory-cache';
 import {
-  contentHash,
-  etagMatches,
   isDirectory,
   openStaticStore,
-  quoteEtag,
   type StaticRead,
   type StaticStore,
 } from './store';
@@ -100,10 +89,10 @@ export interface StorefrontServerOptions {
   render?: express.RequestHandler;
   /** The static site; none: every page is rendered. */
   store?: StaticStore | null;
-  /** No server render: a missing page is answered by its family's shell or `404.html`. */
+  /** No server render: a missing page is answered by `404.html`. */
   staticOnly?: boolean;
   /**
-   * The process environment: `/__env.js`, the coordinator (`STOREFRONT_STATIC_COORDINATOR_URL`
+   * The process environment: the coordinator (`STOREFRONT_STATIC_COORDINATOR_URL`
    * and its token `STOREFRONT_STATIC_COORDINATOR_TOKEN`).
    */
   env?: Record<string, string | undefined>;
@@ -293,50 +282,28 @@ export async function createStorefrontServer(
     response.status(404).end();
   });
 
-  // 2. The public settings of this process: the same for its life, so revalidated with their
-  // ETag, which a document loading them before its modules answers with a 304.
-  const envSource = publicEnvironmentSource(env);
-  const envEtag = quoteEtag(contentHash(envSource));
-  app.get(PUBLIC_ENV_PATH, (request, response) => {
-    response.setHeader('Cache-Control', 'no-cache');
-    response.setHeader('ETag', envEtag);
-    if (etagMatches(request.get('if-none-match'), envEtag)) {
-      response.status(304).end();
-      return;
-    }
-    response.setHeader('Content-Type', 'text/javascript; charset=utf-8');
-    response.end(envSource);
-  });
-
-  /** What a missing page gets without a server render: its family's shell or the 404 page. */
+  /** What a missing page gets without a server render: the 404 page. */
   const sendFallback = async (
     request: ExpressRequest,
-    response: ExpressResponse,
-    pathname: string,
-    index: StaticServerIndex | null
+    response: ExpressResponse
   ) => {
-    const shellKey = staticShellKeyForPath(pathname, index?.locales ?? []);
-    for (const [key, status] of [
-      [shellKey, 200],
-      [STATIC_NOT_FOUND_KEY, 404],
-    ] as const) {
-      if (!key || !store) continue;
+    if (store) {
       try {
-        const read = await store.read(key);
+        const read = await store.read(STATIC_NOT_FOUND_KEY);
         if (read.status === 'found') {
-          sendObject(request, response, read, status, 'no-cache', 'miss');
+          sendObject(request, response, read, 404, 'no-cache', 'miss');
           return;
         }
       } catch (error) {
         logger.warn(
-          `[storefront] static store failed for ${key}: ${String(error)}`
+          `[storefront] static store failed for ${STATIC_NOT_FOUND_KEY}: ${String(error)}`
         );
       }
     }
     response.status(404).type('text/plain').end('Not Found');
   };
 
-  // 3–8. The static site.
+  // 2–6. The static site.
   app.use(async (request, response, next: NextFunction) => {
     const pathname = pathnameOf(request);
     if (bypassesStatic(request, pathname)) {
@@ -344,52 +311,17 @@ export async function createStorefrontServer(
       return;
     }
 
-    // 4. The data of a page: from the store or nothing.
-    if (pathname.startsWith(`/${STATIC_DATA_PREFIX}`)) {
-      const key = pathname.slice(1);
-      try {
-        const read =
-          store && key.endsWith('.json')
-            ? await store.read(key, {
-                ifNoneMatch: request.get('if-none-match') ?? undefined,
-              })
-            : ({ status: 'missing' } as const);
-        if (read.status === 'found') {
-          sendObject(request, response, read, 200, STATIC_CACHE_CONTROL);
-          return;
-        }
-        if (read.status === 'not-modified') {
-          response.status(304);
-          response.setHeader('ETag', read.etag);
-          response.setHeader('Cache-Control', STATIC_CACHE_CONTROL);
-          response.end();
-          return;
-        }
-      } catch (error) {
-        logger.warn(
-          `[storefront] static store failed for ${key}: ${String(error)}`
-        );
-      }
-      response.status(404).setHeader('Cache-Control', 'no-store').end();
-      return;
-    }
-
     const key = store ? staticKeyForPath(pathname) : null;
     if (!store || !key) {
       if (staticOnly && store) {
-        await sendFallback(
-          request,
-          response,
-          pathname,
-          await readIndex!().catch(() => null)
-        );
+        await sendFallback(request, response);
         return;
       }
       next();
       return;
     }
 
-    // 5. A parameter the page may render (sort, filters, a variant): the server renders it.
+    // 3. A parameter the page may render (sort, filters, a variant): the server renders it.
     if (!staticOnly && !isStaticQuery(searchOf(request))) {
       response.setHeader(STATIC_RESPONSE_HEADER, 'miss');
       next();
@@ -399,7 +331,7 @@ export async function createStorefrontServer(
     let index: StaticServerIndex | null = null;
     try {
       index = await readIndex!();
-      // 5–6. The file of the address.
+      // 3–4. The file of the address.
       const read = await store.read(key, {
         ifNoneMatch: request.get('if-none-match') ?? undefined,
       });
@@ -419,16 +351,16 @@ export async function createStorefrontServer(
         return;
       }
     } catch (error) {
-      // 8. A store that fails is a miss.
+      // 6. A store that fails is a miss.
       logger.warn(
         `[storefront] static store failed for ${key}: ${String(error)}`
       );
     }
 
-    // 7. No file: the server render.
+    // 5. No file: the server render.
     response.setHeader(STATIC_RESPONSE_HEADER, 'miss');
     if (staticOnly) {
-      await sendFallback(request, response, pathname, index);
+      await sendFallback(request, response);
       return;
     }
     if (report && isGeneratedPage(pathname, index?.locales ?? [])) {

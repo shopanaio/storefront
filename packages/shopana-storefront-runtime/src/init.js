@@ -119,9 +119,6 @@ const themeSeoCandidates = [
   'src/runtime/seo.js',
 ];
 
-/** The theme's skeleton of the static site's shells (cart, account, search pages). */
-const themeShellCandidates = ['src/runtime/shell.tsx', 'src/runtime/shell.jsx'];
-
 /** The theme's static site (`defineStaticSite`), at the theme root as the plan of the theme. */
 const themeStaticSiteCandidates = [
   'static.config.ts',
@@ -409,16 +406,6 @@ async function findThemeFile(rootDir, candidates, what) {
   return matches[0] ?? null;
 }
 
-/** `app/shell.tsx`: the theme's skeleton of a shell of the static site, or none. */
-async function writeThemeShell(rootDir, runtimeDir) {
-  const found = await findThemeFile(rootDir, themeShellCandidates, 'shells');
-  const contents = found
-    ? "export { default } from '@src/runtime/shell';\n"
-    : 'const ShellSkeleton = undefined;\nexport default ShellSkeleton;\n';
-  await mkdir(path.join(runtimeDir, 'app'), { recursive: true });
-  await writeFile(path.join(runtimeDir, 'app/shell.tsx'), contents);
-}
-
 /**
  * `app/static-site.ts`: the theme's static site config with the app it renders, for the
  * builder (`storefront-runtime static`), which reads it from the server build; null without
@@ -536,7 +523,6 @@ export async function initRuntime(options = {}) {
   await writeThemeSeo(rootDir, runtimeDir);
   if (framework === 'react-router') {
     await writeThemeMiddleware(rootDir, runtimeDir);
-    await writeThemeShell(rootDir, runtimeDir);
     await writeThemeStaticSite(rootDir, runtimeDir);
   }
   if (layout.linksPublicDirectory) {

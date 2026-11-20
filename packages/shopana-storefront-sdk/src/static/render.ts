@@ -5,13 +5,13 @@
  * the server in front of it treats them. Server only.
  */
 
-/** What to render: `page` the page of the address, `shell` its layout and a skeleton. */
+/** A static render of the page of the address. */
 export const STATIC_RENDER_HEADER = 'x-shopana-static-render';
 
 /** The key of this process's static renders. */
 export const STATIC_RENDER_KEY_HEADER = 'x-shopana-static-render-key';
 
-export type StaticRenderMode = 'page' | 'shell';
+export type StaticRenderMode = 'page';
 
 const RENDER_KEY = Symbol.for('shopana.storefront.staticRenderKey');
 
@@ -43,5 +43,5 @@ export function staticRenderMode(headers: {
 }): StaticRenderMode | null {
   const key = (globalThis as RenderKeyHolder)[RENDER_KEY];
   if (!key || headers.get(STATIC_RENDER_KEY_HEADER) !== key) return null;
-  return headers.get(STATIC_RENDER_HEADER) === 'shell' ? 'shell' : 'page';
+  return 'page';
 }

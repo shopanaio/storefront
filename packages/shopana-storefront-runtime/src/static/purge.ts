@@ -1,8 +1,7 @@
 /**
  * Purges tags of the CDN's cache (Cloudflare, `POST /zones/:zone/purge_cache {tags}`): the job
- * of `static run` purges the pages it published (`pg:<pageKey>`), the coordinator the light
- * answers of what events changed (`sf-p-<uuid>`, `sf-promo`, `sf-vol`). At most 100 tags a
- * request. Without a token there is nothing to purge: the CDN does not cache HTML (step A).
+ * of `static run` purges the pages it published (`pg:<pageKey>`) and a full build its builds
+ * (`build:<buildId>`). At most 100 tags a request. Without a token there is nothing to purge: the CDN does not cache HTML (step A).
  */
 
 /** Tags in one purge request. */

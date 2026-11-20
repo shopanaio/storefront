@@ -360,27 +360,26 @@ Runtime URL должны совпадать с Terraform outputs. Отключа
   `STOREFRONT_PRIVATE_TOKEN`, `STOREFRONT_SERVER_GRAPHQL_URL` (необязателен),
   `STOREFRONT_STATIC_S3_ACCESS_KEY_ID`, `STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY`.
 - `deploy-theme.mjs smoke` проверяет `hit`, `ETag` и `304` главной, `miss` и `no-store`
-  неизвестного товара, `/__env.js`, отсутствие секретов в HTML и `/__builder/api/health`
+  неизвестного товара, публичные настройки и отсутствие секретов в HTML и `/__builder/api/health`
   координатора.
 
 ### Координатор `theme-static`
 
 План `plans/static-coordinator.ru.md`. Сервис `theme-static` того же образа
-(`storefront-runtime static coordinator`, порт 3100, одна реплика) читает ленту событий магазина,
-держит индекс зависимостей страниц в SQLite на volume `theme-static-data`, ставит задания и
-запускает `static-site.yml` темы через GitHub App; рендер и публикация идут в GitHub Actions.
+(`storefront-runtime static coordinator`, порт 3100, одна реплика) держит индекс страниц в SQLite
+на volume `theme-static-data`, ставит задания (полная сборка, пути оператора, промахи новых
+страниц, `validUntil`) и запускает `static-site.yml` темы через GitHub App; рендер и публикация
+идут в GitHub Actions. События магазина ничего не перерисовывают.
 
 - Нода volume: `docker node update --label-add shopana.static=true <node>` (одна).
 - Tunnel: `/__builder/*` публичного hostname идёт на `theme-static:3100`
   (`static_coordinator_origin` окружения в Terraform), Cache Rules и challenge его не трогают.
 - `deploy.env`: `STATIC_ENV_SECRET` (имя Docker secret), `STATIC_GITHUB_REPOSITORY`,
-  `STATIC_GITHUB_APP_ID`, `STATIC_GITHUB_INSTALLATION_ID`, `SHOPANA_ADMIN_GRAPHQL_URL`,
-  `SHOPANA_STORE_NAME`, `SHOPANA_EVENTS_TOKEN_URL`, `SHOPANA_EVENTS_CLIENT_ID`; шаг B —
-  `CLOUDFLARE_ZONE_ID`. `STATIC_ENVIRONMENT` скрипт задаёт по профилю.
-- `static-env.json` (рядом с `server-env.json`, игнорируется Git): refresh-токен служебного
-  пользователя ленты, `STATIC_OPERATOR_TOKEN`, internal token `STOREFRONT_STATIC_COORDINATOR_TOKEN`
+  `STATIC_GITHUB_APP_ID`, `STATIC_GITHUB_INSTALLATION_ID`. `STATIC_ENVIRONMENT` скрипт задаёт по
+  профилю.
+- `static-env.json` (рядом с `server-env.json`, игнорируется Git): `STATIC_OPERATOR_TOKEN`, internal token `STOREFRONT_STATIC_COORDINATOR_TOKEN`
   (тот же, что в `server-env.json` темы: им нода сообщает о попаданиях), PEM ключа GitHub App,
-  ключ записи бакета для снимков индекса (`__builder/index/`), шаг B — `CLOUDFLARE_PURGE_TOKEN`.
+  ключ записи бакета для снимков индекса (`__builder/index/`).
   `init` создаёт файл со случайными токенами.
 - GitHub App `shopana-static-dispatch`: одно разрешение `Actions: Read and write`, установлен
   только в репозиторий темы. Job аутентифицируется OIDC (`id-token: write`, audience
@@ -391,29 +390,29 @@ Runtime URL должны совпадать с Terraform outputs. Отключа
 
   ```bash
   curl -X POST "$APP_URL/__builder/api/builds" -H "Authorization: Bearer $STATIC_OPERATOR_TOKEN" \
-    -H 'Content-Type: application/json' -d '{"mode":"entities","entities":["Product:<uuid>"],"reason":"manual"}'
+    -H 'Content-Type: application/json' -d '{"mode":"paths","paths":["/products/<handle>"],"reason":"manual"}'
   ```
 
-- Состояние: `GET /__builder/api/status` (очередь, dirty, курсор и его отставание, аренды,
-  `currentImage`, последняя полная сборка, очередь purge, `dead_jobs`).
+- Состояние: `GET /__builder/api/status` (очередь, аренды, `currentImage`, последняя полная
+  сборка, `dead_jobs`).
 
 ### Шаг B: Worker и кеш CDN
 
 Не включён: включается после недели шага A на stage (`plans/static-coordinator.ru.md`, этап 7).
 
-- `deploy/worker/` — Worker статики: HTML и `/__static/data/*` из R2 через Cache API
+- `deploy/worker/` — Worker статики: HTML из R2 через Cache API
   (`s-maxage=600, stale-while-revalidate=3600`, `Cache-Tag` из метаданных объекта), промах — на
-  ноду через Tunnel, недоступная нода — семейная оболочка или `404.html`, `/auth/*`, `/__env.js`,
+  ноду через Tunnel, недоступная нода — `404.html`, `/auth/*` и
   `/__builder/*` — на ноду без кеша. Деплой `wrangler deploy --env <stage|production>` из
   `deploy/worker`, секрет `wrangler secret put COORDINATOR_TOKEN --env <env>` (internal token).
   Тесты: `npx vitest run --root deploy/worker`.
 - Terraform `zone`: `static_cdn = { "<hostname>" = { environment, worker } }` создаёт маршрут
   Worker-а и маршруты без Worker-а для ассетов, GraphQL, auth и координатора, custom domain
-  бакета `static.<hostname>` и origin rule для `/assets/*` на него, Cache Rules для HTML и
-  гостевого `GET /graphql` по `Cache-Control` origin.
+  бакета `static.<hostname>` и origin rule для `/assets/*` на него, Cache Rule для HTML по
+  `Cache-Control` origin.
 - `publish.cdn: 'cloudflare'` в `static.config.ts`: builder пишет теги в метаданные, копирует
   `public/` в бакет, job чистит `pg:<pageKey>` изменившихся страниц; `CLOUDFLARE_PURGE_TOKEN` и
-  `CLOUDFLARE_ZONE_ID` у job и у координатора (очередь purge `sf-*`).
+  `CLOUDFLARE_ZONE_ID` у job.
 - `STATIC_CDN=on` в `deploy.env`: `smoke` ждёт `cf-cache-status: HIT` второй загрузки страницы и
   не-`HIT` у `/auth/login`; `STOREFRONT_TRUSTED_PROXY_HOPS` может стать `2` (проверить на stage).
 

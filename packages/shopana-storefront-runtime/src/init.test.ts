@@ -92,7 +92,6 @@ describe('initRuntime for React Router', () => {
       'app/routes/sitemap.ts',
       'app/routes/sw.ts',
       'app/seo.ts',
-      'app/shell.tsx',
       'app/static-site.ts',
       'react-router.config.ts',
       'tsconfig.json',
@@ -109,7 +108,7 @@ describe('initRuntime for React Router', () => {
     ).toContain('defineRuntimeSeo({})');
   });
 
-  it('has no static site and no shell skeleton without the theme files', async () => {
+  it('has no static site without the theme config', async () => {
     await writeTheme({
       name: 'theme',
       storefront: { framework: 'react-router' },
@@ -118,18 +117,12 @@ describe('initRuntime for React Router', () => {
     expect(
       await readFile(path.join(result.runtimeDir, 'app/static-site.ts'), 'utf8')
     ).toBe('export const staticSite = null;\n');
-    expect(
-      await readFile(path.join(result.runtimeDir, 'app/shell.tsx'), 'utf8')
-    ).toContain('const ShellSkeleton = undefined;');
   });
 
-  it("reads the theme's static site config and shell skeleton", async () => {
+  it("reads the theme's static site config", async () => {
     await writeTheme(
       { name: 'theme', storefront: { framework: 'react-router' } },
-      {
-        'static.config.ts': 'export default {};\n',
-        'src/runtime/shell.tsx': 'export default () => null;\n',
-      }
+      { 'static.config.ts': 'export default {};\n' }
     );
     const result = await initRuntime({ rootDir });
     expect(
@@ -144,9 +137,6 @@ describe('initRuntime for React Router', () => {
         '',
       ].join('\n')
     );
-    expect(
-      await readFile(path.join(result.runtimeDir, 'app/shell.tsx'), 'utf8')
-    ).toBe("export { default } from '@src/runtime/shell';\n");
   });
 
   it("uses the theme's SEO definition", async () => {

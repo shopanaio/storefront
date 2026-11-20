@@ -6,14 +6,11 @@
 import { parentPort, workerData } from 'node:worker_threads';
 import { pathToFileURL } from 'node:url';
 import type { ServerBuild } from 'react-router';
-import type { StaticFieldAspects } from '@shopana/storefront-sdk/static';
 import { createStaticRenderer, type StaticRenderRequest } from './renderer';
 
 export interface RenderWorkerData {
   serverBuildPath: string;
   origin: string;
-  /** The theme's aspects of fields, plain data of its static config. */
-  fieldAspects?: StaticFieldAspects;
 }
 
 export type RenderWorkerMessage =
@@ -26,12 +23,11 @@ export type RenderWorkerMessage =
     }
   | { id: number; ok: false; error: string };
 
-const { serverBuildPath, origin, fieldAspects } =
-  workerData as RenderWorkerData;
+const { serverBuildPath, origin } = workerData as RenderWorkerData;
 const build = (await import(
   pathToFileURL(serverBuildPath).href
 )) as ServerBuild;
-const renderer = createStaticRenderer(build, { origin, fieldAspects });
+const renderer = createStaticRenderer(build, { origin });
 
 parentPort!.on(
   'message',

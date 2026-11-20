@@ -46,19 +46,13 @@ export function parseEnv(source) {
   ];
   // The static site bucket of the environment (Terraform output static_site of zone/); without
   // them the theme serves the static site of its image.
-  // The coordinator (plans/static-coordinator.ru.md): the GitHub App of its dispatches, the admin
-  // API and store of its event feed, the zone of its purges (step B).
+  // The coordinator: the GitHub App of its dispatches.
   const optional = [
     'STATIC_STORE',
     'STATIC_ENDPOINT',
     'STATIC_GITHUB_REPOSITORY',
     'STATIC_GITHUB_APP_ID',
     'STATIC_GITHUB_INSTALLATION_ID',
-    'SHOPANA_ADMIN_GRAPHQL_URL',
-    'SHOPANA_STORE_NAME',
-    'SHOPANA_EVENTS_TOKEN_URL',
-    'SHOPANA_EVENTS_CLIENT_ID',
-    'CLOUDFLARE_ZONE_ID',
     // Step B: `on` when the CDN worker answers the pages (deploy/worker, Terraform static_cdn).
     'STATIC_CDN',
   ];
@@ -102,13 +96,11 @@ export function parseEnv(source) {
 
 /** Keys the coordinator's secret may hold (deploy/runtime/start-static.cjs). */
 const STATIC_ENV_KEYS = new Set([
-  'SHOPANA_EVENTS_REFRESH_TOKEN',
   'STATIC_OPERATOR_TOKEN',
   'STOREFRONT_STATIC_COORDINATOR_TOKEN',
   'STATIC_GITHUB_APP_PRIVATE_KEY',
   'STOREFRONT_STATIC_S3_ACCESS_KEY_ID',
   'STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY',
-  'CLOUDFLARE_PURGE_TOKEN',
 ]);
 
 /**
@@ -680,9 +672,9 @@ async function main() {
 
 /**
  * The theme on its public address (step A of the static site): a generated page from the
- * static site (`x-shopana-static: hit`, its ETag, 304 for it, its static facts), an unknown
- * one rendered live (`miss`, no-store), public settings from `/__env.js` only, no private value
- * in either, same-origin GraphQL and IAM discovery.
+ * static site (`x-shopana-static: hit`, its ETag, 304 for it), an unknown one rendered live
+ * (`miss`, no-store), the public settings inline, no private value in either, same-origin
+ * GraphQL and IAM discovery.
  */
 export async function smoke(values, fetcher = fetch, { cdn = false } = {}) {
   const get = (path, options = {}) =>
@@ -703,21 +695,6 @@ export async function smoke(values, fetcher = fetch, { cdn = false } = {}) {
       fail(`Private runtime configuration leaked into ${what}.`);
   };
 
-  const env = await get('/__env.js');
-  const envSource = env.ok ? await env.text() : '';
-  if (!env.ok || !/no-cache/.test(env.headers.get('cache-control') ?? ''))
-    fail(
-      `/__env.js must answer 200 with Cache-Control: no-cache (HTTP ${env.status}).`
-    );
-  if (!envSource.includes(values.NEXT_PUBLIC_API_KEY))
-    fail('/__env.js lacks the public runtime configuration.');
-  assertPrivate(envSource, '/__env.js');
-  if (
-    values.STOREFRONT_SERVER_GRAPHQL_URL &&
-    envSource.includes(values.STOREFRONT_SERVER_GRAPHQL_URL)
-  )
-    fail('The server GraphQL address leaked into /__env.js.');
-
   const page = await get('/');
   if (
     !page.ok ||
@@ -735,16 +712,14 @@ export async function smoke(values, fetcher = fetch, { cdn = false } = {}) {
   const etag = page.headers.get('etag');
   if (!etag) fail('A static page must have an ETag.');
   const html = await page.text();
-  if (!html.includes('window.__shopanaStatic='))
-    fail('The static page lacks its static facts (__shopanaStatic).');
-  if (
-    !html.includes('<script src="/__env.js">') ||
-    html.includes('__shopanaPublicEnv=')
-  )
-    fail(
-      'Documents must load the public settings from /__env.js, never inline.'
-    );
+  if (!html.includes(values.NEXT_PUBLIC_API_KEY))
+    fail('The static page lacks the public runtime configuration.');
   assertPrivate(html, 'static HTML');
+  if (
+    values.STOREFRONT_SERVER_GRAPHQL_URL &&
+    html.includes(values.STOREFRONT_SERVER_GRAPHQL_URL)
+  )
+    fail('The server GraphQL address leaked into the static HTML.');
   const again = await get('/', { headers: { 'if-none-match': etag } });
   if (again.status !== 304)
     fail(`If-None-Match must answer 304 (HTTP ${again.status}).`);
@@ -770,8 +745,8 @@ export async function smoke(values, fetcher = fetch, { cdn = false } = {}) {
   if (!/no-store/.test(missing.headers.get('cache-control') ?? ''))
     fail('SSR HTML must use Cache-Control: no-store.');
   const rendered = await missing.text();
-  if (!rendered.includes('<script src="/__env.js">'))
-    fail('SSR documents must load the public settings from /__env.js.');
+  if (!rendered.includes(values.NEXT_PUBLIC_API_KEY))
+    fail('SSR documents lack the public runtime configuration.');
   assertPrivate(rendered, 'SSR HTML');
 
   const coordinator = await get('/__builder/api/health');
@@ -804,7 +779,7 @@ export async function smoke(values, fetcher = fetch, { cdn = false } = {}) {
     }
   }
   console.log(
-    'Smoke passed: static hit with ETag and 304, live render of a missing page, /__env.js, private settings, the coordinator, same-origin GraphQL and canonical IAM discovery. Interactive login, agent streaming and a guest navigation without /graphql requests still require a browser check.'
+    'Smoke passed: static hit with ETag and 304, live render of a missing page, public and private settings, the coordinator, same-origin GraphQL and canonical IAM discovery. Interactive login and agent streaming still require a browser check.'
   );
 }
 

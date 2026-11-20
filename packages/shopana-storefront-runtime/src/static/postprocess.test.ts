@@ -3,7 +3,6 @@ import {
   assertNoPrivateValues,
   pruneEmotionStyles,
   splitCssBlocks,
-  withStaticDocumentInfo,
 } from './postprocess';
 
 describe('static HTML', () => {
@@ -48,19 +47,6 @@ describe('static HTML', () => {
     );
   });
 
-  it('puts the static facts at the end of the head', () => {
-    expect(
-      withStaticDocumentInfo('<head></head>', {
-        buildId: 'b',
-        renderedAt: 't',
-        locale: 'uk',
-        path: '/uk/<x>',
-      })
-    ).toBe(
-      '<head><script>window.__shopanaStatic={"buildId":"b","renderedAt":"t","locale":"uk","path":"/uk/\\u003cx>"}</script></head>'
-    );
-  });
-
   it('refuses private values', () => {
     expect(() =>
       assertNoPrivateValues('<p>secret-value-1234</p>', {
@@ -68,11 +54,8 @@ describe('static HTML', () => {
       })
     ).toThrow(/STOREFRONT_SESSION_SECRET/);
     expect(() =>
-      assertNoPrivateValues(
-        '<script>globalThis.__shopanaPublicEnv={}</script>',
-        {}
-      )
-    ).toThrow(/__shopanaPublicEnv/);
+      assertNoPrivateValues('<p>shopana_storefront_visitor_id</p>', {})
+    ).toThrow(/shopana_storefront_visitor_id/);
     expect(() => assertNoPrivateValues('<p>ok</p>', {})).not.toThrow();
   });
 });

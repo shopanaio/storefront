@@ -23,8 +23,6 @@ import type {
   StorefrontLocales,
 } from './modules/localization/core/types';
 import { StoreProvider } from './modules/store/react/StoreContext';
-import { ViewerRefresh } from './static/useViewerRefresh';
-import { VolatileDataProvider } from './modules/volatile/react/VolatileDataProvider';
 
 export interface AppProvidersProps {
   children: React.ReactNode;
@@ -40,8 +38,7 @@ export interface AppProvidersProps {
 }
 
 /**
- * The storefront providers below Apollo: store, localization, session, cart and the fast data
- * of the page (stock, promotions, the viewer's loyalty). They read the
+ * The storefront providers below Apollo: store, localization, session and cart. They read the
  * Apollo client of the framework integration around them (the Next.js `App`, the React Router
  * runtime's `AppProvider`), whose cache already holds the server snapshot.
  */
@@ -102,11 +99,8 @@ export const AppProviders: React.FC<
             initialCart={initialCheckout}
             localization={cartLocalization}
           >
-            <VolatileDataProvider>
-              {children}
-              <AccountCartSync />
-              <ViewerRefresh />
-            </VolatileDataProvider>
+            {children}
+            <AccountCartSync />
           </CartProvider>
         </SessionProvider>
       </LocalizationProvider>

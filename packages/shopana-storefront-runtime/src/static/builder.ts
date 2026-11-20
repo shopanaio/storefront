@@ -1,8 +1,7 @@
 /**
  * The static site builder: every address of a theme's static config rendered by its server
- * build, as a guest, into a store (a directory or a bucket), with the data of each page, the
- * shells, the 404 page, `robots.txt` and the sitemaps, the assets of the build, and the
- * manifest last. A full build replaces the site: a page it no longer has is deleted with it.
+ * build, as a guest, into a store (a directory or a bucket), with the 404 page, `robots.txt`
+ * and the sitemaps, the assets of the build, and the manifest last. A full build replaces the site: a page it no longer has is deleted with it.
  * `renderStaticPaths` adds or renews pages. The manifest is written only over the version a
  * writer read, so a build and a render at the same time both keep what they wrote.
  */
@@ -21,7 +20,6 @@ import {
   staticServerIndex,
   type StaticManifest,
   type StaticManifestFile,
-  type StaticPageDep,
 } from '@shopana/storefront-sdk/static';
 import { createHash } from 'node:crypto';
 import type { StaticSiteEntry } from '../react-router/static-site';
@@ -32,13 +30,9 @@ import {
   STATIC_MANIFEST_KEY,
   STATIC_NOT_FOUND_KEY,
   STATIC_SERVER_INDEX_KEY,
-  STATIC_SHELL_FAMILIES,
-  staticDataKeyForPath,
   staticKeyForPath,
-  staticShellKey,
 } from './keys';
 import { createRenderPool } from './pool';
-import { withStaticDocumentInfo } from './postprocess';
 import {
   createStaticRenderer,
   type StaticRenderRequest,
@@ -61,15 +55,6 @@ const MANIFEST_ATTEMPTS = 5;
 /** The path the 404 page is rendered at: no page of any store has it. */
 const NOT_FOUND_PATH = '/__static/not-found';
 
-/** The address each family shell renders at: its family's route with a handle no page has. */
-const FAMILY_SHELL_PATHS: Record<string, string> = {
-  products: '/products/__shell',
-  categories: '/categories/__shell',
-  collections: '/collections/__shell',
-  vendors: '/vendors/__shell',
-  pages: '/pages/__shell',
-};
-
 export interface StaticBuildOptions {
   /** The theme's runtime directory: `build/server/index.js`, `build/client/assets`. */
   runtimeDir: string;
@@ -85,8 +70,8 @@ export interface StaticBuildOptions {
   build?: ServerBuild;
   now?: () => Date;
   /**
-   * Hears of every page of the config rendered (or not), with what it depends on: the
-   * results a job of `static run` returns to the coordinator.
+   * Hears of every page of the config rendered (or not): the results a job of `static run`
+   * returns to the coordinator.
    */
   onPage?: (result: StaticPageResult) => void;
   /** Purges the tags of the CDN of what changed (`publish.cdn: 'cloudflare'`). */
@@ -95,7 +80,7 @@ export interface StaticBuildOptions {
 
 /** What became of a page a render was asked for. */
 export type StaticPageOutcome =
-  /** Its HTML or data changed and was written. */
+  /** Its HTML changed and was written. */
   | 'published'
   /** Rendered the same as the store has it: nothing written, nothing purged. */
   | 'unchanged'
@@ -112,14 +97,8 @@ export interface StaticPageResult {
   path: string;
   /** The page type (`product`, …). */
   route: string;
-  /** The entity the page is of, if any. */
-  ownerKey: string | null;
   outcome: StaticPageOutcome;
   htmlHash: string | null;
-  dataHash: string | null;
-  deps: StaticPageDep[];
-  /** Entities only the layout shows. */
-  layout: string[];
   validUntil: string | null;
   /** When its render started (ms): changes after it are not in the page. */
   renderStartedAt: number;
@@ -128,16 +107,12 @@ export interface StaticPageResult {
   jobIds?: number[];
 }
 
-/** A page to render again, by its address or by the entity it is of. */
+/** A page to render again, by its address. */
 export interface StaticPageRequest {
   /** The address as served (`/uk/products/x`). */
-  path?: string;
+  path: string;
   /** The URL segment of its language; by the address when it has one. */
   locale?: string;
-  /** The entity of the page: its address is looked up when none is given or it changed. */
-  owner?: { key: string; id: string; route: string };
-  /** The address the page had: gone when the entity's page is elsewhere now. */
-  previousPath?: string;
   /** The jobs of the coordinator it is rendered for: carried into its results. */
   jobIds?: number[];
 }
@@ -164,7 +139,6 @@ export function staticPageTags(
 
 export interface StaticBuildReport {
   pages: number;
-  shells: number;
   skipped: number;
   removed: number;
   failed: Array<{ path: string; reason: string }>;
@@ -292,11 +266,6 @@ async function commitManifest(
   }
 }
 
-/** The hash of a rendered page with what its static facts add to it. */
-function pageHash(html: string, dataPageTypes: readonly string[]): string {
-  return contentHash(`${html}\n${dataPageTypes.join(',')}`);
-}
-
 /** Runs `work` over `items`, `limit` at a time. */
 async function forEachLimited<T>(
   items: readonly T[],
@@ -321,12 +290,10 @@ function openRenderer(
   concurrency: number,
   pagesPerWorker: number
 ) {
-  const { fieldAspects } = staticSiteOf(build).config;
   if (options.inProcess) {
     const renderer = createStaticRenderer(build, {
       origin: options.origin,
       now: options.now,
-      fieldAspects,
     });
     return { render: renderer.render, close: async () => {} };
   }
@@ -336,7 +303,6 @@ function openRenderer(
     workerData: {
       serverBuildPath: path.join(options.runtimeDir, 'build/server/index.js'),
       origin: options.origin,
-      fieldAspects,
     },
   });
 }
@@ -344,8 +310,7 @@ function openRenderer(
 /** What a page's write did. */
 interface PageWrite {
   htmlHash: string;
-  dataHash: string | null;
-  /** Its HTML or its data was written. */
+  /** Its HTML was written. */
   changed: boolean;
 }
 
@@ -359,11 +324,8 @@ class SiteWriter {
     private readonly store: StaticStore,
     private readonly previous: StaticManifest | null,
     private readonly buildId: string,
-    private readonly dataPageTypes: readonly string[],
     /** Tags of the CDN in the objects' metadata (`publish.cdn: 'cloudflare'`). */
-    private readonly tagged = false,
-    /** Prices come with the fast data: the site is in an image. */
-    private readonly volatilePrices = false
+    private readonly tagged = false
   ) {}
 
   /**
@@ -374,8 +336,6 @@ class SiteWriter {
     const file = this.previous?.files[key];
     if (!file) return false;
     this.files[key] = file;
-    const data = file.data && this.previous?.files[file.data];
-    if (file.data && data) this.files[file.data] = data;
     return true;
   }
 
@@ -417,18 +377,16 @@ class SiteWriter {
   }
 
   /**
-   * A rendered document and its data. Its hash leaves the static facts out: a page whose
-   * content did not change keeps its file (and the moment it was rendered).
+   * A rendered document: a page whose content did not change keeps its file (and the moment
+   * it was rendered).
    */
   async writePage(
     task: RenderTask,
     result: StaticRenderResult
   ): Promise<PageWrite> {
-    const hash = pageHash(result.html, this.dataPageTypes);
+    const hash = contentHash(result.html);
     const same = this.unchanged(task.key, hash);
     const renderedAt = same?.renderedAt ?? result.renderedAt;
-    const dataKey =
-      task.kind === 'page' ? staticDataKeyForPath(task.request.path) : null;
     const tags =
       task.kind === 'page'
         ? staticPageTags(task.locale, task.request.path, this.buildId)
@@ -441,27 +399,15 @@ class SiteWriter {
       contentType: contentTypeOf(task.key),
       hash,
       renderedAt,
-      ...(dataKey ? { data: dataKey } : {}),
-      ...(task.kind === 'page'
-        ? { entities: result.entities, validUntil: result.validUntil }
-        : {}),
+      ...(task.kind === 'page' ? { validUntil: result.validUntil } : {}),
     };
     let changed = false;
     if (same) {
       this.skipped += 1;
     } else {
-      const html = withStaticDocumentInfo(result.html, {
-        buildId: this.buildId,
-        renderedAt,
-        locale: task.locale,
-        path: task.request.path,
-        validUntil: task.kind === 'page' ? result.validUntil : null,
-        dataPageTypes: [...this.dataPageTypes],
-        ...(this.volatilePrices ? { volatilePrices: true } : {}),
-      });
       await this.store.write(
         task.key,
-        html,
+        result.html,
         entry.contentType,
         this.tagged ? { cacheTags: tags } : {}
       );
@@ -469,18 +415,7 @@ class SiteWriter {
       changed = true;
     }
     this.files[task.key] = entry;
-    let dataHash: string | null = null;
-    if (dataKey && result.state) {
-      const data = await this.writeFile(
-        dataKey,
-        result.state,
-        { kind: 'data', status: 200, renderedAt },
-        tags
-      );
-      dataHash = data.hash;
-      changed ||= data.written;
-    }
-    return { htmlHash: hash, dataHash, changed };
+    return { htmlHash: hash, changed };
   }
 }
 
@@ -637,7 +572,7 @@ async function renderSeoFiles(
 
 /**
  * Renders the static site of a theme: the addresses of its config in each of its languages,
- * the shells and the family shells, the 404 page, `robots.txt` and the sitemaps, and the
+ * the 404 page, `robots.txt` and the sitemaps, and the
  * assets of the build, then the manifest. A page that answers 404 is not written, and the file
  * of an earlier build goes with every other file the new manifest does not list. A page that
  * fails keeps its earlier files. A redirect is an error of the config.
@@ -681,7 +616,6 @@ export async function buildStaticSite(
         path: served,
         mode,
         localeTag: locale.tag,
-        translated: locale.segment !== all.defaultLocale.segment,
       },
       kind,
       locale: locale.segment,
@@ -690,31 +624,13 @@ export async function buildStaticSite(
     });
   };
 
-  // The page types of the rendered addresses: a client navigation asks for the data of these.
-  const dataPageTypes = new Set<string>();
   for (const locale of rendered) {
     const routes = await site.routes(locale);
     logger.info(`[static] ${locale.segment}: ${routes.length} pages`);
-    for (const route of routes) {
-      addTask(route.path, locale, 'page', 'page');
-      const { pageType } = parseRoute(route.path);
-      if (pageType !== '404') dataPageTypes.add(pageType);
-    }
-    for (const shell of config.shells ?? [])
-      addTask(shell, locale, 'shell', 'shell');
+    for (const route of routes) addTask(route.path, locale, 'page', 'page');
   }
-  // One shell per family and one 404 page, in the default language: what an address without
-  // a file gets when no server renders.
+  // One 404 page, in the default language.
   const defaultLocale = all.defaultLocale;
-  for (const family of new Set(Object.values(STATIC_SHELL_FAMILIES))) {
-    addTask(
-      FAMILY_SHELL_PATHS[family],
-      defaultLocale,
-      'shell',
-      'family-shell',
-      staticShellKey(family)
-    );
-  }
   if (config.notFound) {
     addTask(
       NOT_FOUND_PATH,
@@ -726,16 +642,8 @@ export async function buildStaticSite(
     );
   }
 
-  const pageTypes = [...dataPageTypes].sort();
   const tagged = config.publish?.cdn === 'cloudflare';
-  const writer = new SiteWriter(
-    store,
-    previous,
-    build.assets.version,
-    pageTypes,
-    tagged,
-    store.kind === 'fs'
-  );
+  const writer = new SiteWriter(store, previous, build.assets.version, tagged);
   const localeSegments = all.locales.map((locale) =>
     locale.segment.toLowerCase()
   );
@@ -752,12 +660,8 @@ export async function buildStaticSite(
       locale: task.locale,
       path: task.request.path,
       route: routeOf(task.request.path, localeSegments),
-      ownerKey: result?.deps.owner ?? null,
       outcome,
       htmlHash: write?.htmlHash ?? null,
-      dataHash: write?.dataHash ?? null,
-      deps: result?.deps.deps ?? [],
-      layout: result?.deps.layout ?? [],
       validUntil: result?.validUntil ?? null,
       renderStartedAt: started,
       ...(error ? { error } : {}),
@@ -771,7 +675,6 @@ export async function buildStaticSite(
     config.pagesPerWorker ?? 200
   );
   let pages = 0;
-  let shells = 0;
   let kept = 0;
   const fail = (task: RenderTask, reason: string, started: number) => {
     failed.push({ path: task.request.path, reason });
@@ -786,7 +689,6 @@ export async function buildStaticSite(
         if (result.status === task.expectedStatus && result.html) {
           const write = await writer.writePage(task, result);
           if (task.kind === 'page') pages += 1;
-          else shells += 1;
           report(
             task,
             taskStarted,
@@ -823,10 +725,7 @@ export async function buildStaticSite(
   }
 
   await renderSeoFiles(
-    createStaticRenderer(build, {
-      origin: options.origin,
-      fieldAspects: config.fieldAspects,
-    }),
+    createStaticRenderer(build, { origin: options.origin }),
     writer,
     started,
     logger
@@ -856,7 +755,6 @@ export async function buildStaticSite(
       buildId: build.assets.version,
       builtAt: started.toISOString(),
       locales: all.locales.map((locale) => locale.segment.toLowerCase()),
-      dataPageTypes: pageTypes,
       files,
       retired,
     };
@@ -874,7 +772,6 @@ export async function buildStaticSite(
   }
   const buildReport: StaticBuildReport = {
     pages,
-    shells,
     skipped: writer.skipped,
     removed,
     failed,
@@ -882,7 +779,7 @@ export async function buildStaticSite(
     manifest,
   };
   logger.info(
-    `[static] ${pages} pages, ${shells} shells, ${writer.written} files written, ` +
+    `[static] ${pages} pages, ${writer.written} files written, ` +
       `${writer.skipped} unchanged, ${assets.written} assets added, ` +
       `${removed} old files removed, ${failed.length} failed (${kept} kept from the last build) ` +
       `in ${(buildReport.durationMs / 1000).toFixed(1)} s to ${store.url}`
@@ -901,10 +798,8 @@ export interface StaticPagesReport extends StaticBuildReport {
 }
 
 /**
- * Renders some pages again into a site the store has: by their address (as served:
- * `/uk/products/x`), or by the entity they are of, whose address is looked up when the request
- * has none (a new product) and whose earlier address leaves the site when it changed (a new
- * handle). A page rendered the same as the store has it is not written (`unchanged`); one that
+ * Renders some pages again into a site the store has, by their address (as served:
+ * `/uk/products/x`). A page rendered the same as the store has it is not written (`unchanged`); one that
  * now answers 404 leaves the site (`gone`); one that fails keeps its files. The manifest is
  * updated over the version read, the tags of the changed pages are purged.
  */
@@ -927,14 +822,7 @@ export async function renderStaticPages(
     locale.segment.toLowerCase()
   );
   const tagged = site.config.publish?.cdn === 'cloudflare';
-  const writer = new SiteWriter(
-    store,
-    previous,
-    build.assets.version,
-    previous.dataPageTypes,
-    tagged,
-    store.kind === 'fs'
-  );
+  const writer = new SiteWriter(store, previous, build.assets.version, tagged);
   const renderer = openRenderer(
     options,
     build,
@@ -944,7 +832,7 @@ export async function renderStaticPages(
   const failed: StaticBuildReport['failed'] = [];
   const results: StaticPageResult[] = [];
   const changedTags = new Set<string>();
-  /** Keys of pages that left the site, and their data. */
+  /** Keys of pages that left the site. */
   const gone = new Set<string>();
   let pages = 0;
 
@@ -972,22 +860,14 @@ export async function renderStaticPages(
     if (key && file) {
       gone.add(key);
       await store.remove(key);
-      if (file.data) {
-        gone.add(file.data);
-        await store.remove(file.data);
-      }
       changedTags.add(`pg:${staticPageKey(locale, served)}`);
     }
     out.push({
       locale,
       path: served,
       route: routeOf(served, localeSegments),
-      ownerKey: null,
       outcome: 'gone',
       htmlHash: null,
-      dataHash: null,
-      deps: [],
-      layout: [],
       validUntil: null,
       renderStartedAt: startedAt,
     });
@@ -1011,52 +891,21 @@ export async function renderStaticPages(
     out: StaticPageResult[]
   ) => {
     const startedAt = now().getTime();
-    const locale = localeOf(request, request.path ?? request.previousPath);
+    const locale = localeOf(request, request.path);
     const failure = (served: string, reason: string) => {
       failed.push({ path: served, reason });
       out.push({
         locale: locale.segment,
         path: served,
         route: routeOf(served, localeSegments),
-        ownerKey: request.owner?.key ?? null,
         outcome: 'failed',
         htmlHash: null,
-        dataHash: null,
-        deps: [],
-        layout: [],
         validUntil: null,
         renderStartedAt: startedAt,
         error: reason,
       });
     };
-    let served = request.path ? servedPath(request.path) : null;
-    if (request.owner) {
-      let address: string | null;
-      try {
-        address = await site.ownerPath(
-          locale,
-          request.owner.id,
-          request.owner.route
-        );
-      } catch (error) {
-        failure(
-          request.path ?? request.previousPath ?? request.owner.key,
-          error instanceof Error ? error.message : String(error)
-        );
-        return;
-      }
-      const localized = address
-        ? localizedPath(address, locale, all, site.routing.localePrefix)
-        : null;
-      const earlier = request.previousPath ?? request.path ?? null;
-      if (earlier && earlier !== localized) {
-        await remove(servedPath(earlier), locale.segment, startedAt, out);
-      }
-      served = localized;
-      // The API shows the entity to no guest: its page is gone, there is none to render.
-      if (!served) return;
-    }
-    if (!served) return;
+    const served = servedPath(request.path);
     const key = staticKeyForPath(served);
     if (!key) {
       failure(served, 'not an address of the static site');
@@ -1067,7 +916,6 @@ export async function renderStaticPages(
         path: served,
         mode: 'page',
         localeTag: locale.tag,
-        translated: locale.segment !== all.defaultLocale.segment,
       },
       kind: 'page',
       locale: locale.segment,
@@ -1091,12 +939,8 @@ export async function renderStaticPages(
         locale: locale.segment,
         path: served,
         route: routeOf(served, localeSegments),
-        ownerKey: result.deps.owner ?? request.owner?.key ?? null,
         outcome: write.changed ? 'published' : 'unchanged',
         htmlHash: write.htmlHash,
-        dataHash: write.dataHash,
-        deps: result.deps.deps,
-        layout: result.deps.layout,
         validUntil: result.validUntil,
         renderStartedAt: startedAt,
       });
@@ -1147,7 +991,6 @@ export async function renderStaticPages(
   ).length;
   const report: StaticPagesReport = {
     pages,
-    shells: 0,
     skipped: writer.skipped,
     removed,
     failed,
@@ -1170,7 +1013,7 @@ export async function renderStaticPages(
 
 /**
  * Renders some addresses again (as served: `/uk/products/x`) into a site the store has: their
- * files and data renewed, the manifest updated. A page of the site that now answers 404 leaves
+ * files renewed, the manifest updated. A page of the site that now answers 404 leaves
  * it; an address the site has no page of and that answers 404 is left alone.
  */
 export function renderStaticPaths(

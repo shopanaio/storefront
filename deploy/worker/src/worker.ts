@@ -1,6 +1,6 @@
 /**
- * The CDN worker of the static site (step B of plans/static-coordinator.ru.md): HTML pages and
- * their data answered from the R2 bucket through the cache of the CDN, everything else and
+ * The CDN worker of the static site (step B of plans/static-coordinator.ru.md): HTML pages
+ * answered from the R2 bucket through the cache of the CDN, everything else and
  * every address without a file from the hybrid node through the Tunnel.
  *
  * 1. The key of an address is the node's (`staticKeyForPath`); an address with a parameter
@@ -9,20 +9,17 @@
  *    the object, puts it with `s-maxage=600, stale-while-revalidate=3600`, its ETag and its
  *    `Cache-Tag` (`pg:<pageKey>, build:<buildId>` of its metadata, purged by the jobs), and
  *    tells the coordinator of the hit (a stale page is rendered again on its first visit).
- * 3. No object: the node, cookies and answer as they are. The node unreachable: the shell of
- *    the page's family (200) or `404.html` (404).
- * 4. `/auth/*`, `/__env.js`, `/__builder/*` and every method but GET and HEAD: the node, never
+ * 3. No object: the node, cookies and answer as they are. The node unreachable: `404.html`
+ *    (404).
+ * 4. `/auth/*`, `/__builder/*` and every method but GET and HEAD: the node, never
  *    cached.
  *
  * `keys.ts` of the runtime has no Node built-ins: the worker imports the node's own functions.
  */
 import {
   isStaticQuery,
-  STATIC_DATA_PREFIX,
   STATIC_NOT_FOUND_KEY,
-  STATIC_SERVER_INDEX_KEY,
   staticKeyForPath,
-  staticShellKeyForPath,
 } from '../../../packages/shopana-storefront-runtime/src/static/keys';
 
 /** The part of an R2 object the worker reads. */
@@ -31,7 +28,6 @@ export interface SiteObject {
   httpEtag: string;
   httpMetadata?: { contentType?: string };
   customMetadata?: Record<string, string>;
-  text(): Promise<string>;
 }
 
 export interface SiteBucket {
@@ -82,33 +78,9 @@ const NODE_PREFIXES = [
 /** The node did not answer: no response, or one of the Tunnel's errors. */
 const UNREACHABLE = new Set([502, 503, 504, 520, 521, 522, 523, 524, 530]);
 
-/** Language segments of the site, read from its index once a minute per isolate. */
-let locales: { at: number; value: string[] } | null = null;
-
-export function resetWorkerState(): void {
-  locales = null;
-}
-
 function objectKey(env: WorkerEnv, key: string): string {
   const prefix = env.SITE_PREFIX?.replace(/^\/+|\/+$/g, '');
   return prefix ? `${prefix}/${key}` : key;
-}
-
-async function siteLocales(env: WorkerEnv, now: number): Promise<string[]> {
-  if (locales && now - locales.at < 60_000) return locales.value;
-  const index = await env.SITE.get(objectKey(env, STATIC_SERVER_INDEX_KEY));
-  let value: string[] = [];
-  if (index) {
-    try {
-      value =
-        (JSON.parse(await index.text()) as { locales?: string[] }).locales ??
-        [];
-    } catch {
-      value = [];
-    }
-  }
-  locales = { at: now, value };
-  return value;
 }
 
 /** The answer of an object of the bucket, as cached: with its tags of the CDN. */
@@ -189,7 +161,6 @@ function report(
 export interface WorkerDependencies {
   cache: EdgeCache;
   fetch?: typeof fetch;
-  now?: () => number;
 }
 
 /** The fetch handler of the worker. */
@@ -197,40 +168,29 @@ export async function handleRequest(
   request: Request,
   env: WorkerEnv,
   ctx: WorkerContext,
-  { cache, fetch: fetcher = fetch, now = Date.now }: WorkerDependencies
+  { cache, fetch: fetcher = fetch }: WorkerDependencies
 ): Promise<Response> {
   const url = new URL(request.url);
   const { pathname } = url;
   if (
     (request.method !== 'GET' && request.method !== 'HEAD') ||
-    pathname === '/__env.js' ||
     NODE_PREFIXES.some((prefix) => pathname.startsWith(prefix))
   ) {
     return toNode(request, env, fetcher);
   }
 
-  let key: string | null;
+  let key = staticKeyForPath(pathname);
   let cacheControl = PAGE_CACHE_CONTROL;
-  let page = false;
-  if (pathname.startsWith(`/${STATIC_DATA_PREFIX}`)) {
-    key =
-      pathname.endsWith('.json') && !pathname.includes('..')
-        ? pathname.slice(1)
-        : null;
-    if (!key) return new Response('Not found', { status: 404 });
-  } else {
-    key = staticKeyForPath(pathname);
-    page = key !== null;
-    if (!key) {
-      // A file of `public/` (`/favicon.ico`), else the node (old assets, React Router data).
-      key = /^\/[^/]+\.[a-z0-9]+$/i.test(pathname)
-        ? `${PUBLIC_PREFIX}${pathname.slice(1)}`
-        : null;
-      cacheControl = PUBLIC_CACHE_CONTROL;
-      if (!key) return toNode(request, env, fetcher);
-    } else if (!isStaticQuery(url.searchParams)) {
-      return toNode(request, env, fetcher);
-    }
+  const page = key !== null;
+  if (!key) {
+    // A file of `public/` (`/favicon.ico`), else the node (old assets, React Router data).
+    key = /^\/[^/]+\.[a-z0-9]+$/i.test(pathname)
+      ? `${PUBLIC_PREFIX}${pathname.slice(1)}`
+      : null;
+    cacheControl = PUBLIC_CACHE_CONTROL;
+    if (!key) return toNode(request, env, fetcher);
+  } else if (!isStaticQuery(url.searchParams)) {
+    return toNode(request, env, fetcher);
   }
 
   // One entry per address: tracking parameters are no part of the page.
@@ -245,9 +205,7 @@ export async function handleRequest(
     if (page) report(env, key, ctx, fetcher);
     return toClient(request, response);
   }
-  if (!page && cacheControl === PUBLIC_CACHE_CONTROL)
-    return toNode(request, env, fetcher);
-  if (!page) return new Response('Not found', { status: 404 });
+  if (!page) return toNode(request, env, fetcher);
 
   // No file: the node renders it (its own report of the miss), or the site degrades.
   let response: Response | null = null;
@@ -257,13 +215,6 @@ export async function handleRequest(
     response = null;
   }
   if (response && !UNREACHABLE.has(response.status)) return response;
-  const shellKey = staticShellKeyForPath(
-    pathname,
-    await siteLocales(env, now())
-  );
-  const shell = shellKey ? await env.SITE.get(objectKey(env, shellKey)) : null;
-  if (shell)
-    return toClient(request, objectResponse(shell, 200, 'private, no-store'));
   const notFound = await env.SITE.get(objectKey(env, STATIC_NOT_FOUND_KEY));
   if (notFound)
     return toClient(

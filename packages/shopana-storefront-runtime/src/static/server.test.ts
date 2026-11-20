@@ -85,9 +85,7 @@ beforeEach(async () => {
     'build/static/__static/server.json': JSON.stringify(index),
     'build/static/index.html': '<p>home</p>',
     'build/static/uk/products/x/index.html': '<p>x</p>',
-    'build/static/__static/data/uk/products/x.json': '{"ROOT_QUERY":{}}',
     'build/static/404.html': '<p>404</p>',
-    'build/static/__shell/products.html': '<p>products shell</p>',
     'build/static/assets/old.js': 'old',
   });
 });
@@ -170,40 +168,6 @@ describe('the hybrid server', () => {
     expect(await (await get('/uk/products/x', { method: 'POST' })).text()).toBe(
       '<p>ssr POST /uk/products/x</p>'
     );
-  });
-
-  it('answers page data from the store or 404, never rendered', async () => {
-    const get = await serve();
-    const found = await get('/__static/data/uk/products/x.json');
-    expect(found.status).toBe(200);
-    expect(await found.json()).toEqual({ ROOT_QUERY: {} });
-    const etag = found.headers.get('etag') ?? '';
-    const again = await get('/__static/data/uk/products/x.json', {
-      headers: { 'If-None-Match': etag },
-    });
-    expect(again.status).toBe(304);
-    expect(again.headers.get('cache-control')).toBe(
-      'public, max-age=0, must-revalidate'
-    );
-    const missing = await get('/__static/data/uk/products/y.json');
-    expect(missing.status).toBe(404);
-    expect(ssr).not.toHaveBeenCalled();
-  });
-
-  it('serves the public settings of its environment', async () => {
-    const get = await serve();
-    const response = await get('/__env.js');
-    expect(response.headers.get('cache-control')).toBe('no-cache');
-    const body = await response.text();
-    expect(body).toContain('"NEXT_PUBLIC_API_KEY":"public"');
-    expect(body).not.toContain('secret');
-    const etag = response.headers.get('etag');
-    expect(etag).toBe(quoteEtag(contentHash(body)));
-    const again = await get('/__env.js', {
-      headers: { 'If-None-Match': etag ?? '' },
-    });
-    expect(again.status).toBe(304);
-    expect(await again.text()).toBe('');
   });
 
   it('serves the assets of the build, and those of earlier builds from the store', async () => {
@@ -315,7 +279,7 @@ describe('the hybrid server', () => {
     const get = await serve();
     const response = await get('/uk/products/none', {
       headers: {
-        'x-shopana-static-render': 'shell',
+        'x-shopana-static-render': 'page',
         'x-shopana-static-render-key': 'guessed',
       },
     });
@@ -332,11 +296,11 @@ describe('the hybrid server', () => {
     expect(ssr).toHaveBeenCalledTimes(1);
   });
 
-  it('answers the family shell or 404.html without a server render', async () => {
+  it('answers 404.html without a server render', async () => {
     const get = await serve({ staticOnly: true });
-    const shell = await get('/uk/products/y');
-    expect(shell.status).toBe(200);
-    expect(await shell.text()).toBe('<p>products shell</p>');
+    const missing = await get('/uk/products/y');
+    expect(missing.status).toBe(404);
+    expect(await missing.text()).toBe('<p>404</p>');
     const unknown = await get('/nothing/here');
     expect(unknown.status).toBe(404);
     expect(await unknown.text()).toBe('<p>404</p>');

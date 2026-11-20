@@ -128,9 +128,17 @@ async function request<T>(
     pattern: '*',
     context: new RouterContextProvider(),
   } as unknown as LoaderFunctionArgs;
-  return (middleware as unknown as MiddlewareFunction<T>)(args, () =>
-    handler(args)
-  ) as Promise<T>;
+  // The middleware wraps what `next` answers in the site's headers: the handler's result is
+  // kept apart from the response React Router would make of it.
+  let result: T | undefined;
+  await (middleware as unknown as MiddlewareFunction<Response>)(
+    args,
+    async () => {
+      result = await handler(args);
+      return new Response(null);
+    }
+  );
+  return result as T;
 }
 
 const load = (href: string) =>
@@ -251,24 +259,6 @@ describe('the static render', () => {
     } finally {
       vi.unstubAllEnvs();
     }
-  });
-
-  it('renders a closed page as a shell, never a redirect', async () => {
-    stubApi();
-    await expect(
-      request('/uk/test-account', (args) => loader(args), {
-        ...staticRenderHeaders('shell'),
-      })
-    ).resolves.toEqual({
-      kind: 'shell',
-      pathname: '/test-account',
-      metadata: { robots: 'noindex' },
-    });
-    await expect(
-      request('/cart', (args) => loader(args), {
-        ...staticRenderHeaders('shell'),
-      })
-    ).resolves.toMatchObject({ kind: 'shell', pathname: '/cart' });
   });
 });
 

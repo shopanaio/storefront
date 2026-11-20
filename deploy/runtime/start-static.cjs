@@ -5,8 +5,6 @@ const { spawn } = require('node:child_process');
 
 const values = JSON.parse(readFileSync('/run/secrets/static-env', 'utf8'));
 const allowed = new Set([
-  // The service user of the event feed.
-  'SHOPANA_EVENTS_REFRESH_TOKEN',
   // The tokens of the API: the operator's, the servers' reports of hits.
   'STATIC_OPERATOR_TOKEN',
   'STOREFRONT_STATIC_COORDINATOR_TOKEN',
@@ -15,8 +13,6 @@ const allowed = new Set([
   // The key of the bucket for the snapshots of the index (__builder/).
   'STOREFRONT_STATIC_S3_ACCESS_KEY_ID',
   'STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY',
-  // Step B: purges of CDN tags.
-  'CLOUDFLARE_PURGE_TOKEN',
 ]);
 for (const [key, value] of Object.entries(values)) {
   if (!allowed.has(key) || typeof value !== 'string') {

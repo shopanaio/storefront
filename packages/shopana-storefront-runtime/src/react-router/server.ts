@@ -257,19 +257,6 @@ export function createRuntimePageLoader(
     const searchParams = toSearchRecord(url.searchParams);
 
     try {
-      // A client page of the static site: its layout and a skeleton, filled in by the
-      // browser. Never a redirect: a closed page's guard runs in the browser.
-      if (staticRenderMode(incoming.headers) === 'shell') {
-        await (resolution.kind === 'module'
-          ? loadModuleLayout(route, resolution.match.record)
-          : loadRouteLayout(route, resolution.pageType, { isModule: false }));
-        return {
-          kind: 'shell',
-          pathname: resolution.pathname,
-          metadata: { robots: 'noindex' },
-        } satisfies RuntimePageData;
-      }
-
       if (resolution.kind === 'module') {
         const { match } = resolution;
         // Before the module loads: a closed page renders nothing for a visitor without a session.

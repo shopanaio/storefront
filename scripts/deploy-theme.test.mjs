@@ -12,20 +12,34 @@ import {
 } from './deploy-theme.mjs';
 
 test('Docker replica limits do not hide a converged stack', () => {
+  const replicas = {
+    theme: '2/2',
+    cloudflared: '2/2',
+    'theme-static': '1/1',
+  };
   assert.equal(
     hasReadyReplicas(
-      'theme 2/2 (max 2 per node)\ncloudflared 2/2 (max 1 per node)'
+      'theme 2/2 (max 2 per node)\ncloudflared 2/2 (max 1 per node)\ntheme-static 1/1',
+      replicas
     ),
     true
   );
-  assert.equal(hasReadyReplicas('theme 2/2\ncloudflared 2/2'), true);
+  assert.equal(
+    hasReadyReplicas('theme 2/2\ncloudflared 2/2\ntheme-static 1/1', replicas),
+    true
+  );
   assert.equal(
     hasReadyReplicas(
-      'theme 1/2 (max 2 per node)\ncloudflared 2/2 (max 1 per node)'
+      'theme 1/2 (max 2 per node)\ncloudflared 2/2 (max 1 per node)\ntheme-static 1/1',
+      replicas
     ),
     false
   );
-  assert.equal(hasReadyReplicas('theme 2/2'), false);
+  assert.equal(
+    hasReadyReplicas('theme 2/2\ncloudflared 2/2\ntheme-static 0/1', replicas),
+    false
+  );
+  assert.equal(hasReadyReplicas('theme 2/2\ncloudflared 2/2', replicas), false);
 });
 
 const env = `THEME_IMAGE=ghcr.io/shopanaio/theme@sha256:${'a'.repeat(64)}
@@ -54,7 +68,6 @@ const values = {
   IAM_OAUTH_CLIENT_SECRET: 'private-client-secret',
   IAM_OAUTH_RESOURCE: 'resource',
   IAM_OAUTH_REDIRECT_URI: `${outputs.app_url}/auth/callback`,
-  IAM_OAUTH_POST_LOGOUT_REDIRECT_URI: `${outputs.app_url}/`,
 };
 const service = (...entries) => ({
   Spec: {
@@ -194,7 +207,6 @@ test('headless sign-in uses the registered callback independently from the theme
   const headless = {
     ...values,
     IAM_OAUTH_REDIRECT_URI: 'https://registered.test/auth/callback',
-    IAM_OAUTH_POST_LOGOUT_REDIRECT_URI: '',
   };
   validateRuntime(headless, outputs);
   await verifyHeadlessOAuth(headless, async () =>
@@ -242,22 +254,15 @@ test('deploy inputs take the static site bucket, well formed', () => {
   );
 });
 
-test('the smoke wants a static hit, its 304, a live miss and /__env.js', async () => {
+test('the smoke wants a static hit, its 304, a live miss and the public settings', async () => {
   const etag = '"abc"';
-  const staticHtml =
-    '<html><head><script src="/__env.js"></script><script>window.__shopanaStatic={}</script></head></html>';
+  const staticHtml = `<html><head><script>globalThis.__shopanaPublicEnv={"NEXT_PUBLIC_API_KEY":"${values.NEXT_PUBLIC_API_KEY}"}</script></head></html>`;
   const site =
     (overrides = {}) =>
     async (url, init = {}) => {
       const { pathname } = new URL(url);
       const headers = init.headers ?? {};
       if (pathname in overrides) return overrides[pathname]();
-      if (pathname === '/__env.js') {
-        return new Response(
-          `globalThis.__shopanaPublicEnv={"NEXT_PUBLIC_API_KEY":"${values.NEXT_PUBLIC_API_KEY}"};`,
-          { headers: { 'cache-control': 'no-cache' } }
-        );
-      }
       if (pathname === '/') {
         if (headers['if-none-match'] === etag)
           return new Response(null, { status: 304 });
@@ -271,7 +276,7 @@ test('the smoke wants a static hit, its 304, a live miss and /__env.js', async (
         });
       }
       if (pathname.startsWith('/products/smoke-')) {
-        return new Response('<script src="/__env.js"></script>', {
+        return new Response(staticHtml, {
           status: 404,
           headers: {
             'x-shopana-static': 'miss',
@@ -306,16 +311,18 @@ test('the smoke wants a static hit, its 304, a live miss and /__env.js', async (
     smoke(
       values,
       site({
-        '/__env.js': () =>
-          new Response(
-            values.STOREFRONT_SESSION_SECRET + values.NEXT_PUBLIC_API_KEY,
-            {
-              headers: { 'cache-control': 'no-cache' },
-            }
-          ),
+        '/': () =>
+          new Response(staticHtml + values.STOREFRONT_SESSION_SECRET, {
+            headers: {
+              'content-type': 'text/html',
+              'x-shopana-static': 'hit',
+              'cache-control': 'public, max-age=0, must-revalidate',
+              etag,
+            },
+          }),
       })
     ),
-    /leaked into \/__env\.js/
+    /leaked into static HTML/
   );
 });
 
@@ -324,7 +331,7 @@ test('the coordinator secret holds known keys and the token of the theme', () =>
   const staticValues = {
     STATIC_OPERATOR_TOKEN: 'o'.repeat(40),
     STOREFRONT_STATIC_COORDINATOR_TOKEN: token,
-    SHOPANA_EVENTS_REFRESH_TOKEN: 'refresh',
+    STATIC_GITHUB_APP_PRIVATE_KEY: 'pem',
   };
   validateStaticEnv(staticValues, {
     ...values,
@@ -382,16 +389,10 @@ test('a new image asks the coordinator for a full build', async () => {
 
 test('the CDN smoke wants a HIT of a page it has seen, never of auth', async () => {
   const etag = '"abc"';
-  const staticHtml =
-    '<html><head><script src="/__env.js"></script><script>window.__shopanaStatic={}</script></head></html>';
+  const staticHtml = `<html><head><script>globalThis.__shopanaPublicEnv={"NEXT_PUBLIC_API_KEY":"${values.NEXT_PUBLIC_API_KEY}"}</script></head></html>`;
   let pages = 0;
   const fetcher = async (url, init = {}) => {
     const { pathname } = new URL(url);
-    if (pathname === '/__env.js')
-      return new Response(
-        `globalThis.__shopanaPublicEnv={"NEXT_PUBLIC_API_KEY":"${values.NEXT_PUBLIC_API_KEY}"};`,
-        { headers: { 'cache-control': 'no-cache' } }
-      );
     if (pathname === '/') {
       if (init.headers?.['if-none-match'] === etag)
         return new Response(null, { status: 304 });
@@ -412,7 +413,7 @@ test('the CDN smoke wants a HIT of a page it has seen, never of auth', async () 
         headers: { 'cf-cache-status': 'DYNAMIC' },
       });
     if (pathname.startsWith('/products/smoke-'))
-      return new Response('<script src="/__env.js"></script>', {
+      return new Response(staticHtml, {
         status: 404,
         headers: {
           'x-shopana-static': 'miss',

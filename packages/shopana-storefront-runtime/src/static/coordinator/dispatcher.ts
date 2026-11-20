@@ -2,13 +2,12 @@
  * When the coordinator starts a run of `static-site.yml`:
  *
  * - the first job after a quiet time starts a 20 s wait (later jobs do not extend it), so one
- *   run takes a burst of events;
+ *   run takes a burst of jobs;
  * - at least 60 s between two dispatches;
  * - one dispatch not yet claimed (by the first lease of its run) at a time; one unclaimed for
  *   10 minutes is stale and another goes;
  * - while a run holds a lease it takes the new jobs itself: a dispatch goes when it has ended,
- *   or when less than 3 minutes of its budget remain;
- * - the sweep's jobs never make a dispatch: a run made for other jobs takes them.
+ *   or when less than 3 minutes of its budget remain.
  */
 import { randomBytes } from 'node:crypto';
 import type { CoordinatorState } from './state';
@@ -74,7 +73,7 @@ export class Dispatcher {
     if (this.running) return 'running';
     const now = this.now();
     const ready = this.state.readyJobs();
-    if (ready.dispatchable === 0) {
+    if (ready.total === 0) {
       this.firstSeenAt = null;
       return 'idle';
     }

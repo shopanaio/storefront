@@ -1,8 +1,6 @@
 /**
  * The request of the static site builder (`@shopana/storefront-sdk/static`): a guest's page
- * rendered whole, for every buyer. The header's value says what to render: `page` the page of
- * the address, `shell` its layout and a skeleton the browser fills in (a cart, an account, a
- * search). Only the builder's own process renders so (its key).
+ * rendered whole, for every buyer. Only the builder's own process renders so (its key).
  */
 export {
   STATIC_RENDER_HEADER,

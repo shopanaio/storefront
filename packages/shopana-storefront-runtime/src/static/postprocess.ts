@@ -1,12 +1,8 @@
 /**
  * The HTML of a static page after its render: the emotion rules the page does not use dropped
- * (a long-lived process gathers every rule it ever rendered), the document's own facts for the
- * browser (`window.__shopanaStatic`), and a check that nothing private got in.
+ * (a long-lived process gathers every rule it ever rendered), and a check that nothing private
+ * got in.
  */
-import {
-  STATIC_DOCUMENT_GLOBAL,
-  type StaticDocumentInfo,
-} from '@shopana/storefront-sdk/static';
 
 const STYLE_TAG = /<style data-emotion="([^"]*)"([^>]*)>([\s\S]*?)<\/style>/g;
 
@@ -102,23 +98,6 @@ export function pruneEmotionStyles(html: string): string {
   );
 }
 
-/** The inline script with what a static document tells the browser about itself. */
-export function staticDocumentScript(info: StaticDocumentInfo): string {
-  const json = JSON.stringify(info).replace(/</g, '\\u003c');
-  return `<script>window.${STATIC_DOCUMENT_GLOBAL}=${json}</script>`;
-}
-
-/** The document with its static facts at the end of `<head>`. */
-export function withStaticDocumentInfo(
-  html: string,
-  info: StaticDocumentInfo
-): string {
-  const headEnd = html.indexOf('</head>');
-  const script = staticDocumentScript(info);
-  if (headEnd === -1) return script + html;
-  return html.slice(0, headEnd) + script + html.slice(headEnd);
-}
-
 /** Environment values a static page must never carry. */
 const PRIVATE_SETTINGS = [
   'STOREFRONT_SESSION_SECRET',
@@ -131,8 +110,6 @@ const PRIVATE_SETTINGS = [
 
 /** What must not be in a guest's document: other visitors' or the server's. */
 const PRIVATE_MARKERS = [
-  // The settings come from `/__env.js`, never inline.
-  '__shopanaPublicEnv=',
   // A visitor's id, a session: the builder renders without cookies.
   'shopana_storefront_visitor_id',
   'x-shopana-storefront-visitor-id',
@@ -140,7 +117,7 @@ const PRIVATE_MARKERS = [
 
 /**
  * Throws when the HTML of a static page carries a private value: a server secret of the
- * builder's environment, a visitor's id, inline public settings.
+ * builder's environment, a visitor's id.
  */
 export function assertNoPrivateValues(
   html: string,

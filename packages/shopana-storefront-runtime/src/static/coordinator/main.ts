@@ -1,25 +1,18 @@
 /**
- * `storefront-runtime static coordinator`: the service `theme-static` (one replica). It reads
- * the event feed of the store, keeps the index of pages and their dependencies, queues the
- * pages to render, dispatches runs of `static-site.yml` in GitHub Actions and leases them the
- * jobs, purges tags of the CDN (step B) and snapshots its index. It renders nothing itself.
+ * `storefront-runtime static coordinator`: the service `theme-static` (one replica). It keeps
+ * the index of pages, queues the pages to render (a build asked for, a page the site has not
+ * yet, a moment its content changes at), dispatches runs of `static-site.yml` in GitHub Actions
+ * and leases them the jobs, and snapshots its index. It renders nothing itself.
  *
  * Configured by the environment (every value but the secrets has a default):
  *
  * | Variable | |
  * | --- | --- |
- * | `SHOPANA_ADMIN_GRAPHQL_URL`, `SHOPANA_STORE_NAME` | the admin API and the store of the feed |
- * | `SHOPANA_EVENTS_REFRESH_TOKEN`, `SHOPANA_EVENTS_TOKEN_URL`, `SHOPANA_EVENTS_CLIENT_ID` | the service user's session |
- * | `STATIC_EVENT_TOPICS` | topics, comma separated (`STATIC_EVENT_TOPICS` of the SDK) |
- * | `STATIC_EVENTS_POLL_MS` (2000) | the feed is read this often when it has nothing more |
- * | `STATIC_EAGER_TOP` (300), `STATIC_SWEEP_BATCH` (200), `STATIC_SWEEP_INTERVAL_MS` (300000) | eager pages, the sweep |
- * | `STATIC_READ_LAG_MS` (0) | a job waits after its event for the caches of the API |
  * | `STATIC_DISPATCH_DELAY_MS` (20000), `STATIC_DISPATCH_MIN_INTERVAL_MS` (60000), `STATIC_DISPATCH_STALE_MS` (600000), `STATIC_RUN_BUDGET_MS` (35 min) | dispatches |
  * | `STATIC_GITHUB_APP_ID`, `STATIC_GITHUB_INSTALLATION_ID`, `STATIC_GITHUB_APP_PRIVATE_KEY(_FILE)` | the GitHub App |
  * | `STATIC_GITHUB_REPOSITORY`, `STATIC_GITHUB_WORKFLOW` (`static-site.yml`), `STATIC_GITHUB_REF` (`main`), `STATIC_ENVIRONMENT` | the workflow and the environment |
  * | `STATIC_OIDC_WORKFLOW_REF` | the `workflow_ref` claim the leases accept |
  * | `STATIC_OPERATOR_TOKEN`, `STOREFRONT_STATIC_COORDINATOR_TOKEN` | the operator's and the servers' tokens |
- * | `CLOUDFLARE_PURGE_TOKEN`, `CLOUDFLARE_ZONE_ID`, `STATIC_PURGE_PER_MINUTE` (5), `STATIC_PURGE_BURST` (25) | purges (step B) |
  * | `STATIC_INDEX_STORE` (`STOREFRONT_STATIC_STORE`) | where the snapshots of the index go |
  * | `THEME_IMAGE` | the image of the theme the runs render with |
  */
@@ -27,23 +20,15 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import type { Server } from 'node:http';
 import path from 'node:path';
-import {
-  createEventFeedClient,
-  refreshTokenSource,
-  STATIC_EVENT_TOPICS,
-} from '@shopana/storefront-sdk/static';
-import { purgerFromEnv } from '../purge';
 import { openStaticStore, type StaticStore } from '../store';
 import { openCoordinatorDb } from './db';
 import { Dispatcher } from './dispatcher';
-import { EventFeedLoop } from './feed';
 import {
   dispatchWorkflow,
   githubAppTokens,
   githubOidcVerifier,
 } from './github';
 import { createCoordinatorApp } from './http';
-import { DEFAULT_PURGE_LIMITS, PurgeQueue } from './purgeQueue';
 import { restoreSnapshot, takeSnapshot } from './snapshots';
 import { CoordinatorState } from './state';
 import { COORDINATOR_AUDIENCE } from '../run';
@@ -110,14 +95,8 @@ export async function startStaticCoordinator({
     );
   }
   const db = openCoordinatorDb(file);
-  const purger = purgerFromEnv(env);
   const state = new CoordinatorState(db, {
-    eagerTop: number(env, 'STATIC_EAGER_TOP', 300),
-    sweepBatch: number(env, 'STATIC_SWEEP_BATCH', 200),
-    sweepIntervalMs: number(env, 'STATIC_SWEEP_INTERVAL_MS', 5 * 60_000),
-    readLagMs: number(env, 'STATIC_READ_LAG_MS', 0),
     leaseMs: number(env, 'STATIC_LEASE_MS', 3 * 60_000),
-    purge: Boolean(purger),
   });
   if (restored) {
     state.resetRuns();
@@ -126,44 +105,6 @@ export async function startStaticCoordinator({
   const image = text(env, 'THEME_IMAGE');
   if (image && !state.getSetting('current_image'))
     state.setSetting('current_image', image);
-
-  // The event feed.
-  const adminUrl = text(env, 'SHOPANA_ADMIN_GRAPHQL_URL');
-  const storeName = text(env, 'SHOPANA_STORE_NAME');
-  const refreshToken =
-    state.getSetting('events_refresh_token') ??
-    secret(env, 'SHOPANA_EVENTS_REFRESH_TOKEN');
-  const tokenUrl = text(env, 'SHOPANA_EVENTS_TOKEN_URL');
-  let feedLoop: EventFeedLoop | null = null;
-  if (adminUrl && storeName && refreshToken && tokenUrl) {
-    const topics = text(env, 'STATIC_EVENT_TOPICS')
-      ?.split(',')
-      .map((topic) => topic.trim())
-      .filter(Boolean) ?? [...STATIC_EVENT_TOPICS];
-    const feed = createEventFeedClient({
-      adminGraphqlUrl: adminUrl,
-      storeName,
-      topics,
-      apiVersion: text(env, 'SHOPANA_EVENTS_API_VERSION') ?? undefined,
-      auth: refreshTokenSource({
-        tokenUrl,
-        refreshToken,
-        clientId: text(env, 'SHOPANA_EVENTS_CLIENT_ID') ?? undefined,
-        // A rotated refresh token is kept: the one of the secret is spent.
-        onRefreshToken: (token) =>
-          state.setSetting('events_refresh_token', token),
-      }),
-    });
-    feedLoop = new EventFeedLoop(state, feed, {
-      pollMs: number(env, 'STATIC_EVENTS_POLL_MS', 2000),
-      logger,
-    });
-  } else {
-    logger.warn(
-      '[static-coordinator] no event feed: set SHOPANA_ADMIN_GRAPHQL_URL, SHOPANA_STORE_NAME, ' +
-        'SHOPANA_EVENTS_TOKEN_URL and SHOPANA_EVENTS_REFRESH_TOKEN'
-    );
-  }
 
   // GitHub.
   const repository = text(env, 'STATIC_GITHUB_REPOSITORY');
@@ -224,23 +165,6 @@ export async function startStaticCoordinator({
       })
     : null;
 
-  const purgeQueue = purger
-    ? new PurgeQueue(
-        state,
-        purger,
-        {
-          perMinute: number(
-            env,
-            'STATIC_PURGE_PER_MINUTE',
-            DEFAULT_PURGE_LIMITS.perMinute
-          ),
-          burst: number(env, 'STATIC_PURGE_BURST', DEFAULT_PURGE_LIMITS.burst),
-        },
-        Date.now,
-        logger
-      )
-    : null;
-
   let snapshotting = false;
   const snapshot = () => {
     if (!snapshotStore || snapshotting) return;
@@ -265,8 +189,6 @@ export async function startStaticCoordinator({
     internalToken: secret(env, 'STOREFRONT_STATIC_COORDINATOR_TOKEN'),
     onFullBuild: snapshot,
     status: () => ({
-      feed: feedLoop?.status ?? null,
-      purge: Boolean(purger),
       dispatch: Boolean(token && repository && environment),
     }),
     logger,
@@ -292,11 +214,7 @@ export async function startStaticCoordinator({
   };
   every(1000, () => dispatcher.tick());
   every(15_000, () => state.expireLeases());
-  every(30_000, () => {
-    state.enqueueExpired();
-    state.sweep();
-  });
-  if (purgeQueue) every(5000, () => purgeQueue.tick());
+  every(30_000, () => state.enqueueExpired());
   every(60 * 60_000, () => {
     const day = new Date().toISOString().slice(0, 10);
     if (state.getSetting('hits_day') !== day) {
@@ -306,7 +224,6 @@ export async function startStaticCoordinator({
     const last = Number(state.getSetting('last_snapshot') ?? 0);
     if (Date.now() - last > 24 * 60 * 60_000) snapshot();
   });
-  feedLoop?.start();
 
   const server = await new Promise<Server>((resolve) => {
     const listening = app.listen(port, () => resolve(listening));
@@ -314,7 +231,6 @@ export async function startStaticCoordinator({
   logger.info(`[static-coordinator] listening on ${port}, index ${file}`);
 
   const stop = async () => {
-    feedLoop?.stop();
     for (const interval of intervals) clearInterval(interval);
     await new Promise<void>((resolve) => server.close(() => resolve()));
     db.close();

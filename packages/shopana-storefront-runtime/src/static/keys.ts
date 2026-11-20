@@ -8,12 +8,8 @@
 export const STATIC_MANIFEST_KEY = '__static/manifest.json';
 /** What the hybrid server reads of the manifest (`StaticServerIndex`), small at any size. */
 export const STATIC_SERVER_INDEX_KEY = '__static/server.json';
-/** The data of each page (its Apollo state), for client navigations. */
-export const STATIC_DATA_PREFIX = '__static/data/';
 /** The theme's 404 page. */
 export const STATIC_NOT_FOUND_KEY = '404.html';
-/** The shells of the page families, for addresses without a file when no server renders. */
-export const STATIC_SHELL_PREFIX = '__shell/';
 /** Assets of the builds a static page was rendered with. */
 export const STATIC_ASSETS_PREFIX = 'assets/';
 
@@ -21,8 +17,8 @@ export const STATIC_ASSETS_PREFIX = 'assets/';
 const SEO_FILE = /^\/(?:robots\.txt|sitemap\.xml|sitemaps\/[^/]+\.xml)$/;
 
 /**
- * Whether a key is a file the builder writes for its pages (an HTML, its data, a shell, the
- * 404 page, a file of search engines): what a build deletes when it no longer lists it.
+ * Whether a key is a file the builder writes for its pages (an HTML, the 404 page, a file of
+ * search engines): what a build deletes when it no longer lists it.
  * Assets, the manifest and anything else in the store are never such a file.
  */
 export function isStaticSiteKey(key: string): boolean {
@@ -30,8 +26,6 @@ export function isStaticSiteKey(key: string): boolean {
     key === 'index.html' ||
     key.endsWith('/index.html') ||
     key === STATIC_NOT_FOUND_KEY ||
-    (key.startsWith(STATIC_DATA_PREFIX) && key.endsWith('.json')) ||
-    (key.startsWith(STATIC_SHELL_PREFIX) && key.endsWith('.html')) ||
     SEO_FILE.test(`/${key}`)
   );
 }
@@ -42,7 +36,7 @@ const FILE_EXTENSION = /\.[a-z0-9]+$/i;
 /**
  * The segments of a page address, or null for one that is no page of the static site: a file,
  * a path that leaves its root, an empty segment (`/uk//products`), a segment of the runtime's
- * own (`__static`, `__shell`). One trailing slash is the address without it.
+ * own (`__static`). One trailing slash is the address without it.
  */
 function pageSegments(pathname: string): string[] | null {
   if (!pathname.startsWith('/')) return null;
@@ -85,58 +79,6 @@ export function staticKeyForPath(pathname: string): string | null {
   const segments = pageSegments(pathname);
   if (!segments) return null;
   return [...segments, 'index.html'].join('/');
-}
-
-/**
- * The key of the data of an address: `/` → `__static/data/index.json`, `/uk/products/x` →
- * `__static/data/uk/products/x.json`. Null where `staticKeyForPath` has no page.
- */
-export function staticDataKeyForPath(pathname: string): string | null {
-  const segments = pageSegments(pathname);
-  if (!segments) return null;
-  return `${STATIC_DATA_PREFIX}${segments.length ? segments.join('/') : 'index'}.json`;
-}
-
-/** The address the data of a page is answered at (`/__static/data/...json`). */
-export function staticDataUrl(pathname: string): string | null {
-  const key = staticDataKeyForPath(pathname);
-  return key ? `/${key}` : null;
-}
-
-/** Page families with a shell, by the first segment of their address. */
-export const STATIC_SHELL_FAMILIES: Readonly<Record<string, string>> = {
-  products: 'products',
-  p: 'products',
-  categories: 'categories',
-  collections: 'collections',
-  c: 'collections',
-  vendors: 'vendors',
-  pages: 'pages',
-};
-
-/** The shell key of a family (`__shell/products.html`). */
-export function staticShellKey(family: string): string {
-  return `${STATIC_SHELL_PREFIX}${family}.html`;
-}
-
-/**
- * The shell of the family an address belongs to, by its first segment after the locale
- * (`/uk/products/x` → `__shell/products.html`); null for an address of no family. The shell of
- * a family renders the layout of its page type: the same for every language.
- */
-export function staticShellKeyForPath(
-  pathname: string,
-  localeSegments: readonly string[]
-): string | null {
-  const segments = pageSegments(pathname);
-  if (!segments || segments.length === 0) return null;
-  const [first, ...rest] = segments;
-  const unlocalized = localeSegments.includes(first.toLowerCase())
-    ? rest
-    : segments;
-  if (unlocalized.length < 2) return null;
-  const family = STATIC_SHELL_FAMILIES[unlocalized[0]];
-  return family ? staticShellKey(family) : null;
 }
 
 /**

@@ -1,12 +1,12 @@
 # Step B of plans/static-coordinator.ru.md: HTML and the data of pages come from R2 through the
 # CDN worker (deploy/worker) and the cache of the CDN; assets from the bucket's custom domain
 # without the worker; the hybrid node behind the Tunnel answers misses, auth and the rest.
-# Purges by tag (pg:<pageKey>, build:<buildId>, sf-*) keep the cache fresh.
+# Purges by tag (pg:<pageKey>, build:<buildId>) keep the cache fresh.
 
 locals {
   cdn_hosts = sort(keys(var.static_cdn))
   # Paths the worker never runs for: the node or the bucket's domain answers them directly.
-  worker_bypass = ["/assets/*", "/graphql*", "/auth/*", "/__builder/*", "/__env.js", "/apps/*", "/.well-known/*", "/cdn-cgi/*"]
+  worker_bypass = ["/assets/*", "/graphql*", "/auth/*", "/__builder/*", "/apps/*", "/.well-known/*", "/cdn-cgi/*"]
   worker_bypass_routes = merge([
     for hostname in local.cdn_hosts : {
       for path in local.worker_bypass : "${hostname}${path}" => hostname

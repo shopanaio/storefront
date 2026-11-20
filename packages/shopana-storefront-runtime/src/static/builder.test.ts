@@ -9,7 +9,6 @@ import {
   buildStaticSite,
   localizedPath,
   publishStaticSite,
-  renderStaticPages,
   renderStaticPaths,
   staticPageKey,
   type StaticPageResult,
@@ -18,7 +17,6 @@ import { createFsStore, type StaticStore } from './store';
 import {
   jobRequest,
   jobTokenSource,
-  planStaticEvents,
   runStaticJobs,
   type CoordinatorClient,
   type CoordinatorLease,
@@ -27,12 +25,7 @@ import {
 import { parseDuration } from './cli';
 
 let dir: string;
-let catalog: Record<
-  string,
-  { title: string; endsAt?: string; stock?: number; volatile?: boolean }
->;
-/** The handle of each product by its API id, as `ownerPath` finds it. */
-let handles: Record<string, string | null>;
+let catalog: Record<string, { title: string; endsAt?: string }>;
 /** Products still listed whose page the API no longer shows a guest. */
 let unpublished: Set<string>;
 /** Products whose page the API fails to render now. */
@@ -46,13 +39,10 @@ const staticSite: StaticSiteEntry = {
   config: {
     locales: 'all',
     pages: { home: true, product: { enumerate: 'products' } },
-    shells: ['/cart'],
     notFound: true,
   },
   routing: { localePrefix: 'as-needed' },
   locales: async () => ({ all: locales, rendered: locales.locales }),
-  ownerPath: async (_locale, id) =>
-    handles[id] ? `/products/${handles[id]}` : null,
   routes: async () => [
     { path: '/', family: 'home' },
     ...Object.keys(catalog).map((handle) => ({
@@ -86,16 +76,7 @@ function fakeBuild(): ServerBuild {
         ) => {
           const page = context.staticHandlerContext.loaderData[
             'routes/page'
-          ] as
-            | {
-                title: string;
-                endsAt?: string;
-                volatile?: boolean;
-                stock?: number;
-              }
-            | undefined;
-          const shell =
-            request.headers.get('x-shopana-static-render') === 'shell';
+          ] as { title: string; endsAt?: string } | undefined;
           const state = page
             ? {
                 ROOT_QUERY: {
@@ -113,14 +94,13 @@ function fakeBuild(): ServerBuild {
                   __typename: 'ProductVariant',
                   id: '1',
                   availableForSale: true,
-                  ...(page.volatile ? { quantityAvailable: page.stock } : {}),
                 },
               }
             : {};
           headers.set('Content-Type', 'text/html');
           return new Response(
             `<html><head><style data-emotion="acss a b">.acss-a{x:y}.acss-b{x:y}</style></head>` +
-              `<body><p class="acss-a">${shell ? 'shell' : (page?.title ?? 'not found')} ${new URL(request.url).pathname}</p>` +
+              `<body><p class="acss-a">${page?.title ?? 'not found'} ${new URL(request.url).pathname}</p>` +
               `<script>window.__shopanaApolloState=${JSON.stringify(state)}</script></body></html>`,
             { status, headers }
           );
@@ -138,9 +118,6 @@ function fakeBuild(): ServerBuild {
         module: {
           default: () => null,
           loader: ({ request }: { request: Request }) => {
-            if (request.headers.get('x-shopana-static-render') === 'shell') {
-              return { title: 'shell' };
-            }
             const handle = new URL(request.url).pathname.split('/').pop() ?? '';
             const pathname = new URL(request.url).pathname;
             if (pathname === '/' || pathname === '/uk')
@@ -181,7 +158,6 @@ beforeEach(async () => {
   };
   unpublished = new Set();
   broken = new Set();
-  handles = {};
 });
 
 afterEach(async () => {
@@ -215,28 +191,18 @@ describe('the static site builder', () => {
     expect(localizedPath('/cart', en, locales, 'always')).toBe('/en/cart');
   });
 
-  it('writes the pages of every language, their data, shells, 404 and the manifest', async () => {
+  it('writes the pages of every language, 404 and the manifest', async () => {
     const report = await build();
     expect(report.failed).toEqual([]);
     expect(report.pages).toBe(6);
 
     const page = await read('uk/products/socks/index.html');
     expect(page).toContain('Socks /uk/products/socks');
-    // The unused emotion rule is gone; the static facts are in the head.
+    // The unused emotion rule is gone; the HTML is the render's, the Apollo state inline.
     expect(page).toContain('<style data-emotion="acss a">.acss-a{x:y}</style>');
-    expect(page).toContain(
-      '<script>window.__shopanaStatic={"buildId":"build-1","renderedAt":"2026-11-06T10:00:00.000Z","locale":"uk","path":"/uk/products/socks","validUntil":"2099-01-01T00:00:00.000Z","dataPageTypes":["home","product"],"volatilePrices":true}</script></head>'
-    );
-    expect(
-      JSON.parse(await read('__static/data/uk/products/socks.json'))
-    ).toMatchObject({
-      'Product:1': { title: 'Socks' },
-    });
-    expect(await read('cart/index.html')).toContain('shell /cart');
-    expect(await read('uk/cart/index.html')).toContain('shell /uk/cart');
-    expect(await read('__shell/products.html')).toContain(
-      'shell /products/__shell'
-    );
+    expect(page).not.toContain('__shopanaStatic');
+    expect(page).toContain('<script>window.__shopanaApolloState=');
+    await expect(read('cart/index.html')).rejects.toThrow();
     expect(await read('404.html')).toContain('not found /__static/not-found');
     expect(await read('robots.txt')).toBe('User-agent: *\n');
     expect(await read('assets/app-1.js')).toBe('js');
@@ -245,7 +211,6 @@ describe('the static site builder', () => {
       await read('__static/manifest.json')
     ) as StaticManifest;
     expect(manifest.locales).toEqual(['en', 'uk']);
-    expect(manifest.dataPageTypes).toEqual(['home', 'product']);
     // The server reads its small index, never the manifest.
     expect(JSON.parse(await read('__static/server.json'))).toEqual({
       version: 1,
@@ -258,8 +223,6 @@ describe('the static site builder', () => {
       kind: 'page',
       path: '/products/socks',
       locale: 'en',
-      data: '__static/data/products/socks.json',
-      entities: ['Product:1', 'ProductVariant:1'],
       validUntil: '2099-01-01T00:00:00.000Z',
     });
     // A product the API does not show a guest has no file.
@@ -291,10 +254,9 @@ describe('the static site builder', () => {
     expect(later.manifest.files['products/hats/index.html']).toBeUndefined();
     expect(later.manifest.retired).toEqual({});
     await expect(read('products/hats/index.html')).rejects.toThrow();
-    await expect(read('__static/data/products/hats.json')).rejects.toThrow();
     await expect(read('products/orphan/index.html')).rejects.toThrow();
     expect(await read('products/orphan.html')).toBe('x');
-    expect(later.removed).toBe(5);
+    expect(later.removed).toBe(3);
   });
 
   it('keeps the earlier files of a page that fails now', async () => {
@@ -308,9 +270,6 @@ describe('the static site builder', () => {
     expect(later.manifest.files['products/socks/index.html']).toMatchObject({
       renderedAt: '2026-11-06T10:00:00.000Z',
     });
-    expect(
-      later.manifest.files['__static/data/products/socks.json']
-    ).toBeDefined();
     expect(await read('products/socks/index.html')).toContain('Socks');
   });
 
@@ -394,7 +353,7 @@ describe('the static site builder', () => {
     expect(manifest.files['uk/products/hats/index.html']).toBeDefined();
   });
 
-  it('reports every page with its dependencies, unchanged when rendered the same', async () => {
+  it('reports every page, unchanged when rendered the same', async () => {
     const results: StaticPageResult[] = [];
     const options = {
       runtimeDir: dir,
@@ -415,22 +374,14 @@ describe('the static site builder', () => {
     expect(socks).toMatchObject({
       locale: 'uk',
       route: 'product',
-      ownerKey: 'Product:1',
       outcome: 'published',
+      validUntil: '2099-01-01T00:00:00.000Z',
     });
-    expect(socks?.deps.map((dep) => dep.key)).toEqual([
-      'Product:1',
-      'ProductVariant:1',
-    ]);
-    // The page of the other language is translated: its content carries the aspect.
-    expect(socks!.deps[0].aspects & 128).toBe(128);
     expect(
       results.find((result) => result.path === '/products/hidden')?.outcome
     ).toBe('gone');
 
     results.length = 0;
-    // Other stock, the same page: the stock is no part of it.
-    catalog.socks.stock = 3;
     await buildStaticSite({
       ...options,
       now: () => new Date('2026-11-07T10:00:00Z'),
@@ -440,56 +391,6 @@ describe('the static site builder', () => {
         (result) => result.outcome !== 'unchanged' && result.outcome !== 'gone'
       )
     ).toEqual([]);
-  });
-
-  it('refuses a page that asks for volatile fields', async () => {
-    catalog.socks.volatile = true;
-    catalog.socks.stock = 2;
-    const report = await build();
-    const failure = report.failed.find(
-      (item) => item.path === '/products/socks'
-    );
-    expect(failure?.reason).toContain('ProductVariant.quantityAvailable');
-  });
-
-  it('renders the page of an entity at its new address and takes the old one away', async () => {
-    await build();
-    handles['gid-1'] = 'woolen-socks';
-    catalog['woolen-socks'] = { title: 'Woolen socks' };
-    const report = await renderStaticPages({
-      runtimeDir: dir,
-      store: createFsStore(path.join(dir, 'build/static')),
-      origin: 'https://shop.example',
-      inProcess: true,
-      build: fakeBuild(),
-      logger: quiet,
-      pages: [
-        {
-          locale: 'uk',
-          previousPath: '/uk/products/socks',
-          owner: { key: 'Product:1', id: 'gid-1', route: 'product' },
-        },
-        // A product the API shows to no guest: nothing to render.
-        {
-          locale: 'en',
-          owner: { key: 'Product:2', id: 'gid-2', route: 'product' },
-        },
-      ],
-    });
-    expect(
-      report.results.map((result) => [result.path, result.outcome])
-    ).toEqual([
-      ['/uk/products/socks', 'gone'],
-      ['/uk/products/woolen-socks', 'published'],
-    ]);
-    expect(await read('uk/products/woolen-socks/index.html')).toContain(
-      'Woolen socks'
-    );
-    await expect(read('uk/products/socks/index.html')).rejects.toThrow();
-    expect(report.changedTags).toEqual([
-      `pg:${staticPageKey('uk', '/uk/products/socks')}`,
-      `pg:${staticPageKey('uk', '/uk/products/woolen-socks')}`,
-    ]);
   });
 
   it('tags the files for the CDN and purges what changed', async () => {
@@ -529,15 +430,10 @@ describe('the static site builder', () => {
         'build:build-1',
       ];
       expect(writes.get('uk/products/socks/index.html')).toEqual(tags);
-      expect(writes.get('__static/data/uk/products/socks.json')).toEqual(tags);
       expect(purged).toEqual([['build:build-1']]);
       // The files of public/ go to the bucket for the CDN.
       expect(writes.has('public/favicon.ico')).toBe(true);
       expect(writes.has('public/assets/app-1.js')).toBe(false);
-      // A bucket's pages leave the prices to the next render, not to the fast data.
-      expect(await read('uk/products/socks/index.html')).not.toContain(
-        'volatilePrices'
-      );
 
       catalog.socks.title = 'New socks';
       purged.length = 0;
@@ -567,7 +463,6 @@ describe('the static site builder', () => {
       later.manifest.retired?.['products/hats/index.html']
     ).toBeUndefined();
     await expect(read('products/hats/index.html')).rejects.toThrow();
-    await expect(read('__static/data/products/hats.json')).rejects.toThrow();
   });
 
   it('retires the assets of earlier builds for a week', async () => {
@@ -627,8 +522,6 @@ describe('static run', () => {
   it('renders the jobs of its leases and returns their results', async () => {
     await build();
     catalog.socks.title = 'Wool socks';
-    handles['gid-2'] = 'boots';
-    catalog.boots = { title: 'Boots' };
     const { client, results, completed, requests } = coordinator([
       {
         mode: 'queue',
@@ -639,30 +532,14 @@ describe('static run', () => {
             locale: 'en',
             target: 'path:/products/socks',
             path: '/products/socks',
-            apiId: null,
-            route: 'product',
             htmlHash: null,
-            dataHash: null,
-          },
-          {
-            id: 2,
-            locale: 'en',
-            target: 'owner:Product:2',
-            path: null,
-            apiId: 'gid-2',
-            route: 'product',
-            htmlHash: null,
-            dataHash: null,
           },
           {
             id: 3,
             locale: 'en',
             target: 'path:/products/hats',
             path: '/products/hats',
-            apiId: null,
-            route: 'product',
             htmlHash: null,
-            dataHash: null,
           },
         ],
       },
@@ -673,7 +550,7 @@ describe('static run', () => {
       requestId: 'd-1',
       runId: '42',
     });
-    expect(report).toEqual({ leases: 1, pages: 3, failed: 0 });
+    expect(report).toEqual({ leases: 1, pages: 2, failed: 0 });
     expect(requests[0]).toMatchObject({
       requestId: 'd-1',
       runId: '42',
@@ -685,7 +562,6 @@ describe('static run', () => {
     ).toEqual(
       expect.arrayContaining([
         [[1], '/products/socks', 'published'],
-        [[2], '/products/boots', 'published'],
         [[3], '/products/hats', 'unchanged'],
       ])
     );
@@ -723,19 +599,11 @@ describe('static run', () => {
       jobRequest({
         id: 7,
         locale: 'uk',
-        target: 'owner:Product:1',
+        target: 'path:/uk/products/a',
         path: '/uk/products/a',
-        apiId: 'g',
-        route: 'product',
         htmlHash: null,
-        dataHash: null,
       })
-    ).toEqual({
-      locale: 'uk',
-      previousPath: '/uk/products/a',
-      owner: { key: 'Product:1', id: 'g', route: 'product' },
-      jobIds: [7],
-    });
+    ).toEqual({ locale: 'uk', path: '/uk/products/a', jobIds: [7] });
   });
 
   it('asks GitHub for its OIDC token with the audience of the coordinator', async () => {
@@ -755,44 +623,5 @@ describe('static run', () => {
     expect(urls).toEqual([
       'https://gh.test/token?x=1&audience=shopana-static-coordinator',
     ]);
-  });
-
-  it('plans the pages of events from the data of a built site', async () => {
-    await build();
-    const plan = await planStaticEvents({
-      store: createFsStore(path.join(dir, 'build/static')),
-      events: [
-        {
-          id: 'e1',
-          topic: 'productUpdated',
-          data: { productId: '1', reasons: ['inventory'] },
-        },
-        { id: 'e2', topic: 'discountUpdated', data: { id: 'd' } },
-      ],
-    });
-    // Stock only marks the pages stale (the product shows `availableForSale`), and the
-    // discount renders nothing.
-    expect(plan.eager).toEqual([]);
-    expect(plan.dirty.map((page) => page.path).sort()).toEqual([
-      '/products/hats',
-      '/products/socks',
-      // The home page of the fake build shows the product too.
-      '/uk',
-      '/uk/products/hats',
-      '/uk/products/socks',
-    ]);
-    expect(plan.purgeTags).toEqual(['sf-p-1', 'sf-promo', 'sf-vol']);
-
-    const content = await planStaticEvents({
-      store: createFsStore(path.join(dir, 'build/static')),
-      events: [
-        {
-          id: 'e3',
-          topic: 'productUpdated',
-          data: { productId: '1', reasons: ['content'] },
-        },
-      ],
-    });
-    expect(content.eager.length).toBe(5);
   });
 });

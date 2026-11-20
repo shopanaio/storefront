@@ -14,16 +14,9 @@ locals {
   cdn_expression = length(var.static_cdn) == 0 ? "" : "http.host in {${join(" ", [for hostname in sort(keys(var.static_cdn)) : jsonencode(hostname)])}}"
   cdn_rules = [for rule in [
     {
-      ref               = "static_html_and_data"
-      description       = "Step B: HTML and page data by their own Cache-Control (s-maxage, purged by tag)"
+      ref               = "static_html"
+      description       = "Step B: HTML by its own Cache-Control (s-maxage, purged by tag)"
       expression        = "(${local.cdn_expression}) and http.request.method in {\"GET\" \"HEAD\"} and not (${local.dynamic}) and not ends_with(http.request.uri.path, \".data\")"
-      action            = "set_cache_settings"
-      action_parameters = { cache = true, edge_ttl = { mode = "respect_origin" }, browser_ttl = { mode = "respect_origin" } }
-    },
-    {
-      ref               = "static_graphql_get"
-      description       = "Step B: guest GET /graphql (persisted documents) by the gateway's Cache-Control, the query string in the key"
-      expression        = "(${local.cdn_expression}) and http.request.method eq \"GET\" and http.request.uri.path eq \"/graphql\" and not any(len(http.request.headers[\"authorization\"][*]) > 0)"
       action            = "set_cache_settings"
       action_parameters = { cache = true, edge_ttl = { mode = "respect_origin" }, browser_ttl = { mode = "respect_origin" } }
     },

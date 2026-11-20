@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  staticDataKeyForPath,
-  staticDataUrl,
-  staticKeyForPath,
-  staticShellKeyForPath,
-} from './keys';
+import { staticKeyForPath } from './keys';
 
 describe('static keys', () => {
   it('maps an address to the key of its HTML, the query string aside', () => {
@@ -36,28 +31,5 @@ describe('static keys', () => {
     expect(staticKeyForPath('/sitemaps/products-1.xml')).toBe(
       'sitemaps/products-1.xml'
     );
-  });
-
-  it('maps an address to its data', () => {
-    expect(staticDataKeyForPath('/')).toBe('__static/data/index.json');
-    expect(staticDataKeyForPath('/uk/products/x')).toBe(
-      '__static/data/uk/products/x.json'
-    );
-    expect(staticDataUrl('/uk')).toBe('/__static/data/uk.json');
-    expect(staticDataUrl('/x.js')).toBeNull();
-  });
-
-  it('finds the shell of a page family behind the locale segment', () => {
-    expect(staticShellKeyForPath('/products/x', ['uk'])).toBe(
-      '__shell/products.html'
-    );
-    expect(staticShellKeyForPath('/uk/p/x', ['uk'])).toBe(
-      '__shell/products.html'
-    );
-    expect(staticShellKeyForPath('/uk/c/x', ['uk'])).toBe(
-      '__shell/collections.html'
-    );
-    expect(staticShellKeyForPath('/collections', ['uk'])).toBeNull();
-    expect(staticShellKeyForPath('/cart', ['uk'])).toBeNull();
   });
 });

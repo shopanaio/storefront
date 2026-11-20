@@ -11,8 +11,6 @@
  * - `static run --coordinator <url> [--request-id <id>] [--run-id <id>] [--run-attempt <n>]
  *   [--budget 35m] [--capacity 500]`: a job of the coordinator in GitHub Actions: leases,
  *   renders, publishes what changed, returns the results.
- * - `static run --events <file.ndjson>`: the pages events change in a built site, rendered
- *   without a coordinator (the mapper and the aspects on real snapshots).
  * - `static coordinator [--port 3100] [--data <dir>]`: the coordinator (`theme-static`).
  *
  * Stores are `fs:<dir>` or `s3://<bucket>/<prefix>`. Requests go to the API of the theme's
@@ -29,13 +27,7 @@ import {
   type StaticBuildReport,
 } from './builder';
 import { purgerFromEnv } from './purge';
-import {
-  createCoordinatorClient,
-  jobTokenSource,
-  readEventsFile,
-  runStaticEvents,
-  runStaticJobs,
-} from './run';
+import { createCoordinatorClient, jobTokenSource, runStaticJobs } from './run';
 import { openStaticStore, type StaticStore } from './store';
 
 interface ParsedArgs {
@@ -123,7 +115,7 @@ export interface StaticCommandContext {
 
 const USAGE =
   'Usage: storefront-runtime static <build | render <path>... | publish --from <store> --to <store> | ' +
-  'run (--coordinator <url> | --events <file>) | coordinator> ' +
+  'run --coordinator <url> | coordinator> ' +
   '[--out <dir>] [--store <fs:dir | s3://bucket/prefix>] [--concurrency <n>] [--budget 35m]';
 
 /** A duration of the CLI: `35m`, `90s`, `1h`, or milliseconds. */
@@ -193,7 +185,6 @@ export async function runStaticCommand(
       return 0;
     }
     case 'run': {
-      const events = parsed.options.get('events');
       const store = await targetStore(parsed, context);
       const common = {
         runtimeDir: context.runtimeDir,
@@ -202,13 +193,6 @@ export async function runStaticCommand(
         concurrency: concurrencyOf(parsed),
         purger: purgerFromEnv(context.env),
       };
-      if (events) {
-        await runStaticEvents({
-          ...common,
-          events: await readEventsFile(path.resolve(context.themeDir, events)),
-        });
-        return 0;
-      }
       const url =
         parsed.options.get('coordinator') ?? context.env.COORDINATOR_URL;
       if (!url) {

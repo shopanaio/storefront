@@ -24,7 +24,7 @@ import { ServerRequestScopeProvider } from '@shopana/storefront-sdk/core/ServerR
 import { isNotFoundSignal } from './not-found-response';
 import { pageJsonLdScripts } from './page-json-ld';
 import { serverInsertedHTMLCallbacks } from './server-inserted-html';
-import { PUBLIC_ENV_SCRIPT_TAG } from './public-env';
+import { publicEnvironmentScript } from './public-env';
 import { staticRenderMode } from './static-render';
 import {
   readRenderRedirect,
@@ -168,9 +168,7 @@ export default function handleRequest(
           let queued: Buffer[] = [];
           let batch: ReturnType<typeof setImmediate> | undefined;
           let headSent = false;
-          // The public settings come from the server that answers `/__env.js`, never inline:
-          // a static document lives longer than one environment.
-          let headHTML = PUBLIC_ENV_SCRIPT_TAG + pageJsonLdScripts();
+          let headHTML = publicEnvironmentScript() + pageJsonLdScripts();
           const send = (stream: Transform, chunk: Buffer) => {
             // More document after `</body>`: the state goes at its very end instead.
             if (closing) {

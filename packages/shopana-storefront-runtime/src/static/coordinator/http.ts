@@ -4,7 +4,7 @@
  * it):
  *
  * - `POST hits` — servers and the CDN worker, the internal token: hits and misses.
- * - `POST builds`, `GET builds/:id`, `GET pages?dep=`, `GET status` — the operator token (a
+ * - `POST builds`, `GET builds/:id`, `GET status` — the operator token (a
  *   build also by OIDC: the nightly run registers itself).
  * - `POST leases`, `…/:id/heartbeat`, `…/:id/results` (NDJSON), `…/:id/complete` — the jobs of
  *   GitHub Actions with their OIDC token (or the operator token, for a run by hand).
@@ -21,7 +21,7 @@ export interface CoordinatorAppOptions {
   verifyOidc?: ((token: string) => Promise<OidcClaims>) | null;
   operatorToken?: string | null;
   internalToken?: string | null;
-  /** More figures of the status endpoint (the feed, the dispatcher). */
+  /** More figures of the status endpoint (the dispatcher). */
   status?: () => Record<string, unknown>;
   /** A full build ended: the index is snapshot. */
   onFullBuild?: () => void;
@@ -117,7 +117,6 @@ export function createCoordinatorApp(
       const body = request.body as {
         mode?: string;
         paths?: unknown;
-        entities?: unknown;
         locales?: unknown;
         reason?: unknown;
         image?: unknown;
@@ -126,18 +125,13 @@ export function createCoordinatorApp(
         Array.isArray(value)
           ? value.filter((item): item is string => typeof item === 'string')
           : undefined;
-      if (
-        body.mode !== 'full' &&
-        body.mode !== 'paths' &&
-        body.mode !== 'entities'
-      ) {
-        response.status(400).json({ error: 'mode is full, paths or entities' });
+      if (body.mode !== 'full' && body.mode !== 'paths') {
+        response.status(400).json({ error: 'mode is full or paths' });
         return;
       }
       const result = state.requestBuild({
         mode: body.mode,
         paths: strings(body.paths),
-        entities: strings(body.entities),
         locales: strings(body.locales),
         reason: typeof body.reason === 'string' ? body.reason : undefined,
         image: typeof body.image === 'string' ? body.image : undefined,
@@ -153,15 +147,6 @@ export function createCoordinatorApp(
       return;
     }
     response.json(build);
-  });
-
-  api.get('/pages', authorize('operator'), (request, response) => {
-    const dep = typeof request.query.dep === 'string' ? request.query.dep : '';
-    if (!dep) {
-      response.status(400).json({ error: 'dep is required' });
-      return;
-    }
-    response.json({ dep, pages: state.pagesByDep(dep) });
   });
 
   api.get('/status', authorize('operator'), (_request, response) => {

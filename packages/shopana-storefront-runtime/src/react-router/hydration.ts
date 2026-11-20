@@ -41,7 +41,6 @@ export async function hydrationReady(): Promise<void> {
 export type HydratedPage =
   | { kind: 'page'; pageType: RuntimeRenderablePageType }
   | { kind: 'module'; pathname: string }
-  | { kind: 'shell'; pathname: string }
   | { kind: 'not-found' };
 
 const GLOBAL_KEY = '__shopanaHydratedPage';
@@ -61,11 +60,8 @@ export function hydratedPageOf(
         pageType: page.pageType as RuntimeRenderablePageType,
       };
     }
-    if (
-      (page?.kind === 'module' || page?.kind === 'shell') &&
-      typeof page.pathname === 'string'
-    ) {
-      return { kind: page.kind, pathname: page.pathname };
+    if (page?.kind === 'module' && typeof page.pathname === 'string') {
+      return { kind: 'module', pathname: page.pathname };
     }
     if (page?.kind === 'not-found') return { kind: 'not-found' };
   }

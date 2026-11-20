@@ -61,8 +61,8 @@ services:
           cpus: '1.0'
           memory: 1G
 
-  # The coordinator of the static site (plans/static-coordinator.ru.md): the event feed, the
-  # index of pages, the queue, dispatches of static-site.yml, leases, purges. One replica on the
+  # The coordinator of the static site: the index of pages, the queue, dispatches of
+  # static-site.yml, leases. One replica on the
   # node of its volume: its SQLite database has one writer. It renders nothing.
   theme-static:
     image: ${THEME_IMAGE:?Set THEME_IMAGE to a release tag or digest}
@@ -74,15 +74,9 @@ services:
       STATIC_GITHUB_REPOSITORY: ${STATIC_GITHUB_REPOSITORY:-shopanaio/storefront-brand-bite-and-crunch}
       STATIC_GITHUB_APP_ID: ${STATIC_GITHUB_APP_ID:-}
       STATIC_GITHUB_INSTALLATION_ID: ${STATIC_GITHUB_INSTALLATION_ID:-}
-      SHOPANA_ADMIN_GRAPHQL_URL: ${SHOPANA_ADMIN_GRAPHQL_URL:-}
-      SHOPANA_STORE_NAME: ${SHOPANA_STORE_NAME:-}
-      SHOPANA_EVENTS_TOKEN_URL: ${SHOPANA_EVENTS_TOKEN_URL:-}
-      SHOPANA_EVENTS_CLIENT_ID: ${SHOPANA_EVENTS_CLIENT_ID:-}
       # Snapshots of the index go to the bucket of the site, under __builder/.
       STATIC_INDEX_STORE: ${STATIC_STORE:-}
       STOREFRONT_STATIC_S3_ENDPOINT: ${STATIC_ENDPOINT:-}
-      # Step B: the zone whose CDN tags are purged (the token is in the static env secret).
-      CLOUDFLARE_ZONE_ID: ${CLOUDFLARE_ZONE_ID:-}
     networks: [frontend, backend]
     volumes:
       - theme-static-data:/data

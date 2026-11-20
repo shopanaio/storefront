@@ -1,8 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   handleRequest,
   PAGE_CACHE_CONTROL,
-  resetWorkerState,
   type EdgeCache,
   type SiteObject,
   type WorkerEnv,
@@ -27,7 +26,6 @@ function bucket(
             contentType: object.type ?? 'text/html; charset=utf-8',
           },
           customMetadata: object.tags ? { 'cache-tag': object.tags } : {},
-          text: async () => object.body,
         };
       },
     },
@@ -62,21 +60,9 @@ const site = {
     body: '<p>A</p>',
     tags: 'pg:0123456789abcdef,build:b1',
   },
-  'site/__static/data/products/a.json': {
-    body: '{}',
-    type: 'application/json',
-    tags: 'pg:0123456789abcdef,build:b1',
-  },
-  'site/__static/server.json': {
-    body: '{"locales":["en","uk"]}',
-    type: 'application/json',
-  },
-  'site/__shell/products.html': { body: '<p>shell</p>' },
   'site/404.html': { body: '<p>404</p>' },
   'site/public/favicon.ico': { body: 'icon', type: 'image/x-icon' },
 };
-
-beforeEach(() => resetWorkerState());
 
 describe('the CDN worker', () => {
   it('answers a page from the bucket, caches it with its tags, then from the cache', async () => {
@@ -147,24 +133,10 @@ describe('the CDN worker', () => {
     expect(revalidated.status).toBe(304);
   });
 
-  it('answers the data of a page and the files of public/', async () => {
+  it('answers the files of public/', async () => {
     const { SITE } = bucket(site);
     const { ctx } = context();
     const env = { SITE, SITE_PREFIX: 'site' };
-    const data = await handleRequest(
-      new Request('https://shop.test/__static/data/products/a.json'),
-      env,
-      ctx,
-      { cache: edgeCache() }
-    );
-    expect(data.headers.get('Content-Type')).toBe('application/json');
-    const missing = await handleRequest(
-      new Request('https://shop.test/__static/data/products/b.json'),
-      env,
-      ctx,
-      { cache: edgeCache() }
-    );
-    expect(missing.status).toBe(404);
     const icon = await handleRequest(
       new Request('https://shop.test/favicon.ico'),
       env,
@@ -199,7 +171,7 @@ describe('the CDN worker', () => {
       new Request('https://shop.test/auth/login', {
         headers: { cookie: 's=1' },
       }),
-      new Request('https://shop.test/__env.js'),
+      new Request('https://shop.test/products/a.data'),
       new Request('https://shop.test/products/a', {
         method: 'POST',
         body: 'x',
@@ -217,26 +189,26 @@ describe('the CDN worker', () => {
       ['/products/new', 'GET'],
       ['/products/a', 'GET'],
       ['/auth/login', 'GET'],
-      ['/__env.js', 'GET'],
+      ['/products/a.data', 'GET'],
       ['/products/a', 'POST'],
     ]);
     expect(seen[2].cookie).toBe('s=1');
     expect(cache.entries.size).toBe(0);
   });
 
-  it('degrades to the shell of the family, else the 404 page, when the node is down', async () => {
+  it('degrades to the 404 page when the node is down', async () => {
     const { SITE } = bucket(site);
     const { ctx } = context();
     const env = { SITE, SITE_PREFIX: 'site' };
     const down = (async () =>
       new Response('', { status: 530 })) as typeof fetch;
-    const shell = await handleRequest(
+    const missing = await handleRequest(
       new Request('https://shop.test/uk/products/new'),
       env,
       ctx,
       { cache: edgeCache(), fetch: down }
     );
-    expect([shell.status, await shell.text()]).toEqual([200, '<p>shell</p>']);
+    expect([missing.status, await missing.text()]).toEqual([404, '<p>404</p>']);
     const broken = (async () => {
       throw new Error('tunnel');
     }) as typeof fetch;

@@ -5,11 +5,7 @@
  */
 import { createRequestHandler, type ServerBuild } from 'react-router';
 import {
-  extractPageDeps,
-  findVolatileFields,
   indexStaticPage,
-  type StaticFieldAspects,
-  type StaticPageDeps,
   type StaticPageIndex,
 } from '@shopana/storefront-sdk/static';
 import {
@@ -24,8 +20,6 @@ export interface StaticRenderRequest {
   mode: StaticRenderMode;
   /** The BCP 47 tag of the page's language, its `Accept-Language`. */
   localeTag: string;
-  /** The language is not the store's default: the page's content is translated. */
-  translated?: boolean;
 }
 
 export interface StaticRenderResult extends StaticPageIndex {
@@ -34,33 +28,18 @@ export interface StaticRenderResult extends StaticPageIndex {
   location: string | null;
   /** The document, its unused styles out; empty for a redirect. */
   html: string;
-  /** The Apollo state the document carries (JSON), or null. */
-  state: string | null;
   /** When the render ran. */
   renderedAt: string;
   durationMs: number;
-  /** What the page depends on (`extractPageDeps`): empty without a state. */
-  deps: StaticPageDeps;
 }
-
-/** A page that asked for fields no static page may have (stock, promotions). */
-export class StaticVolatileFieldsError extends Error {
-  constructor(
-    readonly path: string,
-    readonly fields: readonly string[]
-  ) {
-    super(
-      `${path}: the page asks for fields that change without events (${fields.join(', ')}): ` +
-        'take them out of its fragments, the browser asks for them (useVolatileVariant, useVolatileCard)'
-    );
-    this.name = 'StaticVolatileFieldsError';
-  }
-}
-
-const NO_DEPS: StaticPageDeps = { deps: [], layout: [], owner: null };
 
 const APOLLO_STATE =
   /<script>window\.__shopanaApolloState=([\s\S]*?)<\/script>/;
+
+/** The Apollo state a static document carries (JSON), or null. */
+function apolloStateOf(html: string): string | null {
+  return html.match(APOLLO_STATE)?.[1] ?? null;
+}
 
 export interface StaticRenderer {
   render(request: StaticRenderRequest): Promise<StaticRenderResult>;
@@ -78,20 +57,17 @@ export function createStaticRenderer(
     origin,
     env = process.env,
     now = () => new Date(),
-    fieldAspects,
   }: {
     origin: string;
     env?: Record<string, string | undefined>;
     now?: () => Date;
-    /** The theme's aspects (`fieldAspects` of `static.config.ts`). */
-    fieldAspects?: StaticFieldAspects;
   }
 ): StaticRenderer {
   const handle = createRequestHandler(build, 'production');
   const host = new URL(origin).host;
 
   return {
-    async render({ path, mode, localeTag, translated }) {
+    async render({ path, mode, localeTag }) {
       const started = Date.now();
       const renderedAt = now();
       const response = await handle(
@@ -111,28 +87,17 @@ export function createStaticRenderer(
           : await response.text();
       const html = body ? pruneEmotionStyles(body) : '';
       if (html) assertNoPrivateValues(html, env);
-      const state = html.match(APOLLO_STATE)?.[1] ?? null;
+      const state = apolloStateOf(html);
       const parsed: unknown = state ? JSON.parse(state) : null;
-      // Stock and promotions change without events: a page that has them would be stale
-      // within seconds and its hash would change with every render.
-      const volatile = parsed ? findVolatileFields(parsed) : [];
-      if (volatile.length > 0)
-        throw new StaticVolatileFieldsError(path, volatile);
       const index = parsed
         ? indexStaticPage(parsed, renderedAt)
-        : { entities: [], validUntil: null };
-      const deps =
-        parsed && mode === 'page'
-          ? extractPageDeps(parsed, { fieldAspects, translated })
-          : NO_DEPS;
+        : { validUntil: null };
       return {
         status: response.status,
         location,
         html,
-        state,
         renderedAt: renderedAt.toISOString(),
         durationMs: Date.now() - started,
-        deps,
         ...index,
       };
     },

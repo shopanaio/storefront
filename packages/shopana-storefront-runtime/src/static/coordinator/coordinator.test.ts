@@ -4,34 +4,17 @@ import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import {
-  EventFeedError,
-  STATIC_ASPECTS,
-  STATIC_DEP_KINDS,
-  type EventFeedClient,
-  type StaticPageDep,
-} from '@shopana/storefront-sdk/static';
 import { createFsStore } from '../store';
 import { openCoordinatorDb } from './db';
 import { Dispatcher } from './dispatcher';
-import { EventFeedLoop } from './feed';
 import {
   dispatchWorkflow,
   githubAppTokens,
   githubOidcVerifier,
 } from './github';
 import { createCoordinatorApp } from './http';
-import { PurgeQueue } from './purgeQueue';
 import { restoreSnapshot, takeSnapshot } from './snapshots';
-import {
-  CoordinatorState,
-  FULL_TARGET,
-  PRIORITY,
-  type LeaseResult,
-} from './state';
-
-const { entity, list } = STATIC_DEP_KINDS;
-const { content, pricing, availability, membership } = STATIC_ASPECTS;
+import { CoordinatorState, PRIORITY, type LeaseResult } from './state';
 
 let clock: { now: number };
 let state: CoordinatorState;
@@ -40,7 +23,7 @@ beforeEach(() => {
   clock = { now: Date.parse('2026-11-07T10:00:00Z') };
   state = new CoordinatorState(
     openCoordinatorDb(':memory:'),
-    { eagerTop: 1 },
+    {},
     () => clock.now
   );
 });
@@ -49,15 +32,12 @@ const tick = (ms: number) => {
   clock.now += ms;
 };
 
-/** A published page with its dependencies, through a lease as a run would return it. */
+/** Published pages, through a lease as a run would return them. */
 function publish(
   pages: Array<{
     path: string;
     locale?: string;
     route?: string;
-    owner?: string;
-    deps: StaticPageDep[];
-    layout?: string[];
     validUntil?: string | null;
   }>,
   renderStartedAt = clock.now
@@ -71,12 +51,8 @@ function publish(
         locale: page.locale ?? 'en',
         path: page.path,
         route: page.route ?? 'product',
-        ownerKey: page.owner ?? null,
         outcome: 'published',
         htmlHash: `h-${page.path}`,
-        dataHash: `d-${page.path}`,
-        deps: page.deps,
-        layout: page.layout ?? [],
         validUntil: page.validUntil ?? null,
         renderStartedAt,
       })
@@ -98,244 +74,60 @@ const jobs = () =>
     reasons: string;
   }>;
 
-const dirty = () =>
-  (
-    state.db
-      .prepare(
-        'SELECT path FROM pages WHERE dirty_since IS NOT NULL ORDER BY path'
-      )
-      .all() as Array<{ path: string }>
-  ).map((row) => row.path);
-
 const clearJobs = () => state.db.exec('DELETE FROM jobs');
 
-/** A catalog: a product page, a popular category listing it, a rare vendor listing it. */
+/** A catalog: two products, a category, a vendor and the home page. */
 function seedCatalog() {
   publish([
-    {
-      path: '/products/a',
-      owner: 'Product:a',
-      deps: [
-        {
-          key: 'Product:a',
-          kind: entity,
-          aspects: content | pricing | availability,
-        },
-      ],
-    },
-    {
-      path: '/categories/c',
-      route: 'category',
-      owner: 'Category:c',
-      deps: [
-        {
-          key: 'Product:a',
-          kind: entity,
-          aspects: content | pricing | availability,
-        },
-        {
-          key: 'Category:c#products',
-          kind: list,
-          aspects: membership | pricing,
-        },
-      ],
-    },
-    {
-      path: '/vendors/v',
-      route: 'vendor',
-      deps: [
-        {
-          key: 'Product:a',
-          kind: entity,
-          aspects: content | pricing | availability,
-        },
-      ],
-    },
-    {
-      path: '/products/b',
-      owner: 'Product:b',
-      // A in breadcrumbs only.
-      deps: [{ key: 'Product:a', kind: entity, aspects: content }],
-    },
-    {
-      path: '/',
-      route: 'home',
-      deps: [],
-      layout: ['Store:s', 'OnlineStoreNavigationMenu:m'],
-    },
+    { path: '/products/a' },
+    { path: '/products/b' },
+    { path: '/categories/c', route: 'category' },
+    { path: '/vendors/v', route: 'vendor' },
+    { path: '/', route: 'home' },
   ]);
-  // The category is the most visited page.
-  state.recordHits({
-    'categories/c/index.html': 50,
-    'vendors/v/index.html': 1,
-  });
-  state.recomputeHits();
   clearJobs();
 }
 
-const productUpdated = (eventId: string, reasons: string[]) => ({
-  eventId,
-  topic: 'productUpdated',
-  envelope: {
-    id: eventId,
-    topic: 'productUpdated',
-    data: { productId: 'gid://shopana/Product/a', reasons },
-  },
-});
-
-describe('events', () => {
-  it('renders the own page and the popular ones at once, marks the rest stale', () => {
-    seedCatalog();
-    const applied = state.applyEvents(
-      [productUpdated('e1', ['pricing'])],
-      'c1'
-    );
-    expect(applied).toMatchObject({
-      events: 1,
-      eager: 2,
-      dirty: 1,
-      full: false,
-    });
-    expect(jobs().map((job) => [job.target, job.priority])).toEqual([
-      ['owner:Product:a', PRIORITY.own],
-      ['path:/categories/c', PRIORITY.popular],
-    ]);
-    // The vendor listing is stale; the product in breadcrumbs is not touched by pricing.
-    expect(dirty()).toEqual(['/vendors/v']);
-    expect(state.cursor()).toBe('c1');
-  });
-
-  it('only marks stock stale, never renders it at once', () => {
-    seedCatalog();
-    state.applyEvents([productUpdated('e1', ['inventory'])], 'c1');
-    expect(jobs()).toEqual([]);
-    expect(dirty()).toEqual(['/categories/c', '/products/a', '/vendors/v']);
-  });
-
-  it('takes an event once and keeps the cursor with its jobs', () => {
-    seedCatalog();
-    state.applyEvents([productUpdated('e1', ['content'])], 'c1');
-    const first = jobs().length;
-    const again = state.applyEvents([productUpdated('e1', ['content'])], 'c2');
-    expect(again).toMatchObject({ events: 0, duplicates: 1 });
-    expect(jobs()).toHaveLength(first);
-    expect(state.cursor()).toBe('c2');
-  });
-
-  it('builds everything for the layout and for menus', () => {
-    seedCatalog();
-    state.applyEvents(
-      [
-        {
-          eventId: 'e1',
-          topic: 'navigationMenuUpdated',
-          envelope: { id: 'e1', topic: 'navigationMenuUpdated', data: {} },
-        },
-      ],
-      'c1'
-    );
-    expect(jobs().map((job) => job.target)).toEqual([FULL_TARGET]);
-  });
-
-  it('queues the new page of a new product in every language', () => {
-    seedCatalog();
-    publish([{ path: '/uk', locale: 'uk', route: 'home', deps: [] }]);
-    clearJobs();
-    state.applyEvents(
-      [
-        {
-          eventId: 'e1',
-          topic: 'productCreated',
-          envelope: {
-            id: 'e1',
-            topic: 'productCreated',
-            data: { productId: 'gid://shopana/Product/new' },
-          },
-        },
-      ],
-      'c1'
-    );
-    expect(
-      jobs()
-        .filter((job) => job.target === 'owner:Product:new')
-        .map((job) => job.locale)
-    ).toEqual(['en', 'uk']);
-  });
-
-  it('renders no page for a discount and purges with a CDN', () => {
-    seedCatalog();
-    const withCdn = new CoordinatorState(
-      state.db,
-      { purge: true },
-      () => clock.now
-    );
-    withCdn.applyEvents(
-      [
-        {
-          eventId: 'e1',
-          topic: 'discountUpdated',
-          envelope: { id: 'e1', topic: 'discountUpdated', data: { id: 'd' } },
-        },
-      ],
-      'c1'
-    );
-    expect(jobs()).toEqual([]);
-    expect(dirty()).toEqual([]);
-    expect(withCdn.purgeBatch(100)).toEqual(['sf-promo', 'sf-vol']);
-    // Without a CDN the queue stays empty.
-    state.applyEvents([{ ...productUpdated('e2', ['pricing']) }], 'c2');
-    expect(state.purgeBatch(100)).toEqual(['sf-promo', 'sf-vol']);
-  });
-});
-
 describe('hits and misses', () => {
-  it('queues a stale page someone opens, counts a fresh one, renders a missed address', () => {
+  it('counts the hits of a page and renders a missed address', () => {
     seedCatalog();
-    state.applyEvents([productUpdated('e1', ['inventory'])], 'c1');
-    state.recordHits({ 'vendors/v/index.html': 1, 'index.html': 3 }, [
-      'products/unknown/index.html',
-    ]);
+    const counted = state.recordHits(
+      { 'vendors/v/index.html': 1, 'index.html': 3 },
+      ['products/unknown/index.html', 'products/a/index.html']
+    );
+    expect(counted).toEqual({ counted: 2, queued: 1 });
+    // A hit queues nothing; a miss of a page the site has queues nothing either.
     expect(jobs().map((job) => [job.target, job.priority])).toEqual([
-      ['path:/vendors/v', PRIORITY.popular],
       ['path:/products/unknown', PRIORITY.timer],
     ]);
+    state.recomputeHits();
+    expect(state.pageByPath('/')?.hits_7d).toBe(3);
   });
 });
 
 describe('results', () => {
-  it('clears a stale mark set before the render, keeps one set during it', () => {
-    seedCatalog();
-    state.applyEvents([productUpdated('e1', ['inventory'])], 'c1');
-    const startedBefore = clock.now - 1;
-    tick(10);
-    publish([{ path: '/vendors/v', route: 'vendor', deps: [] }], startedBefore);
-    expect(dirty()).toContain('/vendors/v');
-    publish([{ path: '/vendors/v', route: 'vendor', deps: [] }], clock.now + 1);
-    expect(dirty()).not.toContain('/vendors/v');
-  });
-
   it('collapses jobs of a page and takes those queued before its render', () => {
     seedCatalog();
     state.enqueue({
       locale: 'en',
       target: 'path:/vendors/v',
-      priority: PRIORITY.sweep,
+      priority: PRIORITY.timer,
       reason: { topic: 'a' },
     });
     state.enqueue({
       locale: 'en',
       target: 'path:/vendors/v',
-      priority: PRIORITY.popular,
+      priority: PRIORITY.request,
       reason: { topic: 'b' },
     });
     expect(jobs()).toHaveLength(1);
-    expect(jobs()[0].priority).toBe(PRIORITY.popular);
+    expect(jobs()[0].priority).toBe(PRIORITY.request);
     expect(JSON.parse(jobs()[0].reasons)).toEqual([
       { topic: 'a' },
       { topic: 'b' },
     ]);
     tick(5);
-    publish([{ path: '/vendors/v', route: 'vendor', deps: [] }]);
+    publish([{ path: '/vendors/v', route: 'vendor' }]);
     expect(jobs()).toEqual([]);
   });
 
@@ -355,11 +147,8 @@ describe('results', () => {
           locale: 'en',
           path: '/x',
           route: 'product',
-          ownerKey: null,
           outcome: 'failed',
           htmlHash: null,
-          dataHash: null,
-          deps: [],
           validUntil: null,
           renderStartedAt: clock.now,
           error: 'API down',
@@ -387,13 +176,12 @@ describe('results', () => {
     expect(state.recordResults(lease.leaseId, [])).toBe(false);
   });
 
-  it('turns the pages a full build did not see into gone and clears every stale mark', () => {
+  it('turns the pages a full build did not see into gone and takes the jobs before it', () => {
     seedCatalog();
-    state.applyEvents([productUpdated('e1', ['inventory'])], 'c1');
     state.enqueue({
       locale: 'en',
       target: 'path:/vendors/v',
-      priority: 2,
+      priority: PRIORITY.timer,
       reason: { topic: 'x' },
     });
     state.enqueueFull({ topic: 'manual' });
@@ -408,12 +196,9 @@ describe('results', () => {
         { locale: 'en', path: '/' },
       ],
     });
-    expect(dirty()).toEqual([]);
     expect(jobs()).toEqual([]);
     expect(state.pageByPath('/vendors/v')?.status).toBe('gone');
-    expect(
-      state.pagesByDep('Product:a').map((page) => page.path)
-    ).not.toContain('/vendors/v');
+    expect(state.pageByPath('/products/a')?.status).toBe('published');
   });
 
   it('queues a page whose content changes by itself at its moment', () => {
@@ -421,7 +206,6 @@ describe('results', () => {
       {
         path: '/collections/s',
         route: 'collection',
-        deps: [],
         validUntil: new Date(clock.now + 1000).toISOString(),
       },
     ]);
@@ -436,33 +220,8 @@ describe('results', () => {
   });
 });
 
-describe('the sweep', () => {
-  it('queues stale pages only when nothing is queued or leased, at most every 5 minutes', () => {
-    seedCatalog();
-    state.applyEvents([productUpdated('e1', ['inventory'])], 'c1');
-    state.enqueue({
-      locale: 'en',
-      target: 'path:/other',
-      priority: 1,
-      reason: { topic: 't' },
-    });
-    expect(state.sweep()).toBe(0);
-    clearJobs();
-    const lease = state.lease({ capacity: 1 });
-    expect(state.sweep()).toBe(0);
-    state.complete(lease.leaseId, {});
-    expect(state.sweep()).toBe(3);
-    expect(jobs().every((job) => job.priority === PRIORITY.sweep)).toBe(true);
-    clearJobs();
-    tick(60_000);
-    expect(state.sweep()).toBe(0);
-    tick(5 * 60_000);
-    expect(state.sweep()).toBe(3);
-  });
-});
-
 describe('dispatches', () => {
-  it('waits 20 s, keeps 60 s apart, one unclaimed at a time, none for the sweep', async () => {
+  it('waits 20 s, keeps 60 s apart, one unclaimed at a time', async () => {
     const runs: Array<{ requestId: string; reason: string }> = [];
     const dispatcher = new Dispatcher(
       state,
@@ -471,31 +230,25 @@ describe('dispatches', () => {
       () => clock.now,
       { info: () => {}, warn: () => {} }
     );
-    state.enqueue({
-      locale: 'en',
-      target: 'path:/s',
-      priority: PRIORITY.sweep,
-      reason: { topic: 'sweep' },
-    });
     expect(await dispatcher.tick()).toBe('idle');
     state.enqueue({
       locale: 'en',
       target: 'path:/a',
-      priority: 0,
-      reason: { topic: 'productUpdated' },
+      priority: PRIORITY.timer,
+      reason: { topic: 'miss' },
     });
     expect(await dispatcher.tick()).toBe('accumulating');
     tick(10_000);
     state.enqueue({
       locale: 'en',
       target: 'path:/b',
-      priority: 1,
-      reason: { topic: 'productUpdated' },
+      priority: PRIORITY.timer,
+      reason: { topic: 'miss' },
     });
     expect(await dispatcher.tick()).toBe('accumulating');
     tick(10_000);
     expect(await dispatcher.tick()).toBe('dispatched');
-    expect(runs[0].reason).toBe('productUpdated×2');
+    expect(runs[0].reason).toBe('miss×2');
     expect(runs[0].requestId).toMatch(/^d-20261107-1000\d\d-[0-9a-f]{4}$/);
     tick(70_000);
     expect(await dispatcher.tick()).toBe('unclaimed');
@@ -508,8 +261,8 @@ describe('dispatches', () => {
     state.enqueue({
       locale: 'en',
       target: 'path:/c',
-      priority: 0,
-      reason: { topic: 'productUpdated' },
+      priority: PRIORITY.request,
+      reason: { topic: 'build:paths' },
     });
     tick(30_000);
     expect(await dispatcher.tick()).toBe('running');
@@ -523,79 +276,6 @@ describe('dispatches', () => {
   });
 });
 
-describe('the event feed loop', () => {
-  const quiet = { info: () => {}, warn: () => {}, error: () => {} };
-
-  it('starts with a full build, reads on while there is more, rebuilds on an expired cursor', async () => {
-    const pages = [
-      {
-        entries: [productUpdated('e1', ['content'])],
-        nextCursor: 'c2',
-        hasMore: true,
-      },
-      { entries: [], nextCursor: 'c2', hasMore: false },
-    ];
-    let expired = false;
-    const feed: EventFeedClient = {
-      cursor: async () => (expired ? 'c-fresh' : 'c1'),
-      read: async (after) => {
-        if (expired && after !== 'c-fresh')
-          throw new EventFeedError('CURSOR_EXPIRED', 'old');
-        return (
-          pages.shift() ?? { entries: [], nextCursor: after, hasMore: false }
-        );
-      },
-    };
-    const loop = new EventFeedLoop(state, feed, {
-      pollMs: 2000,
-      logger: quiet,
-    });
-    expect(await loop.pollOnce()).toBe(true);
-    expect(state.cursor()).toBe('c2');
-    expect(jobs().map((job) => job.target)).toContain(FULL_TARGET);
-    expect(await loop.pollOnce()).toBe(false);
-    clearJobs();
-    expired = true;
-    expect(await loop.pollOnce()).toBe(true);
-    expect(state.cursor()).toBe('c-fresh');
-    expect(jobs().map((job) => job.target)).toEqual([FULL_TARGET]);
-  });
-});
-
-describe('the purge queue', () => {
-  it('sends 100 tags a request within the rate limit', async () => {
-    const withCdn = new CoordinatorState(
-      state.db,
-      { purge: true },
-      () => clock.now
-    );
-    for (let index = 0; index < 250; index += 1) {
-      withCdn.applyChange(
-        {
-          key: '',
-          kinds: [],
-          aspects: 0,
-          purgeTags: [`sf-p-${String(index).padStart(3, '0')}`],
-        },
-        { topic: 't' }
-      );
-    }
-    const sent: number[] = [];
-    const queue = new PurgeQueue(
-      withCdn,
-      { purge: async (tags) => void sent.push(tags.length) },
-      { perMinute: 5, burst: 2 },
-      () => clock.now
-    );
-    expect(await queue.tick()).toBe(200);
-    expect(sent).toEqual([100, 100]);
-    expect(await queue.tick()).toBe(0);
-    tick(12_000);
-    expect(await queue.tick()).toBe(50);
-    expect(withCdn.purgeBatch(100)).toEqual([]);
-  });
-});
-
 describe('snapshots', () => {
   let dir: string;
   beforeEach(async () => {
@@ -605,9 +285,8 @@ describe('snapshots', () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  it('restores the index with its cursor, and drops what runs held', async () => {
+  it('restores the index, and drops what runs held', async () => {
     seedCatalog();
-    state.setCursor('c9');
     state.enqueue({
       locale: 'en',
       target: 'path:/x',
@@ -629,8 +308,7 @@ describe('snapshots', () => {
       () => clock.now
     );
     restored.resetRuns();
-    expect(restored.cursor()).toBe('c9');
-    expect(restored.pagesByDep('Product:a')).toHaveLength(4);
+    expect(restored.pageByPath('/products/a')?.status).toBe('published');
     expect(restored.status()).toMatchObject({
       queued: 1,
       leased: 0,
@@ -679,7 +357,7 @@ describe('GitHub', () => {
         environment: 'stage',
         mode: 'queue',
         request_id: 'd-1',
-        reason: 'productUpdated×14',
+        reason: 'miss×14',
       },
     };
     await dispatchWorkflow(dispatch, token, fetchMock);
@@ -826,9 +504,12 @@ describe('the REST API', () => {
       ).toBe(204);
       expect((await call('/status', 'internal')).status).toBe(403);
 
+      expect(
+        (await call('/builds', 'operator', { mode: 'entities' })).status
+      ).toBe(400);
       const build = await call('/builds', 'operator', {
-        mode: 'entities',
-        entities: ['Product:a'],
+        mode: 'paths',
+        paths: ['/products/a', '/products/b', '/categories/c', '/vendors/v'],
         reason: 'manual',
       });
       expect(build.status).toBe(202);
@@ -841,11 +522,6 @@ describe('the REST API', () => {
         await call(`/builds/${requestId}`, 'operator')
       ).json()) as { jobs: unknown[] };
       expect(info.jobs).toHaveLength(4);
-
-      const pages = (await (
-        await call('/pages?dep=Product:a', 'operator')
-      ).json()) as { pages: unknown[] };
-      expect(pages.pages).toHaveLength(4);
 
       expect((await call('/leases', 'internal', { capacity: 2 })).status).toBe(
         403
@@ -866,11 +542,8 @@ describe('the REST API', () => {
         locale: 'en',
         path: lease.jobs[0].path,
         route: 'product',
-        ownerKey: null,
         outcome: 'unchanged',
         htmlHash: `h-${lease.jobs[0].path}`,
-        dataHash: `d-${lease.jobs[0].path}`,
-        deps: [],
         validUntil: null,
         renderStartedAt: clock.now,
       };
@@ -902,7 +575,7 @@ describe('the REST API', () => {
 });
 
 describe('the coordinator service', () => {
-  it('starts on its volume without a feed or GitHub and answers its health', async () => {
+  it('starts on its volume without GitHub and answers its health', async () => {
     const { startStaticCoordinator } = await import('./main');
     const dir = await mkdtemp(path.join(os.tmpdir(), 'coordinator-service-'));
     const quiet = { info: () => {}, warn: () => {}, error: () => {} };
@@ -922,11 +595,10 @@ describe('the coordinator service', () => {
         await fetch(`http://127.0.0.1:${port}/__builder/api/status`, {
           headers: { Authorization: 'Bearer op' },
         })
-      ).json()) as { currentImage: string; dispatch: boolean; purge: boolean };
+      ).json()) as { currentImage: string; dispatch: boolean };
       expect(status).toMatchObject({
         currentImage: 'ghcr.io/x/theme:1',
         dispatch: false,
-        purge: false,
       });
     } finally {
       await running.stop();

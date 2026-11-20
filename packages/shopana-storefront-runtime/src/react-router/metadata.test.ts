@@ -49,7 +49,7 @@ describe('toMetaDescriptors', () => {
     ]);
   });
 
-  it('renders Open Graph types, product tags and schema.org documents', () => {
+  it('renders Open Graph types and product tags; schema.org documents go to the head', () => {
     expect(
       toMetaDescriptors({
         openGraph: {
@@ -70,12 +70,6 @@ describe('toMetaDescriptors', () => {
       { property: 'product:price:currency', content: 'UAH' },
       { property: 'product:availability', content: 'in stock' },
       { name: 'twitter:card', content: 'summary' },
-      {
-        'script:ld+json': {
-          '@context': 'https://schema.org',
-          '@type': 'Product',
-        },
-      },
     ]);
   });
 
