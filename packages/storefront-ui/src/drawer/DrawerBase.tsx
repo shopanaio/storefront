@@ -57,8 +57,6 @@ export interface DrawerBaseProps extends Omit<
   headerExtra?: ReactNode;
   /** Under the body, always in view. */
   footer?: ReactNode;
-  /** A load in flight: a bar under the header, as the checkout's at the top of its page. */
-  loading?: boolean;
   children: ReactNode;
   /**
    * The close button of the header; shown by default, in a bottom sheet too (round, as the
@@ -131,7 +129,6 @@ export const DrawerBase = ({
   header,
   headerExtra,
   footer,
-  loading = false,
   children,
   showCloseButton: showCloseButtonProp,
   dismissible,
@@ -252,7 +249,6 @@ export const DrawerBase = ({
           data-scrolled={isBottomSheet && scrolled ? '' : undefined}
         >
           {renderHeader()}
-          <DrawerBaseLoadingBar loading={loading} />
           <div
             ref={setBodyNode}
             className={cx(styles.body, classNames?.body)}
@@ -284,62 +280,6 @@ export const DrawerBase = ({
         </div>
       </Sheet>
     </DrawerBaseContext.Provider>
-  );
-};
-
-/** Steps of the loading bar: it creeps towards its end while the load lasts. */
-const LOADING_START = 0.08;
-const LOADING_END = 0.95;
-const LOADING_STEP_MS = 200;
-/** The bar fills and fades out in it once the load ends. */
-const LOADING_DONE_MS = 500;
-
-/**
- * The bar of `loading` on the header's lower edge: it creeps on while the load lasts, then
- * fills and fades out, as nprogress does at the top of the checkout.
- */
-const DrawerBaseLoadingBar = ({ loading }: { loading: boolean }) => {
-  const { styles } = useStyles();
-  // The share of the bar filled; null: no bar.
-  const [progress, setProgress] = useState<number | null>(
-    loading ? LOADING_START : null
-  );
-  // Started or ended while rendering (React's pattern for state derived from props).
-  const [wasLoading, setWasLoading] = useState(loading);
-  if (loading !== wasLoading) {
-    setWasLoading(loading);
-    if (loading) {
-      setProgress(
-        progress === null || progress === 1 ? LOADING_START : progress
-      );
-    } else if (progress !== null) {
-      setProgress(1);
-    }
-  }
-  useEffect(() => {
-    if (loading) {
-      const timer = setInterval(() => {
-        setProgress((current) =>
-          current === null || current === 1
-            ? current
-            : current + (LOADING_END - current) * 0.1
-        );
-      }, LOADING_STEP_MS);
-      return () => clearInterval(timer);
-    }
-    const timer = setTimeout(() => setProgress(null), LOADING_DONE_MS);
-    return () => clearTimeout(timer);
-  }, [loading]);
-
-  if (progress === null) return null;
-  return (
-    <div className={styles.loadingTrack} aria-hidden>
-      <div
-        className={styles.loadingBar}
-        data-done={progress === 1 ? '' : undefined}
-        style={{ transform: `scaleX(${progress})` }}
-      />
-    </div>
   );
 };
 
@@ -526,33 +466,6 @@ const useStyles = createStyles(({ css, token }) => ({
     &&&:not(:disabled):hover {
       color: ${token.colorText};
       background: ${token.colorFillSecondary};
-    }
-  `,
-  // No room of its own: the bar lies over the header's lower line.
-  loadingTrack: css`
-    position: relative;
-    z-index: 1;
-    flex-shrink: 0;
-    height: 0;
-  `,
-  loadingBar: css`
-    position: absolute;
-    top: -1px;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: ${token.colorPrimary};
-    box-shadow:
-      0 0 10px ${token.colorPrimary},
-      0 0 5px ${token.colorPrimary};
-    transform-origin: left center;
-    transition: transform ${LOADING_STEP_MS}ms ease;
-
-    &[data-done] {
-      opacity: 0;
-      transition:
-        transform ${LOADING_STEP_MS}ms ease,
-        opacity ${LOADING_DONE_MS - LOADING_STEP_MS}ms ease ${LOADING_STEP_MS}ms;
     }
   `,
   // The body scrolls between the header and the footer, which stay in view.
