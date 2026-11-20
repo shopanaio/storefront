@@ -372,6 +372,7 @@ const useStyles = createStyles(
         grid-column: 2 / 4;
         margin: 0;
         color: ${token.colorTextSecondary};
+        font-size: 13px;
       `,
       content: css`
         grid-column: 2 / 4;
