@@ -14,7 +14,8 @@
     "src/next/**/*.ts",
     "src/next/**/*.tsx",
     "src/react-router/**/*.ts",
-    "src/react-router/**/*.tsx"
+    "src/react-router/**/*.tsx",
+    "src/static/**/*.ts"
   ],
   "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.types.ts"]
 }

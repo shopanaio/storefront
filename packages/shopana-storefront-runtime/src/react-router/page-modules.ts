@@ -23,6 +23,18 @@ export type LoadRuntimeLayout = (
 export interface RuntimePageRouteDefinition {
   pages: RuntimePageModuleMap;
   loadLayout: LoadRuntimeLayout;
+  /**
+   * What a shell of the static site shows in place of its page until the browser has loaded
+   * it (a cart, an account, a search): the theme's skeleton of the page type. Nothing without.
+   */
+  ShellSkeleton?: ComponentType<RuntimeShellSkeletonProps>;
+}
+
+export interface RuntimeShellSkeletonProps {
+  /** The page type of the address (`module` for a module page). */
+  pageType: RuntimePageType;
+  /** Pathname without the locale segment. */
+  pathname: string;
 }
 
 /**

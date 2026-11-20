@@ -10,7 +10,20 @@ RUN corepack enable && yarn install --immutable && yarn cache clean --all
 ARG STOREFRONT_THEME=brand-bite-crunch
 ARG BUILD_NODE_OPTIONS=--max-old-space-size=4096
 ENV NODE_ENV=production
+# The build the workflow rendered the static site with (`storefront-runtime static build` into
+# .runtime/build/static) is the theme build of the image: kept aside while the packages build,
+# then put back, so the pages of the static site and the server and browser builds that answer
+# them are one build (its assets, its React Router version). Without one the image builds the
+# theme itself and renders every page.
+RUN if [ -f "themes/$STOREFRONT_THEME/.runtime/build/static/__static/server.json" ]; then \
+      test -f "themes/$STOREFRONT_THEME/.runtime/build/server/index.js" && \
+      mv "themes/$STOREFRONT_THEME/.runtime/build" /prebuilt; \
+    fi
 RUN NODE_OPTIONS="$BUILD_NODE_OPTIONS" STOREFRONT_THEME="$STOREFRONT_THEME" yarn build && \
+    if [ -d /prebuilt ]; then \
+      rm -rf "themes/$STOREFRONT_THEME/.runtime/build" && \
+      mv /prebuilt "themes/$STOREFRONT_THEME/.runtime/build"; \
+    fi && \
     test -f "themes/$STOREFRONT_THEME/.runtime/build/server/index.js"
 
 FROM build AS production-dependencies
@@ -22,8 +35,7 @@ RUN THEME_PACKAGE=$(node -p "require('./themes/' + process.env.STOREFRONT_THEME 
 FROM node:24-bookworm-slim@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c AS runtime
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
-    PORT=3000 \
-    NODE_OPTIONS=--import=/app/forwarded-for.mjs
+    PORT=3000
 WORKDIR /app
 COPY --from=production-dependencies /app/node_modules ./node_modules
 # Preserve the patch-package changes even if focusing dependencies relinks this package.
@@ -32,8 +44,16 @@ ARG STOREFRONT_THEME=brand-bite-crunch
 COPY --from=build /app/themes/${STOREFRONT_THEME}/package.json ./themes/${STOREFRONT_THEME}/package.json
 COPY --from=production-dependencies /app/themes/${STOREFRONT_THEME}/node_modules ./themes/${STOREFRONT_THEME}/node_modules
 COPY --from=build /app/themes/${STOREFRONT_THEME}/.runtime/build ./themes/${STOREFRONT_THEME}/.runtime/build
-COPY --from=build /app/packages/shopana-storefront-runtime/bin/forwarded-for.js ./forwarded-for.mjs
-WORKDIR /app/themes/${STOREFRONT_THEME}/.runtime
+# The hybrid server (`storefront-runtime start`): the workspace link of @shopana/storefront in
+# node_modules points here.
+COPY --from=build /app/packages/shopana-storefront-runtime/package.json ./packages/shopana-storefront-runtime/package.json
+COPY --from=build /app/packages/shopana-storefront-runtime/bin ./packages/shopana-storefront-runtime/bin
+COPY --from=build /app/packages/shopana-storefront-runtime/dist ./packages/shopana-storefront-runtime/dist
+COPY --from=build /app/packages/shopana-storefront-runtime/src/init.js ./packages/shopana-storefront-runtime/src/init.js
+# The volume of the coordinator of the static site (theme-static): a new named volume takes the
+# owner of the directory it is mounted on.
+RUN mkdir -p /data && chown node:node /data
+WORKDIR /app/themes/${STOREFRONT_THEME}
 USER node
 EXPOSE 3000
-CMD ["node", "/app/node_modules/@react-router/serve/bin.cjs", "build/server/index.js"]
+CMD ["node", "/app/packages/shopana-storefront-runtime/bin/storefront-runtime.js", "start"]

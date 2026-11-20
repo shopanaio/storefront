@@ -1,0 +1,119 @@
+query SdkStaticProducts($first: Int!, $after: Cursor) {
+  products(first: $first, after: $after) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    nodes {
+      id
+      handle
+    }
+  }
+}
+
+query SdkStaticCategories($first: Int!, $after: Cursor) {
+  categories(first: $first, after: $after) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    nodes {
+      id
+      handle
+    }
+  }
+}
+
+query SdkStaticVendors($first: Int!, $after: Cursor) {
+  vendors(first: $first, after: $after) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    nodes {
+      id
+      handle
+    }
+  }
+}
+
+query SdkStaticOnlineStorePages($first: Int!, $after: Cursor) {
+  onlineStorePages(first: $first, after: $after) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    nodes {
+      id
+      handle
+    }
+  }
+}
+
+query SdkStaticStorePolicies {
+  store {
+    id
+    policies {
+      id
+      handle
+    }
+  }
+}
+
+fragment SdkStaticMenuItem on OnlineStoreNavigationMenuItem {
+  id
+  target {
+    type
+    url
+    resource {
+      __typename
+      id
+      ... on Collection {
+        handle
+      }
+    }
+  }
+}
+
+query SdkStaticNavigationMenu($handle: String!) {
+  onlineStoreNavigationMenuByHandle(handle: $handle) {
+    id
+    items {
+      ...SdkStaticMenuItem
+      children {
+        ...SdkStaticMenuItem
+        children {
+          ...SdkStaticMenuItem
+        }
+      }
+    }
+  }
+}
+
+# The handle of an entity whose page a render of its owner looks for (its handle may have
+# changed, or the page is new).
+query SdkStaticNodeHandle($id: ID!) {
+  node(id: $id) {
+    __typename
+    ... on Product {
+      id
+      handle
+    }
+    ... on Category {
+      id
+      handle
+    }
+    ... on Collection {
+      id
+      handle
+    }
+    ... on Vendor {
+      id
+      handle
+    }
+    ... on OnlineStorePage {
+      id
+      handle
+    }
+  }
+}

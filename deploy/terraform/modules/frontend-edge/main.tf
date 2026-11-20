@@ -6,10 +6,28 @@ locals {
     "starts_with(http.request.uri.path, ${jsonencode(prefix)})"
   ])
   dynamic = join(" or ", [
-    for prefix in ["/graphql", "/auth/", "/account", "/api/", "/apps/", "/.well-known/", "/cdn-cgi/"] :
+    for prefix in ["/graphql", "/auth/", "/account", "/api/", "/apps/", "/.well-known/", "/cdn-cgi/", "/__builder/"] :
     "starts_with(http.request.uri.path, ${jsonencode(prefix)})"
   ])
   public_file = "http.request.uri.path in {\"/favicon.ico\" \"/manifest.webmanifest\" \"/robots.txt\" \"/sitemap.xml\"}"
+  # Step B: hostnames whose HTML the CDN caches (static_cdn).
+  cdn_expression = length(var.static_cdn) == 0 ? "" : "http.host in {${join(" ", [for hostname in sort(keys(var.static_cdn)) : jsonencode(hostname)])}}"
+  cdn_rules = [for rule in [
+    {
+      ref               = "static_html_and_data"
+      description       = "Step B: HTML and page data by their own Cache-Control (s-maxage, purged by tag)"
+      expression        = "(${local.cdn_expression}) and http.request.method in {\"GET\" \"HEAD\"} and not (${local.dynamic}) and not ends_with(http.request.uri.path, \".data\")"
+      action            = "set_cache_settings"
+      action_parameters = { cache = true, edge_ttl = { mode = "respect_origin" }, browser_ttl = { mode = "respect_origin" } }
+    },
+    {
+      ref               = "static_graphql_get"
+      description       = "Step B: guest GET /graphql (persisted documents) by the gateway's Cache-Control, the query string in the key"
+      expression        = "(${local.cdn_expression}) and http.request.method eq \"GET\" and http.request.uri.path eq \"/graphql\" and not any(len(http.request.headers[\"authorization\"][*]) > 0)"
+      action            = "set_cache_settings"
+      action_parameters = { cache = true, edge_ttl = { mode = "respect_origin" }, browser_ttl = { mode = "respect_origin" } }
+    },
+  ] : rule if length(var.static_cdn) > 0]
 }
 
 # There can only be one zone entry point per phase: all managed frontend hostnames belong in this state.
@@ -18,7 +36,7 @@ resource "cloudflare_ruleset" "cache" {
   name    = "Storefront CDN (Free)"
   kind    = "zone"
   phase   = "http_request_cache_settings"
-  rules = [
+  rules = concat([
     {
       ref               = "theme_bypass_by_default"
       description       = "Never cache HTML, React Router data, sessions or API responses"
@@ -48,7 +66,7 @@ resource "cloudflare_ruleset" "cache" {
         browser_ttl = { mode = "override_origin", default = 31536000 }
       }
     }
-  ]
+  ], local.cdn_rules)
 }
 
 resource "cloudflare_ruleset" "frontend_security" {

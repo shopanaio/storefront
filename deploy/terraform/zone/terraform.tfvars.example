@@ -1,3 +1,6 @@
 cloudflare_zone_id = "7277c80d30cde81128f4c34646f90af0"
 hostnames = ["pet.shopana.dev"]
 challenge_frontend = true
+# The static site buckets (R2) and their account; the theme reads them over the S3 API.
+cloudflare_account_id = "REPLACE_ME"
+static_site_buckets   = { stage = "shopana-storefront-static-stage" }

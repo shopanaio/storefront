@@ -1,6 +1,10 @@
 import path from 'node:path';
 import { reactRouter } from '@react-router/dev/vite';
-import { PUBLIC_ENV_GLOBAL } from './public-env';
+import {
+  PUBLIC_ENV_GLOBAL,
+  PUBLIC_ENV_PATH,
+  publicEnvironmentSource,
+} from './public-env';
 import {
   defaultClientConditions,
   defaultServerConditions,
@@ -45,7 +49,7 @@ function toList<T>(value: T | T[] | undefined): T[] {
  * The Vite config of a storefront under React Router. The theme package is the source root:
  * `@src` and `@codegen` resolve in it, its `public` directory is served, and its `.env` files
  * fill `process.env` for the dev server. Public settings come from the server environment at
- * runtime and are sent in the document before browser modules execute. No deployment keys or
+ * runtime: every document loads `/__env.js` before browser modules execute. No deployment keys or
  * URLs are embedded at build time. The `react-router` export condition selects
  * the React Router implementation of the storefront facades, and the `@shopana` packages are
  * bundled into the server build, so the runtime and the SDK share one module instance.
@@ -83,6 +87,19 @@ export function createRuntimeViteConfig({
               {
                 name: 'shopana-dev-client-address',
                 configureServer(server) {
+                  // The public settings every document loads, as the hybrid server answers them.
+                  server.middlewares.use((request, response, next) => {
+                    if (request.url?.split('?')[0] !== PUBLIC_ENV_PATH) {
+                      next();
+                      return;
+                    }
+                    response.setHeader(
+                      'Content-Type',
+                      'text/javascript; charset=utf-8'
+                    );
+                    response.setHeader('Cache-Control', 'no-cache');
+                    response.end(publicEnvironmentSource());
+                  });
                   server.middlewares.use((request, _response, next) => {
                     // The dev server is the direct peer: never trust forwarded client headers.
                     delete request.headers['x-forwarded-for'];

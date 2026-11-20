@@ -28,3 +28,17 @@ export function directGatewayHeaders(
   if (userAgent) result['user-agent'] = userAgent;
   return result;
 }
+
+/** The header the gateway knows a trusted server of the store by (the static site builder). */
+export const STOREFRONT_PRIVATE_TOKEN_HEADER =
+  'shopana-storefront-private-token';
+
+/**
+ * `STOREFRONT_PRIVATE_TOKEN`, the private storefront token of a server the gateway should not
+ * take for a browser (its limits, its antifraud): set for the static site builder only, never
+ * for a server buyers reach.
+ */
+export function privateTokenHeaders(): Record<string, string> | undefined {
+  const token = process.env.STOREFRONT_PRIVATE_TOKEN?.trim();
+  return token ? { [STOREFRONT_PRIVATE_TOKEN_HEADER]: token } : undefined;
+}

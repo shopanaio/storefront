@@ -9,7 +9,7 @@ import { initRuntime, readRuntimeFramework } from '../src/init.js';
 
 const require = createRequire(import.meta.url);
 const [command, ...args] = process.argv.slice(2);
-const supportedCommands = new Set(['init', 'dev', 'build', 'start']);
+const supportedCommands = new Set(['init', 'dev', 'build', 'start', 'static']);
 
 /** The path of a package's `bin` entry, resolved from this package. */
 function resolvePackageBin(packageName, binName) {
@@ -20,7 +20,7 @@ function resolvePackageBin(packageName, binName) {
   return path.join(path.dirname(manifestPath), bin);
 }
 
-/** `-p 3000` and `--port 3000` of a start command, which react-router-serve reads as `PORT`. */
+/** `-p 3000` and `--port 3000` of a start command. */
 function takePortArgs(commandArgs) {
   const rest = [];
   let port;
@@ -55,7 +55,7 @@ function withEnvFiles(env, mode) {
 }
 
 /**
- * Sets `X-Forwarded-For` of direct requests in React Router's servers, as Next.js does. In
+ * Sets `X-Forwarded-For` of direct requests in React Router's dev server, as Next.js does. In
  * `NODE_OPTIONS`, not the arguments: `react-router dev` relaunches itself with
  * `--conditions=development` from `process.argv`, which leaves the node flags out.
  */
@@ -69,7 +69,7 @@ const withForwardedFor = (env) => ({
     .join(' '),
 });
 
-/** The framework CLI call of a command: Next.js, or React Router and its server. */
+/** The framework CLI call of a command: Next.js's, or React Router's `dev` and `build`. */
 function frameworkCommand(framework, runtimeDir) {
   if (framework === 'next') {
     return {
@@ -78,39 +78,62 @@ function frameworkCommand(framework, runtimeDir) {
     };
   }
 
-  if (command !== 'start') {
-    return {
-      args: [
-        resolvePackageBin('@react-router/dev', 'react-router'),
-        command,
-        runtimeDir,
-        ...args,
-      ],
-      env: withForwardedFor(process.env),
-    };
-  }
-
-  const { port, rest } = takePortArgs(args);
   return {
-    loadsEnvFiles: true,
-    // The server finds the browser assets of the build relative to its working directory.
-    cwd: runtimeDir,
     args: [
-      resolvePackageBin('@react-router/serve', 'react-router-serve'),
-      'build/server/index.js',
-      ...rest,
+      resolvePackageBin('@react-router/dev', 'react-router'),
+      command,
+      runtimeDir,
+      ...args,
     ],
-    env: withForwardedFor({
-      ...process.env,
-      NODE_ENV: process.env.NODE_ENV ?? 'production',
-      ...(port ? { PORT: port } : {}),
-    }),
+    env: withForwardedFor(process.env),
   };
+}
+
+/**
+ * The production environment of a React Router storefront in this process: the theme's
+ * `.env` files under what is set, `NODE_ENV` production unless set.
+ */
+function loadProductionEnv() {
+  const env = withEnvFiles(process.env, 'production');
+  env.NODE_ENV ??= 'production';
+  Object.assign(process.env, env);
+}
+
+/**
+ * `start` of a React Router storefront: the hybrid server of the runtime in this process
+ * (the static site, the server render, the browser build), with `X-Forwarded-For` of direct
+ * requests set as Next.js does.
+ */
+async function startReactRouter(runtimeDir) {
+  loadProductionEnv();
+  await import('./forwarded-for.js');
+  const { port, rest } = takePortArgs(args);
+  const unknown = rest.filter((arg) => arg !== '--static-only');
+  if (unknown.length > 0) {
+    throw new Error(`Unknown start options: ${unknown.join(' ')}`);
+  }
+  const { startStorefrontServer } = await import('../dist/static/server.js');
+  await startStorefrontServer({
+    runtimeDir: path.resolve(runtimeDir),
+    port: port === undefined ? undefined : Number(port),
+    staticOnly: rest.includes('--static-only'),
+  });
+}
+
+/** `static <build | render | publish>` of a React Router storefront. */
+async function runStatic(runtimeDir) {
+  loadProductionEnv();
+  const { runStaticCommand } = await import('../dist/static/cli.js');
+  process.exitCode = await runStaticCommand(args, {
+    themeDir: process.cwd(),
+    runtimeDir: path.resolve(runtimeDir),
+    env: process.env,
+  });
 }
 
 if (!supportedCommands.has(command)) {
   console.error(
-    'Usage: storefront-runtime <init|dev|build|start> [...framework args]'
+    'Usage: storefront-runtime <init|dev|build|start|static> [...framework args]'
   );
   process.exitCode = 1;
 } else if (command === 'init') {
@@ -124,20 +147,30 @@ if (!supportedCommands.has(command)) {
   let runtimeDir = '.runtime';
   let framework;
 
-  if (command === 'start') {
+  if (command === 'start' || command === 'static') {
     framework = await readRuntimeFramework(process.cwd());
   } else {
     ({ runtimeDir, framework } = await initRuntime());
   }
 
+  if (framework === 'react-router' && command === 'start') {
+    await startReactRouter(runtimeDir);
+  } else if (command === 'static') {
+    if (framework !== 'react-router') {
+      throw new Error('The static site is built for React Router themes only');
+    }
+    await runStatic(runtimeDir);
+  } else {
+    runFrameworkCommand(framework, runtimeDir);
+  }
+}
+
+/** The framework's own CLI in a child process. */
+function runFrameworkCommand(framework, runtimeDir) {
   const call = frameworkCommand(framework, runtimeDir);
-  const env = call.loadsEnvFiles
-    ? withEnvFiles(call.env, 'production')
-    : call.env;
   const child = spawn(process.execPath, call.args, {
-    cwd: call.cwd,
     stdio: 'inherit',
-    env,
+    env: call.env,
   });
 
   for (const signal of ['SIGINT', 'SIGTERM']) {

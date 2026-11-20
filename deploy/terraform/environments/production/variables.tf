@@ -16,3 +16,9 @@ variable "pet_assistant_host_header" {
   type    = string
   default = null
 }
+
+# The coordinator of the static site (theme-static); null until the stack runs it.
+variable "static_coordinator_origin" {
+  type    = string
+  default = "http://theme-static:3100"
+}

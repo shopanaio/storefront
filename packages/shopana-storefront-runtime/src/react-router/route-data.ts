@@ -45,4 +45,14 @@ export type RuntimePageData = RuntimePendingMetadata &
         metadata: RuntimeMetadata;
       }
     | { kind: 'not-found'; data: unknown; metadata: RuntimeMetadata }
+    | {
+        /**
+         * A client page of the static site (a cart, an account, a search): the layout of
+         * its page and a skeleton, which the browser replaces with the page it loads itself.
+         */
+        kind: 'shell';
+        /** Pathname without the locale segment: the page whose layout the shell shows. */
+        pathname: string;
+        metadata: RuntimeMetadata;
+      }
   );

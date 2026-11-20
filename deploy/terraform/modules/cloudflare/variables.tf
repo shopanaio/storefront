@@ -43,3 +43,11 @@ variable "pet_assistant_host_header" {
   type    = string
   default = null
 }
+
+# The static site's coordinator (theme-static, plans/static-coordinator.ru.md): its API under
+# /__builder/* on the public hostname, for the jobs of GitHub Actions and the operator. Null:
+# no coordinator in the stack.
+variable "static_coordinator_origin" {
+  type    = string
+  default = null
+}

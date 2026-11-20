@@ -74,3 +74,21 @@ run "pet_hostname_is_stage" {
     error_message = "IAM must stay on its canonical origin and theme BFF auth routes must stay on the theme."
   }
 }
+
+run "static_coordinator_before_the_theme" {
+  command = plan
+  variables {
+    environment               = "stage"
+    hostname                  = "pet.shopana.dev"
+    pet_assistant_origin      = null
+    static_coordinator_origin = "http://theme-static:3100"
+  }
+  assert {
+    condition     = cloudflare_zero_trust_tunnel_cloudflared_config.this.config.ingress[1].service == "http://theme-static:3100" && can(regex(cloudflare_zero_trust_tunnel_cloudflared_config.this.config.ingress[1].path, "/__builder/api/leases")) && !can(regex(cloudflare_zero_trust_tunnel_cloudflared_config.this.config.ingress[1].path, "/products/x"))
+    error_message = "The coordinator API must reach theme-static before the theme catch-all, and nothing else."
+  }
+  assert {
+    condition     = length(cloudflare_zero_trust_tunnel_cloudflared_config.this.config.ingress) == 4 && cloudflare_zero_trust_tunnel_cloudflared_config.this.config.ingress[2].service == "http://theme:3000"
+    error_message = "The theme stays the catch-all after the coordinator."
+  }
+}
