@@ -8,10 +8,8 @@
  * - `static render <path>... [--out <dir>] [--store <url>]`: some addresses again, into a site
  *   built before.
  * - `static publish --from <url> --to <url>`: a built site copied to another store.
- * - `static run --coordinator <url> [--request-id <id>] [--run-id <id>] [--run-attempt <n>]
- *   [--budget 35m] [--capacity 500]`: a job of the coordinator in GitHub Actions: leases,
- *   renders, publishes what changed, returns the results.
- * - `static coordinator [--port 3100] [--data <dir>]`: the coordinator (`theme-static`).
+ * - `static coordinator [--port 3100] [--data <dir>]`: the coordinator (`theme-static`), which
+ *   renders the pages it queues into the store of `STOREFRONT_STATIC_STORE`.
  *
  * Stores are `fs:<dir>` or `s3://<bucket>/<prefix>`. Requests go to the API of the theme's
  * environment (`STOREFRONT_SERVER_GRAPHQL_URL`), as a guest.
@@ -27,7 +25,6 @@ import {
   type StaticBuildReport,
 } from './builder';
 import { purgerFromEnv } from './purge';
-import { createCoordinatorClient, jobTokenSource, runStaticJobs } from './run';
 import { openStaticStore, type StaticStore } from './store';
 
 interface ParsedArgs {
@@ -115,16 +112,8 @@ export interface StaticCommandContext {
 
 const USAGE =
   'Usage: storefront-runtime static <build | render <path>... | publish --from <store> --to <store> | ' +
-  'run --coordinator <url> | coordinator> ' +
-  '[--out <dir>] [--store <fs:dir | s3://bucket/prefix>] [--concurrency <n>] [--budget 35m]';
-
-/** A duration of the CLI: `35m`, `90s`, `1h`, or milliseconds. */
-export function parseDuration(value: string): number {
-  const match = /^(\d+(?:\.\d+)?)(ms|s|m|h)?$/.exec(value.trim());
-  if (!match) throw new Error(`${value} is no duration (35m, 90s, 1h)`);
-  const units = { ms: 1, s: 1000, m: 60_000, h: 3_600_000 } as const;
-  return Number(match[1]) * units[(match[2] ?? 'ms') as keyof typeof units];
-}
+  'coordinator> ' +
+  '[--out <dir>] [--store <fs:dir | s3://bucket/prefix>] [--concurrency <n>]';
 
 function concurrencyOf(parsed: ParsedArgs): number | undefined {
   const value = parsed.options.get('concurrency');
@@ -184,49 +173,25 @@ export async function runStaticCommand(
       });
       return 0;
     }
-    case 'run': {
-      const store = await targetStore(parsed, context);
-      const common = {
-        runtimeDir: context.runtimeDir,
-        store,
-        origin: staticOrigin(context.env),
-        concurrency: concurrencyOf(parsed),
-        purger: purgerFromEnv(context.env),
-      };
-      const url =
-        parsed.options.get('coordinator') ?? context.env.COORDINATOR_URL;
-      if (!url) {
-        console.error(USAGE);
-        return 1;
-      }
-      const attempt = parsed.options.get('run-attempt');
-      const run = await runStaticJobs({
-        ...common,
-        coordinator: createCoordinatorClient({
-          url,
-          token: jobTokenSource(context.env),
-        }),
-        requestId: parsed.options.get('request-id'),
-        runId: parsed.options.get('run-id') ?? context.env.GITHUB_RUN_ID,
-        runAttempt: attempt
-          ? Number(attempt)
-          : context.env.GITHUB_RUN_ATTEMPT
-            ? Number(context.env.GITHUB_RUN_ATTEMPT)
-            : undefined,
-        budgetMs: parseDuration(parsed.options.get('budget') ?? '35m'),
-        capacity: parsed.options.get('capacity')
-          ? Number(parsed.options.get('capacity'))
-          : undefined,
-      });
-      return run.failed > 0 ? 1 : 0;
-    }
     case 'coordinator': {
       const { startStaticCoordinator } = await import('./coordinator/main');
       const port = parsed.options.get('port');
+      const store = context.env.STOREFRONT_STATIC_STORE?.trim();
       await startStaticCoordinator({
         env: context.env,
         port: port ? Number(port) : undefined,
         dataDir: parsed.options.get('data'),
+        render: store
+          ? {
+              runtimeDir: context.runtimeDir,
+              store: openStaticStore(store, {
+                cwd: context.themeDir,
+                env: context.env,
+              }),
+              origin: staticOrigin(context.env),
+              purger: purgerFromEnv(context.env),
+            }
+          : null,
       });
       return 0;
     }

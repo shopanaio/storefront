@@ -42,7 +42,7 @@ resource "cloudflare_account_token" "static_site_read" {
   }
 }
 
-# The builder of GitHub Actions writes, lists and deletes.
+# The coordinator (theme-static) writes, lists and deletes.
 resource "cloudflare_account_token" "static_site_write" {
   for_each   = var.static_site_buckets
   account_id = var.account_id
@@ -83,7 +83,7 @@ output "static_site_read_keys" {
 }
 
 output "static_site_write_keys" {
-  description = "S3 credentials of the builder in GitHub Actions: read and write."
+  description = "S3 credentials of the coordinator (theme-static): read and write."
   sensitive   = true
   value = {
     for environment, token in cloudflare_account_token.static_site_write : environment => {

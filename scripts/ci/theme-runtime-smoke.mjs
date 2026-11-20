@@ -137,26 +137,8 @@ await server.listen({ host: '0.0.0.0', port: 4105 });
       STOREFRONT_SESSION_SECRET:
         'private-session-must-not-reach-html-0123456789',
     });
-    await ready(origin);
-    // The home page of the image's static site (build/static, rendered by the workflow): its
-    // public settings are those it was rendered with.
-    const home = await fetch(origin);
-    assert.equal(home.headers.get('x-shopana-static'), 'hit');
-    assert.equal(
-      home.headers.get('cache-control'),
-      'public, max-age=0, must-revalidate'
-    );
-    const staticHtml = await home.text();
-    assert(
-      !staticHtml.includes(serverGraphqlUrl) &&
-        !staticHtml.includes('private-oauth-must-not-reach-html') &&
-        !staticHtml.includes('private-session-must-not-reach-html'),
-      'Private settings reached the static HTML'
-    );
-    // A page the image's static site has no file of: the server renders it with its own.
-    const response = await fetch(`${origin}/products/theme-smoke-missing`);
+    const response = await ready(origin);
     assert.equal(response.headers.get('cache-control'), 'private, no-store');
-    assert.equal(response.headers.get('x-shopana-static'), 'miss');
     const html = await response.text();
     const config = html.match(
       /<script>globalThis\.__shopanaPublicEnv=([\s\S]*?)<\/script>/
@@ -176,7 +158,7 @@ await server.listen({ host: '0.0.0.0', port: 4105 });
     );
     assert(gatewayRequests.length > 0, 'SSR did not use the server address');
     gatewayRequests.length = 0;
-    await fetch(`${origin}/products/theme-smoke-missing`, {
+    await fetch(origin, {
       headers: {
         'x-forwarded-for': '198.51.100.66, 203.0.113.7',
         'user-agent': 'theme-smoke-agent',
@@ -195,7 +177,7 @@ await server.listen({ host: '0.0.0.0', port: 4105 });
       'Runtime settings must precede browser module execution'
     );
     console.log(
-      `PASS: same image serves runtime key ${letter} and URL ${origin} with the image's static site; private settings stay server-side.`
+      `PASS: same image serves runtime key ${letter} and URL ${origin}; private settings stay server-side.`
     );
   }
 } catch (error) {

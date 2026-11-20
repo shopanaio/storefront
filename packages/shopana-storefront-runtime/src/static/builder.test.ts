@@ -14,15 +14,9 @@ import {
   type StaticPageResult,
 } from './builder';
 import { createFsStore, type StaticStore } from './store';
-import {
-  jobRequest,
-  jobTokenSource,
-  runStaticJobs,
-  type CoordinatorClient,
-  type CoordinatorLease,
-  type CoordinatorResult,
-} from './run';
-import { parseDuration } from './cli';
+import { openCoordinatorDb } from './coordinator/db';
+import { jobRequest, LocalRunner } from './coordinator/runner';
+import { CoordinatorState, PRIORITY } from './coordinator/state';
 
 let dir: string;
 let catalog: Record<string, { title: string; endsAt?: string }>;
@@ -486,112 +480,85 @@ describe('the static site builder', () => {
   });
 });
 
-describe('static run', () => {
-  /** A coordinator that hands out the leases given, then empty ones. */
-  function coordinator(
-    leases: Array<Omit<CoordinatorLease, 'leaseId' | 'expiresAt'>>
-  ) {
-    const results: CoordinatorResult[] = [];
-    const completed: Array<{ leaseId: string; body: unknown }> = [];
-    const requests: unknown[] = [];
-    let next = 0;
-    const client: CoordinatorClient = {
-      lease: async (request) => {
-        requests.push(request);
-        const lease = leases[next] ?? { mode: 'queue', image: null, jobs: [] };
-        next += 1;
-        return { ...lease, leaseId: `l${next}`, expiresAt: 0 };
-      },
-      heartbeat: async () => true,
-      results: async (_lease, batch) => void results.push(...batch),
-      complete: async (leaseId, body) => void completed.push({ leaseId, body }),
-    };
-    return { client, results, completed, requests };
-  }
-
-  const runOptions = () => ({
-    runtimeDir: dir,
-    store: createFsStore(path.join(dir, 'build/static')),
-    origin: 'https://shop.example',
-    inProcess: true,
-    build: fakeBuild(),
-    logger: quiet,
-    budgetMs: parseDuration('35m'),
+describe('the renders of the coordinator', () => {
+  let clock: number;
+  let state: CoordinatorState;
+  beforeEach(() => {
+    clock = Date.parse('2026-11-07T10:00:00Z');
+    state = new CoordinatorState(
+      openCoordinatorDb(':memory:'),
+      {},
+      () => clock
+    );
   });
 
-  it('renders the jobs of its leases and returns their results', async () => {
-    await build();
-    catalog.socks.title = 'Wool socks';
-    const { client, results, completed, requests } = coordinator([
+  const runner = (onFullBuild = () => {}) =>
+    new LocalRunner(
+      state,
       {
-        mode: 'queue',
-        image: null,
-        jobs: [
-          {
-            id: 1,
-            locale: 'en',
-            target: 'path:/products/socks',
-            path: '/products/socks',
-            htmlHash: null,
-          },
-          {
-            id: 3,
-            locale: 'en',
-            target: 'path:/products/hats',
-            path: '/products/hats',
-            htmlHash: null,
-          },
-        ],
+        runtimeDir: dir,
+        store: createFsStore(path.join(dir, 'build/static')),
+        origin: 'https://shop.example',
+        inProcess: true,
+        build: fakeBuild(),
+        logger: quiet,
       },
-    ]);
-    const report = await runStaticJobs({
-      ...runOptions(),
-      coordinator: client,
-      requestId: 'd-1',
-      runId: '42',
-    });
-    expect(report).toEqual({ leases: 1, pages: 2, failed: 0 });
-    expect(requests[0]).toMatchObject({
-      requestId: 'd-1',
-      runId: '42',
-      capacity: 500,
-    });
-    expect(requests[1]).not.toHaveProperty('requestId');
-    expect(
-      results.map((result) => [result.jobIds, result.path, result.outcome])
-    ).toEqual(
-      expect.arrayContaining([
-        [[1], '/products/socks', 'published'],
-        [[3], '/products/hats', 'unchanged'],
-      ])
+      { delayMs: 20_000 },
+      () => clock,
+      quiet,
+      onFullBuild
     );
-    expect(completed).toEqual([
-      { leaseId: 'l1', body: {} },
-      { leaseId: 'l2', body: {} },
-    ]);
-  });
 
-  it('builds the whole site for a full lease and names the pages it saw', async () => {
-    const { client, results, completed } = coordinator([
-      { mode: 'full', image: null, jobs: [] },
-    ]);
-    await runStaticJobs({ ...runOptions(), coordinator: client });
-    expect(results.some((result) => result.path === '/uk/products/socks')).toBe(
-      true
-    );
-    const body = completed[0].body as {
-      fullBuild: boolean;
-      seenPages: Array<{ locale: string; path: string }>;
-    };
-    expect(body.fullBuild).toBe(true);
-    expect(body.seenPages).toContainEqual({
+  const pages = () =>
+    state.db
+      .prepare('SELECT locale, path, status FROM pages ORDER BY locale, path')
+      .all() as Array<{ locale: string; path: string; status: string }>;
+
+  it('builds the whole site for a full build at once and indexes its pages', async () => {
+    let fullBuilds = 0;
+    const local = runner(() => (fullBuilds += 1));
+    expect(await local.tick()).toBe('idle');
+    state.enqueueFull({ topic: 'deploy' });
+    expect(await local.tick()).toBe('rendered');
+    expect(await read('uk/products/socks/index.html')).toContain('Socks');
+    expect(pages()).toContainEqual({
       locale: 'uk',
       path: '/uk/products/socks',
+      status: 'published',
     });
-    expect(body.seenPages).not.toContainEqual({
-      locale: 'en',
-      path: '/products/hidden',
-    });
+    expect(pages().some((page) => page.path === '/products/hidden')).toBe(
+      false
+    );
+    expect(fullBuilds).toBe(1);
+    expect(state.status()).toMatchObject({ queued: 0, activeLeases: 0 });
+  });
+
+  it('waits for a burst of jobs, then renders them and indexes the results', async () => {
+    await build();
+    catalog.socks.title = 'Wool socks';
+    const local = runner();
+    for (const target of ['path:/products/socks', 'path:/products/hats']) {
+      state.enqueue({
+        locale: 'en',
+        target,
+        priority: PRIORITY.timer,
+        reason: { topic: 'miss' },
+      });
+    }
+    expect(await local.tick()).toBe('accumulating');
+    clock += 20_000;
+    expect(await local.tick()).toBe('rendered');
+    expect(await read('products/socks/index.html')).toContain('Wool socks');
+    expect(state.pageByPath('/products/socks')?.status).toBe('published');
+    expect(state.status()).toMatchObject({ queued: 0, activeLeases: 0 });
+    expect(local.status.last).toMatchObject({ mode: 'queue', pages: 2 });
+  });
+
+  it('renders nothing without a store', async () => {
+    const off = new LocalRunner(state, null, {}, () => clock, quiet);
+    state.enqueueFull({ topic: 'deploy' });
+    expect(await off.tick()).toBe('off');
+    expect(state.status()).toMatchObject({ queued: 1 });
   });
 
   it('turns jobs into requests', () => {
@@ -604,24 +571,5 @@ describe('static run', () => {
         htmlHash: null,
       })
     ).toEqual({ locale: 'uk', path: '/uk/products/a', jobIds: [7] });
-  });
-
-  it('asks GitHub for its OIDC token with the audience of the coordinator', async () => {
-    const urls: string[] = [];
-    const token = jobTokenSource(
-      {
-        ACTIONS_ID_TOKEN_REQUEST_URL: 'https://gh.test/token?x=1',
-        ACTIONS_ID_TOKEN_REQUEST_TOKEN: 'rt',
-      },
-      async (url) => {
-        urls.push(String(url));
-        return Response.json({ value: 'jwt' });
-      }
-    );
-    expect(await token()).toBe('jwt');
-    expect(await token()).toBe('jwt');
-    expect(urls).toEqual([
-      'https://gh.test/token?x=1&audience=shopana-static-coordinator',
-    ]);
   });
 });

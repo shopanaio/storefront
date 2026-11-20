@@ -305,7 +305,6 @@ variables в Actions не нужны. `GITHUB_TOKEN` используется т
 
 Один образ `linux/amd64` публикуется в `ghcr.io/shopanaio/storefront-brand-bite-and-crunch/theme`.
 Tag содержит SHA темы и framework, summary — immutable digest для `THEME_IMAGE`.
-Образ несёт статику одного окружения (см. «Статика»): tag оканчивается на `-<environment>`.
 
 ```sh
 docker buildx build --platform linux/amd64 --push \
@@ -336,55 +335,45 @@ Runtime URL должны совпадать с Terraform outputs. Отключа
 ## Статика
 
 План `plans/static-site-generation.ru.md`, шаг A. Тема отдаёт готовый HTML гостевых страниц
-и рендерит SSR только то, чего в статике нет (`x-shopana-static: hit | miss`).
+и рендерит SSR только то, чего в статике нет (`x-shopana-static: hit | miss`). Статику рендерит
+координатор `theme-static` на своей ноде той же сборкой темы, что в образе; GitHub Actions в
+этом не участвует, в образе статики нет.
 
-- **Статика в образе.** `build-theme.yml` между `yarn build` и `docker build` выполняет
-  `storefront-runtime static build` против API выбранного окружения (`environment` workflow,
-  ночью `stage`); Dockerfile берёт в образ ту же `.runtime/build` (server, client, static), которой
-  статика отрендерена, а не пересобирает тему.
-  Поэтому образ привязан к окружению: tag получает суффикс `-<environment>`. Без
-  `STATIC_STORE` в `deploy.env` тема отдаёт статику образа.
 - **Бакет.** `deploy/terraform/zone` (`static_site_buckets`, `cloudflare_account_id`) создаёт
   бакет R2 на окружение и два ключа S3: чтение для темы (`static_site_read_keys` →
   `STOREFRONT_STATIC_S3_ACCESS_KEY_ID`/`..._SECRET_ACCESS_KEY` в `server-env.json`), запись для
-  GitHub Actions (`static_site_write_keys` → secrets окружения в репозитории темы). В
-  `deploy.env` задайте `STATIC_STORE` и `STATIC_ENDPOINT` из output `static_site`. Бакет пишет
-  `static-site.yml` темы по заданиям координатора (ниже), ночью и по ручному запуску — полной
-  сборкой; на шаге A без purge: реплики видят новые страницы через `STOREFRONT_STATIC_CACHE_TTL`
-  (10 с).
+  координатора (`static_site_write_keys` → те же ключи в `static-env.json`). В `deploy.env`
+  задайте `STATIC_STORE` и `STATIC_ENDPOINT` из output `static_site`. Без `STATIC_STORE`
+  статики нет: тема рендерит каждую страницу. На шаге A без purge: реплики видят новые страницы
+  через `STOREFRONT_STATIC_CACHE_TTL` (10 с).
 - `CLOUDFLARE_API_TOKEN` профиля `zone` для бакетов дополнительно нужны права аккаунта
   Workers R2 Storage Write (бакет), API Tokens Write (ключи) и чтение permission groups.
   `apply` профиля `zone` применяет и его Cache Rules, WAF и Bot Management (см. «Terraform»).
-- Variables окружения GitHub Actions темы: `STOREFRONT_PUBLIC_URL`, `NEXT_PUBLIC_GRAPHQL_URL`,
-  `NEXT_PUBLIC_API_KEY`, `STOREFRONT_STATIC_STORE`, `STOREFRONT_STATIC_S3_ENDPOINT`; secrets:
-  `STOREFRONT_PRIVATE_TOKEN`, `STOREFRONT_SERVER_GRAPHQL_URL` (необязателен),
-  `STOREFRONT_STATIC_S3_ACCESS_KEY_ID`, `STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY`.
-- `deploy-theme.mjs smoke` проверяет `hit`, `ETag` и `304` главной, `miss` и `no-store`
-  неизвестного товара, публичные настройки и отсутствие секретов в HTML и `/__builder/api/health`
-  координатора.
+- `deploy-theme.mjs smoke` проверяет главную (`hit`, `ETag` и `304`, когда координатор её уже
+  отрендерил; при первом деплое она живая), `miss` и `no-store` неизвестного товара, публичные
+  настройки и отсутствие секретов в HTML и `/__builder/api/health` координатора.
 
 ### Координатор `theme-static`
 
 План `plans/static-coordinator.ru.md`. Сервис `theme-static` того же образа
 (`storefront-runtime static coordinator`, порт 3100, одна реплика) держит индекс страниц в SQLite
-на volume `theme-static-data`, ставит задания (полная сборка, пути оператора, промахи новых
-страниц, `validUntil`) и запускает `static-site.yml` темы через GitHub App; рендер и публикация
-идут в GitHub Actions. События магазина ничего не перерисовывают.
+на volume `theme-static-data`, ставит задания (полная сборка после деплоя, ночная в
+`STATIC_NIGHTLY_HOUR` UTC, по умолчанию 1, пути оператора, промахи новых страниц,
+`validUntil`) и сам рендерит их в бакет: в worker-потоках, `STATIC_RENDER_CONCURRENCY` страниц
+сразу (по умолчанию 2), публикуя только изменившееся. События магазина ничего не перерисовывают.
 
-- Нода volume: `docker node update --label-add shopana.static=true <node>` (одна).
+- Нода volume: `docker node update --label-add shopana.static=true <node>` (одна). Рендер
+  нагружает её CPU и API: лимит сервиса 2 CPU и 2G.
 - Tunnel: `/__builder/*` публичного hostname идёт на `theme-static:3100`
   (`static_coordinator_origin` окружения в Terraform), Cache Rules и challenge его не трогают.
-- `deploy.env`: `STATIC_ENV_SECRET` (имя Docker secret), `STATIC_GITHUB_REPOSITORY`,
-  `STATIC_GITHUB_APP_ID`, `STATIC_GITHUB_INSTALLATION_ID`. `STATIC_ENVIRONMENT` скрипт задаёт по
-  профилю.
-- `static-env.json` (рядом с `server-env.json`, игнорируется Git): `STATIC_OPERATOR_TOKEN`, internal token `STOREFRONT_STATIC_COORDINATOR_TOKEN`
-  (тот же, что в `server-env.json` темы: им нода сообщает о попаданиях), PEM ключа GitHub App,
-  ключ записи бакета для снимков индекса (`__builder/index/`).
-  `init` создаёт файл со случайными токенами.
-- GitHub App `shopana-static-dispatch`: одно разрешение `Actions: Read and write`, установлен
-  только в репозиторий темы. Job аутентифицируется OIDC (`id-token: write`, audience
-  `shopana-static-coordinator`); координатор принимает только `static-site.yml@refs/heads/main`
-  своего окружения.
+- `deploy.env`: `STATIC_ENV_SECRET` (имя Docker secret), необязательные
+  `STATIC_RENDER_CONCURRENCY` и, для шага B, `CLOUDFLARE_ZONE_ID`.
+- Настройки темы координатор берёт из того же secret `server-env.json`, что и тема (без её
+  ключа чтения бакета). `static-env.json` (рядом с `server-env.json`, игнорируется Git):
+  `STATIC_OPERATOR_TOKEN`, internal token `STOREFRONT_STATIC_COORDINATOR_TOKEN` (тот же, что в
+  `server-env.json` темы: им нода сообщает о попаданиях), `STOREFRONT_PRIVATE_TOKEN` для
+  запросов рендера, ключ записи бакета (страницы и снимки индекса в `__builder/index/`), шаг B —
+  `CLOUDFLARE_PURGE_TOKEN`. `init` создаёт файл со случайными токенами.
 - После деплоя с новым `THEME_IMAGE` скрипт ставит полную сборку
   (`POST /__builder/api/builds {mode: 'full', image}`). Ручной запуск:
 
@@ -394,7 +383,7 @@ Runtime URL должны совпадать с Terraform outputs. Отключа
   ```
 
 - Состояние: `GET /__builder/api/status` (очередь, аренды, `currentImage`, последняя полная
-  сборка, `dead_jobs`).
+  сборка, `dead_jobs`, идёт ли рендер и итог последнего).
 
 ### Шаг B: Worker и кеш CDN
 
@@ -411,8 +400,8 @@ Runtime URL должны совпадать с Terraform outputs. Отключа
   бакета `static.<hostname>` и origin rule для `/assets/*` на него, Cache Rule для HTML по
   `Cache-Control` origin.
 - `publish.cdn: 'cloudflare'` в `static.config.ts`: builder пишет теги в метаданные, копирует
-  `public/` в бакет, job чистит `pg:<pageKey>` изменившихся страниц; `CLOUDFLARE_PURGE_TOKEN` и
-  `CLOUDFLARE_ZONE_ID` у job.
+  `public/` в бакет, координатор чистит `pg:<pageKey>` изменившихся страниц;
+  `CLOUDFLARE_PURGE_TOKEN` и `CLOUDFLARE_ZONE_ID` у координатора.
 - `STATIC_CDN=on` в `deploy.env`: `smoke` ждёт `cf-cache-status: HIT` второй загрузки страницы и
   не-`HIT` у `/auth/login`; `STOREFRONT_TRUSTED_PROXY_HOPS` может стать `2` (проверить на stage).
 

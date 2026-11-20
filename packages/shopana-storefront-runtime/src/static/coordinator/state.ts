@@ -1,7 +1,6 @@
 /**
  * The state of the static site's coordinator over its database: the index of pages, the queue
- * of jobs, the hits and the leases of the jobs of GitHub Actions. Every operation is one
- * transaction. Pages are queued by a build asked for (an operator, a deploy, the nightly run),
+ * of jobs, the hits and the leases of its renders. Every operation is one transaction. Pages are queued by a build asked for (an operator, a deploy, the nightly run),
  * by a miss of a page the site has not yet and by the moment a page's content changes at
  * (`validUntil`); the store's events queue nothing.
  *
@@ -13,7 +12,7 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseSync, StatementSync } from 'node:sqlite';
 
-/** A page of the results of a lease (`static run`). */
+/** A page of the results of a lease (a render of `runner.ts`). */
 export interface LeaseResult {
   jobIds: number[];
   locale: string;
@@ -88,9 +87,6 @@ export interface PageRow {
 
 export interface LeaseRow {
   id: string;
-  request_id: string | null;
-  run_id: string | null;
-  run_attempt: number | null;
   mode: string;
   image: string | null;
   created_at: number;
@@ -99,7 +95,7 @@ export interface LeaseRow {
   state: string;
 }
 
-/** A job as a lease hands it to `static run`. */
+/** A job as a lease hands it to a render. */
 export interface LeasedJob {
   id: number;
   locale: string;
@@ -478,24 +474,13 @@ export class CoordinatorState {
   }
 
   /**
-   * A lease for a run: the full build when one is queued, else up to `capacity` ready jobs by
-   * priority. The first lease of a run claims its dispatch. No ready job: a lease without jobs
-   * (the run ends).
+   * A lease for a render: the full build when one is queued, else up to `capacity` ready jobs
+   * by priority. No ready job: a lease without jobs.
    */
-  lease(request: {
-    requestId?: string | null;
-    runId?: string | null;
-    runAttempt?: number | null;
-    capacity?: number;
-  }): LeaseGrant {
+  lease(request: { capacity?: number }): LeaseGrant {
     this.expireLeases();
     return this.transaction(() => {
       const now = this.now();
-      if (request.requestId) {
-        this.sql(
-          "UPDATE dispatches SET state = 'claimed', claimed_at = COALESCE(claimed_at, ?), run_id = COALESCE(?, run_id) WHERE request_id = ?"
-        ).run(now, request.runId ?? null, request.requestId);
-      }
       const id = randomUUID();
       const image = this.getSetting('current_image');
       const full = this.sql(
@@ -511,19 +496,9 @@ export class CoordinatorState {
             ).all(now, FULL_TARGET, capacity) as unknown as JobRow[]);
       const mode = full ? 'full' : 'queue';
       this.sql(
-        'INSERT INTO leases (id, request_id, run_id, run_attempt, mode, image, created_at, heartbeat_at, expires_at, state) ' +
-          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')"
-      ).run(
-        id,
-        request.requestId ?? null,
-        request.runId ?? null,
-        request.runAttempt ?? null,
-        mode,
-        image,
-        now,
-        now,
-        now + this.settings.leaseMs
-      );
+        'INSERT INTO leases (id, mode, image, created_at, heartbeat_at, expires_at, state) ' +
+          "VALUES (?, ?, ?, ?, ?, ?, 'active')"
+      ).run(id, mode, image, now, now, now + this.settings.leaseMs);
       const leased: LeasedJob[] = [];
       for (const job of jobs) {
         this.sql(
@@ -688,53 +663,7 @@ export class CoordinatorState {
     return true;
   }
 
-  // Dispatches.
-
-  lastDispatch(): {
-    request_id: string;
-    dispatched_at: number;
-    claimed_at: number | null;
-    state: string;
-  } | null {
-    return (
-      (this.sql(
-        'SELECT * FROM dispatches ORDER BY dispatched_at DESC LIMIT 1'
-      ).get() as
-        | {
-            request_id: string;
-            dispatched_at: number;
-            claimed_at: number | null;
-            state: string;
-          }
-        | undefined) ?? null
-    );
-  }
-
-  recordDispatch(requestId: string, mode: string, reason: string): void {
-    this.sql(
-      "INSERT INTO dispatches (request_id, mode, reason, dispatched_at, state) VALUES (?, ?, ?, ?, 'dispatched')"
-    ).run(requestId, mode, reason, this.now());
-  }
-
-  markDispatchStale(requestId: string): void {
-    this.sql("UPDATE dispatches SET state = 'stale' WHERE request_id = ?").run(
-      requestId
-    );
-  }
-
-  /** The active lease that started first, with when its run claimed its dispatch. */
-  activeRun(): { lease: LeaseRow; runStartedAt: number } | null {
-    const lease = this.sql(
-      "SELECT * FROM leases WHERE state = 'active' ORDER BY created_at LIMIT 1"
-    ).get() as LeaseRow | undefined;
-    if (!lease) return null;
-    const started = this.sql(
-      'SELECT MIN(created_at) AS at FROM leases WHERE run_id IS ? AND run_id IS NOT NULL'
-    ).get(lease.run_id) as { at: number | null };
-    return { lease, runStartedAt: started.at ?? lease.created_at };
-  }
-
-  /** What the jobs queued and leased say, for the dispatch's reason. */
+  /** What the jobs queued say, for the log of a render. */
   queueSummary(): string {
     const rows = this.sql(
       "SELECT reasons FROM jobs WHERE state = 'queued'"
@@ -753,7 +682,7 @@ export class CoordinatorState {
 
   // Operator requests.
 
-  /** A build an operator, a deploy or a cron asks for: its jobs carry its request id. */
+  /** A build an operator or a deploy asks for: its jobs carry its request id. */
   requestBuild(request: {
     mode: 'full' | 'paths';
     paths?: readonly string[];
@@ -802,10 +731,10 @@ export class CoordinatorState {
     });
   }
 
+  /** A build asked for and its jobs not done yet. */
   buildRequest(requestId: string): {
     request: Record<string, unknown> | null;
     jobs: Array<Record<string, unknown>>;
-    dispatch: Record<string, unknown> | null;
   } {
     const request =
       (this.sql('SELECT * FROM build_requests WHERE request_id = ?').get(
@@ -814,21 +743,23 @@ export class CoordinatorState {
     const jobs = this.sql(
       'SELECT id, locale, target, priority, state, lease_id, attempts, created_at FROM jobs WHERE request_id = ?'
     ).all(requestId) as Array<Record<string, unknown>>;
-    const leases = jobs.map((job) => job.lease_id).filter(Boolean);
-    const lease = leases.length
-      ? (this.sql('SELECT request_id, run_id FROM leases WHERE id = ?').get(
-          leases[0] as string
-        ) as { request_id: string | null; run_id: string | null } | undefined)
-      : undefined;
-    const dispatch =
-      (this.sql('SELECT * FROM dispatches WHERE request_id = ?').get(
-        lease?.request_id ?? requestId
-      ) as Record<string, unknown> | undefined) ?? null;
-    return {
-      request,
-      jobs,
-      dispatch: dispatch ?? (lease ? { run_id: lease.run_id } : null),
-    };
+    return { request, jobs };
+  }
+
+  /**
+   * The nightly full build: queued once a day at `hour` (UTC), the net under the changes of the
+   * store a static page does not hear of. Resolves with whether it queued one.
+   */
+  enqueueNightly(hour: number): boolean {
+    return this.transaction(() => {
+      const now = new Date(this.now());
+      const day = now.toISOString().slice(0, 10);
+      if (now.getUTCHours() !== hour || this.getSetting('nightly_day') === day)
+        return false;
+      this.enqueueFull({ topic: 'nightly' });
+      this.setSetting('nightly_day', day);
+      return true;
+    });
   }
 
   /** The figures of the status endpoint. */
@@ -848,11 +779,10 @@ export class CoordinatorState {
       ),
       currentImage: this.getSetting('current_image'),
       lastFullBuild: Number(this.getSetting('last_full_build') ?? 0) || null,
-      lastDispatch: this.lastDispatch(),
     };
   }
 
-  /** After a restore from a snapshot: no run of the old process holds anything. */
+  /** After a restore from a snapshot: no render of the old process holds anything. */
   resetRuns(): void {
     this.transaction(() => {
       this.sql(
@@ -869,9 +799,6 @@ export class CoordinatorState {
           },
           'restored'
         );
-      this.sql(
-        "UPDATE dispatches SET state = 'stale' WHERE state = 'dispatched'"
-      ).run();
     });
   }
 }

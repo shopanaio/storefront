@@ -70,8 +70,8 @@ export interface StaticBuildOptions {
   build?: ServerBuild;
   now?: () => Date;
   /**
-   * Hears of every page of the config rendered (or not): the results a job of `static run`
-   * returns to the coordinator.
+   * Hears of every page of the config rendered (or not): the results a render of the
+   * coordinator indexes.
    */
   onPage?: (result: StaticPageResult) => void;
   /** Purges the tags of the CDN of what changed (`publish.cdn: 'cloudflare'`). */
@@ -89,7 +89,7 @@ export type StaticPageOutcome =
   /** The render failed: the page keeps its earlier files. */
   | 'failed';
 
-/** One page of a render, as `static run` reports it to the coordinator. */
+/** One page of a render, as the coordinator indexes it. */
 export interface StaticPageResult {
   /** The URL segment of its language. */
   locale: string;

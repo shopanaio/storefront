@@ -197,6 +197,7 @@ storefront-runtime build
 storefront-runtime static build              # into .runtime/build/static
 storefront-runtime static render /uk/products/x /categories/y
 storefront-runtime static publish --from fs:.runtime/build/static --to s3://bucket/site
+storefront-runtime static coordinator        # queues the pages and renders them into STOREFRONT_STATIC_STORE
 storefront-runtime start                     # static pages as hits, the rest rendered
 storefront-runtime start --static-only       # no server render: 404.html for a missing page
 ```

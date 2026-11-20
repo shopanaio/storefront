@@ -254,7 +254,7 @@ test('deploy inputs take the static site bucket, well formed', () => {
   );
 });
 
-test('the smoke wants a static hit, its 304, a live miss and the public settings', async () => {
+test('the smoke takes a static hit with its 304 or a live home page, a live miss and the public settings', async () => {
   const etag = '"abc"';
   const staticHtml = `<html><head><script>globalThis.__shopanaPublicEnv={"NEXT_PUBLIC_API_KEY":"${values.NEXT_PUBLIC_API_KEY}"}</script></head></html>`;
   const site =
@@ -292,6 +292,19 @@ test('the smoke wants a static hit, its 304, a live miss and the public settings
       return Response.json({ issuer: `${values.NEXT_PUBLIC_IAM_URL}${path}` });
     };
   await smoke(values, site());
+  // Before the coordinator rendered the site (a first deploy): the home page is live.
+  await smoke(
+    values,
+    site({
+      '/': () =>
+        new Response(staticHtml, {
+          headers: {
+            'content-type': 'text/html',
+            'x-shopana-static': 'miss',
+          },
+        }),
+    })
+  );
   await assert.rejects(
     smoke(
       values,
@@ -300,12 +313,13 @@ test('the smoke wants a static hit, its 304, a live miss and the public settings
           new Response(staticHtml, {
             headers: {
               'content-type': 'text/html',
-              'x-shopana-static': 'miss',
+              'x-shopana-static': 'hit',
+              'cache-control': 'public, max-age=0, must-revalidate',
             },
           }),
       })
     ),
-    /x-shopana-static: hit/
+    /ETag/
   );
   await assert.rejects(
     smoke(
@@ -331,7 +345,7 @@ test('the coordinator secret holds known keys and the token of the theme', () =>
   const staticValues = {
     STATIC_OPERATOR_TOKEN: 'o'.repeat(40),
     STOREFRONT_STATIC_COORDINATOR_TOKEN: token,
-    STATIC_GITHUB_APP_PRIVATE_KEY: 'pem',
+    STOREFRONT_PRIVATE_TOKEN: 'private',
   };
   validateStaticEnv(staticValues, {
     ...values,

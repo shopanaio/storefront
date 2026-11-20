@@ -1,20 +1,34 @@
-// Docker config of theme-static: the coordinator of the static site in the theme image, its
-// secrets from the static env secret (a JSON object), never in the image's layers.
+// Docker config of theme-static: the coordinator of the static site in the theme image. It
+// renders the pages with the theme's own settings (the server env secret, as the theme reads
+// them) and its own secrets (the static env secret), never in the image's layers.
 const { readFileSync } = require('node:fs');
 const { spawn } = require('node:child_process');
 
-const values = JSON.parse(readFileSync('/run/secrets/static-env', 'utf8'));
+const read = (name) => JSON.parse(readFileSync(`/run/secrets/${name}`, 'utf8'));
+
+// The theme's settings: what its server build renders the pages with. The read key of the
+// bucket is the theme's; the coordinator writes with its own below.
+for (const [key, value] of Object.entries(read('server-env'))) {
+  if (typeof value !== 'string') {
+    throw new Error(`Unsupported server setting: ${key}`);
+  }
+  if (key.startsWith('STOREFRONT_STATIC_S3_')) continue;
+  process.env[key] = value;
+}
+
 const allowed = new Set([
   // The tokens of the API: the operator's, the servers' reports of hits.
   'STATIC_OPERATOR_TOKEN',
   'STOREFRONT_STATIC_COORDINATOR_TOKEN',
-  // The private key (PEM) of the GitHub App shopana-static-dispatch.
-  'STATIC_GITHUB_APP_PRIVATE_KEY',
-  // The key of the bucket for the snapshots of the index (__builder/).
+  // The private token of the Storefront API the renders ask with (the static site's alone).
+  'STOREFRONT_PRIVATE_TOKEN',
+  // The write key of the bucket: the pages, the snapshots of the index (__builder/).
   'STOREFRONT_STATIC_S3_ACCESS_KEY_ID',
   'STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY',
+  // Step B: purges of the CDN tags of the pages a render changed.
+  'CLOUDFLARE_PURGE_TOKEN',
 ]);
-for (const [key, value] of Object.entries(values)) {
+for (const [key, value] of Object.entries(read('static-env'))) {
   if (!allowed.has(key) || typeof value !== 'string') {
     throw new Error(`Unsupported coordinator setting: ${key}`);
   }
@@ -29,7 +43,7 @@ for (const key of [
   }
 }
 if (
-  process.env.STATIC_INDEX_STORE?.startsWith('s3://') &&
+  process.env.STOREFRONT_STATIC_STORE?.startsWith('s3://') &&
   !(
     process.env.STOREFRONT_STATIC_S3_ENDPOINT &&
     process.env.STOREFRONT_STATIC_S3_ACCESS_KEY_ID &&
@@ -37,7 +51,7 @@ if (
   )
 ) {
   throw new Error(
-    'An s3:// STATIC_INDEX_STORE needs STOREFRONT_STATIC_S3_ENDPOINT and its key'
+    'An s3:// STOREFRONT_STATIC_STORE needs STOREFRONT_STATIC_S3_ENDPOINT and its write key'
   );
 }
 const child = spawn(

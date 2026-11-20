@@ -61,22 +61,22 @@ services:
           cpus: '1.0'
           memory: 1G
 
-  # The coordinator of the static site: the index of pages, the queue, dispatches of
-  # static-site.yml, leases. One replica on the
-  # node of its volume: its SQLite database has one writer. It renders nothing.
+  # The coordinator of the static site: the index of pages, the queue, and the renders of the
+  # pages with the theme build of this image into the bucket of the site (the theme's settings
+  # from the server env secret, the private token and the write key from the static env
+  # secret). One replica on the node of its volume: its SQLite database has one writer.
   theme-static:
     image: ${THEME_IMAGE:?Set THEME_IMAGE to a release tag or digest}
     command: ['node', '/run/configs/start-static.cjs']
     environment:
       THEME_IMAGE: ${THEME_IMAGE}
       STATIC_DATA_DIR: /data
-      STATIC_ENVIRONMENT: ${STATIC_ENVIRONMENT:?Set STATIC_ENVIRONMENT to the GitHub environment (stage, production)}
-      STATIC_GITHUB_REPOSITORY: ${STATIC_GITHUB_REPOSITORY:-shopanaio/storefront-brand-bite-and-crunch}
-      STATIC_GITHUB_APP_ID: ${STATIC_GITHUB_APP_ID:-}
-      STATIC_GITHUB_INSTALLATION_ID: ${STATIC_GITHUB_INSTALLATION_ID:-}
-      # Snapshots of the index go to the bucket of the site, under __builder/.
-      STATIC_INDEX_STORE: ${STATIC_STORE:-}
+      # The pages and the snapshots of the index (under __builder/) go to the bucket of the site.
+      STOREFRONT_STATIC_STORE: ${STATIC_STORE:-}
       STOREFRONT_STATIC_S3_ENDPOINT: ${STATIC_ENDPOINT:-}
+      STATIC_RENDER_CONCURRENCY: ${STATIC_RENDER_CONCURRENCY:-2}
+      # Step B: the zone whose CDN tags are purged (the token is in the static env secret).
+      CLOUDFLARE_ZONE_ID: ${CLOUDFLARE_ZONE_ID:-}
     networks: [frontend, backend]
     volumes:
       - theme-static-data:/data
@@ -84,6 +84,11 @@ services:
       - source: static_launcher
         target: /run/configs/start-static.cjs
     secrets:
+      - source: server_env
+        target: server-env
+        uid: '1000'
+        gid: '1000'
+        mode: 0400
       - source: static_env
         target: static-env
         uid: '1000'
@@ -116,11 +121,11 @@ services:
         delay: 5s
       resources:
         reservations:
-          cpus: '0.1'
-          memory: 128M
-        limits:
-          cpus: '0.5'
+          cpus: '0.25'
           memory: 512M
+        limits:
+          cpus: '2.0'
+          memory: 2G
 
   cloudflared:
     image: ${CLOUDFLARED_IMAGE:?Set CLOUDFLARED_IMAGE to a version tag or digest}

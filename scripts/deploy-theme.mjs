@@ -44,15 +44,16 @@ export function parseEnv(source) {
     // The coordinator of the static site (theme-static): its secrets (static-env.json).
     'STATIC_ENV_SECRET',
   ];
-  // The static site bucket of the environment (Terraform output static_site of zone/); without
-  // them the theme serves the static site of its image.
-  // The coordinator: the GitHub App of its dispatches.
+  // The static site bucket of the environment (Terraform output static_site of zone/): the
+  // coordinator renders the pages into it, the theme serves them; without it every page is
+  // rendered live.
   const optional = [
     'STATIC_STORE',
     'STATIC_ENDPOINT',
-    'STATIC_GITHUB_REPOSITORY',
-    'STATIC_GITHUB_APP_ID',
-    'STATIC_GITHUB_INSTALLATION_ID',
+    // Pages the coordinator renders at once on its node.
+    'STATIC_RENDER_CONCURRENCY',
+    // Step B: the zone whose CDN tags the coordinator purges.
+    'CLOUDFLARE_ZONE_ID',
     // Step B: `on` when the CDN worker answers the pages (deploy/worker, Terraform static_cdn).
     'STATIC_CDN',
   ];
@@ -98,9 +99,10 @@ export function parseEnv(source) {
 const STATIC_ENV_KEYS = new Set([
   'STATIC_OPERATOR_TOKEN',
   'STOREFRONT_STATIC_COORDINATOR_TOKEN',
-  'STATIC_GITHUB_APP_PRIVATE_KEY',
+  'STOREFRONT_PRIVATE_TOKEN',
   'STOREFRONT_STATIC_S3_ACCESS_KEY_ID',
   'STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY',
+  'CLOUDFLARE_PURGE_TOKEN',
 ]);
 
 /**
@@ -368,7 +370,6 @@ async function main() {
   const settings = parseEnv(readFileSync(envPath, 'utf8'));
   settings.LAUNCHER_CONFIG = `${stack}-launcher-${hash(launcher).slice(0, 12)}`;
   settings.STATIC_LAUNCHER_CONFIG = `${stack}-static-launcher-${hash(staticLauncher).slice(0, 12)}`;
-  settings.STATIC_ENVIRONMENT = profile;
   const values = readJson(runtimePath);
   const staticValues = readJson(staticPath);
   validateStaticEnv(staticValues, values);
@@ -424,7 +425,7 @@ async function main() {
     )
   )
     fail(
-      'STATIC_STORE needs a key of its bucket in static-env.json for the snapshots of the index.'
+      'STATIC_STORE needs the write key of its bucket in static-env.json: the coordinator renders the pages into it.'
     );
   if (!context)
     fail(
@@ -672,9 +673,9 @@ async function main() {
 
 /**
  * The theme on its public address (step A of the static site): a generated page from the
- * static site (`x-shopana-static: hit`, its ETag, 304 for it), an unknown one rendered live
- * (`miss`, no-store), the public settings inline, no private value in either, same-origin
- * GraphQL and IAM discovery.
+ * static site when it has one (`x-shopana-static: hit`, its ETag, 304 for it: the first deploy
+ * renders it only after the smoke), an unknown one rendered live (`miss`, no-store), the public
+ * settings inline, no private value in either, same-origin GraphQL and IAM discovery.
  */
 export async function smoke(values, fetcher = fetch, { cdn = false } = {}) {
   const get = (path, options = {}) =>
@@ -701,29 +702,28 @@ export async function smoke(values, fetcher = fetch, { cdn = false } = {}) {
     !(page.headers.get('content-type') ?? '').includes('text/html')
   )
     fail(`Theme smoke failed: HTTP ${page.status}`);
-  if (page.headers.get('x-shopana-static') !== 'hit')
-    fail(
-      'The home page must come from the static site (x-shopana-static: hit).'
-    );
-  if (
-    page.headers.get('cache-control') !== 'public, max-age=0, must-revalidate'
-  )
-    fail('A static page must be revalidated on every load.');
-  const etag = page.headers.get('etag');
-  if (!etag) fail('A static page must have an ETag.');
+  const hit = page.headers.get('x-shopana-static') === 'hit';
   const html = await page.text();
   if (!html.includes(values.NEXT_PUBLIC_API_KEY))
-    fail('The static page lacks the public runtime configuration.');
-  assertPrivate(html, 'static HTML');
+    fail('The home page lacks the public runtime configuration.');
+  assertPrivate(html, hit ? 'static HTML' : 'SSR HTML');
   if (
     values.STOREFRONT_SERVER_GRAPHQL_URL &&
     html.includes(values.STOREFRONT_SERVER_GRAPHQL_URL)
   )
-    fail('The server GraphQL address leaked into the static HTML.');
-  const again = await get('/', { headers: { 'if-none-match': etag } });
-  if (again.status !== 304)
-    fail(`If-None-Match must answer 304 (HTTP ${again.status}).`);
-  if (cdn) {
+    fail('The server GraphQL address leaked into the home page.');
+  if (hit) {
+    if (
+      page.headers.get('cache-control') !== 'public, max-age=0, must-revalidate'
+    )
+      fail('A static page must be revalidated on every load.');
+    const etag = page.headers.get('etag');
+    if (!etag) fail('A static page must have an ETag.');
+    const again = await get('/', { headers: { 'if-none-match': etag } });
+    if (again.status !== 304)
+      fail(`If-None-Match must answer 304 (HTTP ${again.status}).`);
+  }
+  if (cdn && hit) {
     // Step B: the second load of a page comes from the cache of the CDN, auth never does.
     const cached = await get('/');
     await cached.body?.cancel();
@@ -779,7 +779,7 @@ export async function smoke(values, fetcher = fetch, { cdn = false } = {}) {
     }
   }
   console.log(
-    'Smoke passed: static hit with ETag and 304, live render of a missing page, public and private settings, the coordinator, same-origin GraphQL and canonical IAM discovery. Interactive login and agent streaming still require a browser check.'
+    'Smoke passed: the home page (a static hit with ETag and 304 once the coordinator rendered it), live render of a missing page, public and private settings, the coordinator, same-origin GraphQL and canonical IAM discovery. Interactive login and agent streaming still require a browser check.'
   );
 }
 

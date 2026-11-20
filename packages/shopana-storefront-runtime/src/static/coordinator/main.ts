@@ -1,37 +1,32 @@
 /**
  * `storefront-runtime static coordinator`: the service `theme-static` (one replica). It keeps
  * the index of pages, queues the pages to render (a build asked for, a page the site has not
- * yet, a moment its content changes at), dispatches runs of `static-site.yml` in GitHub Actions
- * and leases them the jobs, and snapshots its index. It renders nothing itself.
+ * yet, a moment its content changes at, the nightly full build), renders them itself with the
+ * theme build of its image (`runner.ts`) into the static site's store, and snapshots its index.
  *
  * Configured by the environment (every value but the secrets has a default):
  *
  * | Variable | |
  * | --- | --- |
- * | `STATIC_DISPATCH_DELAY_MS` (20000), `STATIC_DISPATCH_MIN_INTERVAL_MS` (60000), `STATIC_DISPATCH_STALE_MS` (600000), `STATIC_RUN_BUDGET_MS` (35 min) | dispatches |
- * | `STATIC_GITHUB_APP_ID`, `STATIC_GITHUB_INSTALLATION_ID`, `STATIC_GITHUB_APP_PRIVATE_KEY(_FILE)` | the GitHub App |
- * | `STATIC_GITHUB_REPOSITORY`, `STATIC_GITHUB_WORKFLOW` (`static-site.yml`), `STATIC_GITHUB_REF` (`main`), `STATIC_ENVIRONMENT` | the workflow and the environment |
- * | `STATIC_OIDC_WORKFLOW_REF` | the `workflow_ref` claim the leases accept |
+ * | `STOREFRONT_STATIC_STORE` | the store the pages are rendered into and the snapshots of the index go to; none: nothing is rendered |
+ * | `STOREFRONT_PUBLIC_URL` (`NEXT_PUBLIC_APP_URL`), the theme's server settings | what the pages are rendered for and with |
+ * | `STATIC_RENDER_CONCURRENCY` (2), `STATIC_RENDER_DELAY_MS` (20000) | pages rendered at once, the wait for a burst of jobs |
+ * | `STATIC_NIGHTLY_HOUR` (1) | the hour (UTC) of the nightly full build |
  * | `STATIC_OPERATOR_TOKEN`, `STOREFRONT_STATIC_COORDINATOR_TOKEN` | the operator's and the servers' tokens |
- * | `STATIC_INDEX_STORE` (`STOREFRONT_STATIC_STORE`) | where the snapshots of the index go |
- * | `THEME_IMAGE` | the image of the theme the runs render with |
+ * | `CLOUDFLARE_PURGE_TOKEN`, `CLOUDFLARE_ZONE_ID` | purges of the pages a render changed (step B) |
+ * | `THEME_IMAGE` | the image of the theme, for the status |
  */
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import type { Server } from 'node:http';
 import path from 'node:path';
+import type { StaticBuildOptions } from '../builder';
 import { openStaticStore, type StaticStore } from '../store';
 import { openCoordinatorDb } from './db';
-import { Dispatcher } from './dispatcher';
-import {
-  dispatchWorkflow,
-  githubAppTokens,
-  githubOidcVerifier,
-} from './github';
 import { createCoordinatorApp } from './http';
+import { LocalRunner } from './runner';
 import { restoreSnapshot, takeSnapshot } from './snapshots';
 import { CoordinatorState } from './state';
-import { COORDINATOR_AUDIENCE } from '../run';
 
 type Env = Record<string, string | undefined>;
 
@@ -60,6 +55,11 @@ export interface StaticCoordinatorOptions {
   port?: number;
   /** The directory of the database (the volume `theme-static-data`). */
   dataDir?: string;
+  /**
+   * What the pages are rendered with (the theme's runtime directory, its store, its origin);
+   * none: the coordinator renders nothing.
+   */
+  render?: Omit<StaticBuildOptions, 'onPage' | 'concurrency'> | null;
   logger?: Pick<Console, 'info' | 'warn' | 'error'>;
 }
 
@@ -73,13 +73,13 @@ export async function startStaticCoordinator({
   env,
   port = number(env, 'PORT', 3100),
   dataDir = text(env, 'STATIC_DATA_DIR') ?? path.resolve('.static-coordinator'),
+  render = null,
   logger = console,
 }: StaticCoordinatorOptions): Promise<RunningCoordinator> {
   await mkdir(dataDir, { recursive: true });
   const file = path.join(dataDir, 'index.sqlite');
 
-  const indexStoreUrl =
-    text(env, 'STATIC_INDEX_STORE') ?? text(env, 'STOREFRONT_STATIC_STORE');
+  const indexStoreUrl = text(env, 'STOREFRONT_STATIC_STORE');
   const snapshotStore: StaticStore | null = indexStoreUrl
     ? openStaticStore(indexStoreUrl, { env })
     : null;
@@ -106,65 +106,6 @@ export async function startStaticCoordinator({
   if (image && !state.getSetting('current_image'))
     state.setSetting('current_image', image);
 
-  // GitHub.
-  const repository = text(env, 'STATIC_GITHUB_REPOSITORY');
-  const workflow = text(env, 'STATIC_GITHUB_WORKFLOW') ?? 'static-site.yml';
-  const ref = text(env, 'STATIC_GITHUB_REF') ?? 'main';
-  const environment = text(env, 'STATIC_ENVIRONMENT');
-  const appId = text(env, 'STATIC_GITHUB_APP_ID');
-  const installationId = text(env, 'STATIC_GITHUB_INSTALLATION_ID');
-  const privateKey = secret(env, 'STATIC_GITHUB_APP_PRIVATE_KEY');
-  const token =
-    appId && installationId && privateKey
-      ? githubAppTokens({ appId, installationId, privateKey })
-      : null;
-  if (!token || !repository || !environment) {
-    logger.warn(
-      '[static-coordinator] no dispatches: set STATIC_GITHUB_APP_ID, STATIC_GITHUB_INSTALLATION_ID, ' +
-        'STATIC_GITHUB_APP_PRIVATE_KEY, STATIC_GITHUB_REPOSITORY and STATIC_ENVIRONMENT'
-    );
-  }
-  const dispatcher = new Dispatcher(
-    state,
-    token && repository && environment
-      ? ({ requestId, mode, reason }) =>
-          dispatchWorkflow(
-            {
-              repository,
-              workflow,
-              ref,
-              inputs: {
-                environment,
-                mode,
-                request_id: requestId,
-                reason: reason.slice(0, 1000),
-              },
-            },
-            token
-          )
-      : null,
-    {
-      delayMs: number(env, 'STATIC_DISPATCH_DELAY_MS', 20_000),
-      minIntervalMs: number(env, 'STATIC_DISPATCH_MIN_INTERVAL_MS', 60_000),
-      staleMs: number(env, 'STATIC_DISPATCH_STALE_MS', 10 * 60_000),
-      runBudgetMs: number(env, 'STATIC_RUN_BUDGET_MS', 35 * 60_000),
-    },
-    Date.now,
-    logger
-  );
-  const verifyOidc = repository
-    ? githubOidcVerifier({
-        expect: {
-          audience: COORDINATOR_AUDIENCE,
-          repository,
-          workflowRef:
-            text(env, 'STATIC_OIDC_WORKFLOW_REF') ??
-            `${repository}/.github/workflows/${workflow}@refs/heads/${ref}`,
-          environment: environment ?? undefined,
-        },
-      })
-    : null;
-
   let snapshotting = false;
   const snapshot = () => {
     if (!snapshotStore || snapshotting) return;
@@ -182,16 +123,32 @@ export async function startStaticCoordinator({
       });
   };
 
+  if (!render) {
+    logger.warn(
+      '[static-coordinator] nothing is rendered: set STOREFRONT_STATIC_STORE to the bucket of the site'
+    );
+  }
+  const runner = new LocalRunner(
+    state,
+    render
+      ? {
+          ...render,
+          concurrency: number(env, 'STATIC_RENDER_CONCURRENCY', 2),
+          logger,
+        }
+      : null,
+    { delayMs: number(env, 'STATIC_RENDER_DELAY_MS', 20_000) },
+    Date.now,
+    logger,
+    snapshot
+  );
+  const nightlyHour = number(env, 'STATIC_NIGHTLY_HOUR', 1);
+
   const app = createCoordinatorApp({
     state,
-    verifyOidc,
     operatorToken: secret(env, 'STATIC_OPERATOR_TOKEN'),
     internalToken: secret(env, 'STOREFRONT_STATIC_COORDINATOR_TOKEN'),
-    onFullBuild: snapshot,
-    status: () => ({
-      dispatch: Boolean(token && repository && environment),
-    }),
-    logger,
+    status: () => runner.status,
   });
 
   // The loops.
@@ -212,9 +169,10 @@ export async function startStaticCoordinator({
       }, ms)
     );
   };
-  every(1000, () => dispatcher.tick());
+  every(1000, () => runner.tick());
   every(15_000, () => state.expireLeases());
   every(30_000, () => state.enqueueExpired());
+  every(60_000, () => state.enqueueNightly(nightlyHour));
   every(60 * 60_000, () => {
     const day = new Date().toISOString().slice(0, 10);
     if (state.getSetting('hits_day') !== day) {

@@ -10,20 +10,10 @@ RUN corepack enable && yarn install --immutable && yarn cache clean --all
 ARG STOREFRONT_THEME=brand-bite-crunch
 ARG BUILD_NODE_OPTIONS=--max-old-space-size=4096
 ENV NODE_ENV=production
-# The build the workflow rendered the static site with (`storefront-runtime static build` into
-# .runtime/build/static) is the theme build of the image: kept aside while the packages build,
-# then put back, so the pages of the static site and the server and browser builds that answer
-# them are one build (its assets, its React Router version). Without one the image builds the
-# theme itself and renders every page.
-RUN if [ -f "themes/$STOREFRONT_THEME/.runtime/build/static/__static/server.json" ]; then \
-      test -f "themes/$STOREFRONT_THEME/.runtime/build/server/index.js" && \
-      mv "themes/$STOREFRONT_THEME/.runtime/build" /prebuilt; \
-    fi
+# The static site is no part of the image: the coordinator (theme-static) renders it with this
+# build into the bucket of the environment.
 RUN NODE_OPTIONS="$BUILD_NODE_OPTIONS" STOREFRONT_THEME="$STOREFRONT_THEME" yarn build && \
-    if [ -d /prebuilt ]; then \
-      rm -rf "themes/$STOREFRONT_THEME/.runtime/build" && \
-      mv /prebuilt "themes/$STOREFRONT_THEME/.runtime/build"; \
-    fi && \
+    rm -rf "themes/$STOREFRONT_THEME/.runtime/build/static" && \
     test -f "themes/$STOREFRONT_THEME/.runtime/build/server/index.js"
 
 FROM build AS production-dependencies

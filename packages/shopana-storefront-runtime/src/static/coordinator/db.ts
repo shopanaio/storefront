@@ -59,14 +59,8 @@ const MIGRATIONS: readonly string[] = [
   );
 
   CREATE TABLE leases (
-    id TEXT PRIMARY KEY, request_id TEXT, run_id TEXT, run_attempt INTEGER,
-    mode TEXT NOT NULL, image TEXT, created_at INTEGER, heartbeat_at INTEGER,
-    expires_at INTEGER, state TEXT NOT NULL
-  );
-
-  CREATE TABLE dispatches (
-    request_id TEXT PRIMARY KEY, mode TEXT NOT NULL, reason TEXT,
-    dispatched_at INTEGER, claimed_at INTEGER, run_id TEXT, state TEXT NOT NULL
+    id TEXT PRIMARY KEY, mode TEXT NOT NULL, image TEXT, created_at INTEGER,
+    heartbeat_at INTEGER, expires_at INTEGER, state TEXT NOT NULL
   );
 
   CREATE TABLE build_requests (
@@ -74,7 +68,8 @@ const MIGRATIONS: readonly string[] = [
     created_at INTEGER NOT NULL
   );
 
-  -- Values of the coordinator: the current image, the last full build, the default language.
+  -- Values of the coordinator: the current image, the last full build, the day of the nightly
+  -- one, the default language.
   CREATE TABLE settings (
     key TEXT PRIMARY KEY, value TEXT NOT NULL
   ) WITHOUT ROWID;
