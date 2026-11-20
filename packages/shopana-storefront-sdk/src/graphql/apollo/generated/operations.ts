@@ -52,8 +52,6 @@ export type Scalars = {
   UnsignedInt64: { input: any; output: any };
   /** A file sent as a multipart GraphQL request part. */
   Upload: { input: File; output: File };
-  join__FieldSet: { input: any; output: any };
-  link__Import: { input: any; output: any };
 };
 
 /** How one filter of the request was used. */
@@ -1623,7 +1621,6 @@ export type Collection = Node & {
   readonly featuredMedia?: Maybe<Media>;
   readonly handle: Scalars['String']['output'];
   readonly id: Scalars['ID']['output'];
-  readonly listingUpdatedAt: Scalars['DateTime']['output'];
   readonly media: CollectionMediaConnection;
   readonly name: Scalars['String']['output'];
   readonly products: ProductConnection;
@@ -3736,7 +3733,8 @@ export type ListingFilterInput = {
   readonly price?: InputMaybe<PriceRangeFilterInput>;
   /**
    * Products with a variant that is a target of the storefront promotion, by
-   * StorefrontPromotion.key. Repeated promotion filters are combined with OR. Evaluated
+   * StorefrontPromotion.key; for a Buy X Get Y promotion only the products to buy, not the
+   * items it gives. Repeated promotion filters are combined with OR. Evaluated
    * against the same variant as price and availability. Not applied (OUTSIDE_SCOPE) when
    * the store's PROMOTION facet is outside the facet set of the scope. A promotion that is
    * not published to the storefront matches no product.
@@ -4207,7 +4205,6 @@ export type LoyaltyAccountTransactionsArgs = {
  */
 export type LoyaltyAccountOpportunityPresentation = {
   readonly __typename: 'LoyaltyAccountOpportunityPresentation';
-  readonly evaluatedAt: Scalars['DateTime']['output'];
   readonly opportunities: ReadonlyArray<LoyaltyOpportunity>;
   readonly primaryOpportunity?: Maybe<LoyaltyOpportunity>;
   readonly revision: Scalars['String']['output'];
@@ -7324,8 +7321,6 @@ export type ProductLoyaltyPresentation = {
   readonly __typename: 'ProductLoyaltyPresentation';
   /** Server-ranked non-purchase rewards such as a verified-review reward. */
   readonly engagementOpportunities: ReadonlyArray<LoyaltyOpportunity>;
-  /** When this complete presentation snapshot was calculated. */
-  readonly evaluatedAt: Scalars['DateTime']['output'];
   /**
    * The single opportunity selected by server-side priority for compact surfaces.
    *
@@ -9313,7 +9308,6 @@ export type StorefrontPromotionPlacement =
 /** A set of promotions with cache hints for the storefront. */
 export type StorefrontPromotionPresentation = {
   readonly __typename: 'StorefrontPromotionPresentation';
-  readonly evaluatedAt: Scalars['DateTime']['output'];
   /** Ordered by sort order, then by discount priority. */
   readonly promotions: ReadonlyArray<StorefrontPromotion>;
   /** Changes whenever the visible promotions or their texts change. */
@@ -9544,29 +9538,6 @@ export type WishlistUpdatePayload = {
   /** The updated wishlist, or null when the update failed. */
   readonly wishlist?: Maybe<CustomerWishlist>;
 };
-
-export type Join__Graph =
-  | 'APPS_CONTACT_REQUESTS_STOREFRONT'
-  | 'APPS_HEADLESS_STOREFRONT'
-  | 'APPS_NOVA_POSHTA_STOREFRONT'
-  | 'APPS_ONLINE_STORE_STOREFRONT'
-  | 'APPS_PET_ASSISTANT_STOREFRONT'
-  | 'CATALOG_STOREFRONT'
-  | 'CHECKOUT_STOREFRONT'
-  | 'CUSTOMERS_STOREFRONT'
-  | 'LISTING_STOREFRONT'
-  | 'LOYALTY_STOREFRONT'
-  | 'MEDIA_STOREFRONT'
-  | 'ORDERS_STOREFRONT'
-  | 'PRICING_STOREFRONT'
-  | 'PROJECT_STOREFRONT'
-  | 'REVIEWS_STOREFRONT';
-
-export type Link__Purpose =
-  /** `EXECUTION` features provide metadata necessary for operation execution. */
-  | 'EXECUTION'
-  /** `SECURITY` features provide metadata necessary to securely resolve fields. */
-  | 'SECURITY';
 
 export type SdkAccountProductActionsQueryVariables = Exact<{
   [key: string]: never;
@@ -26127,7 +26098,6 @@ export type SdkStorefrontPromotionsQuery = {
   readonly __typename: 'Query';
   readonly storefrontPromotions: {
     readonly __typename: 'StorefrontPromotionPresentation';
-    readonly evaluatedAt: string;
     readonly validUntil?: string | null;
     readonly revision: string;
     readonly promotions: ReadonlyArray<{
@@ -60747,7 +60717,6 @@ export const SdkStorefrontPromotionsDocument = {
                     ],
                   },
                 },
-                { kind: 'Field', name: { kind: 'Name', value: 'evaluatedAt' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'validUntil' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
               ],

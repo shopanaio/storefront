@@ -94,7 +94,6 @@ query SdkStorefrontPromotions($kinds: [StorefrontPromotionKind!]) {
     promotions {
       ...SdkStorefrontPromotion
     }
-    evaluatedAt
     validUntil
     revision
   }

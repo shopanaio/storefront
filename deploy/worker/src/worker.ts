@@ -45,6 +45,10 @@ export interface WorkerEnv {
   COORDINATOR_TOKEN?: string;
   /** The origin of the node when it is not the zone's own (tests, a staging origin). */
   ORIGIN?: string;
+  /** TTL for HTML stored at the edge. */
+  PAGE_TTL?: string;
+  /** Headers of the stage environment also apply when Node is bypassed. */
+  NOINDEX?: string;
 }
 
 export interface WorkerContext {
@@ -105,6 +109,17 @@ function objectResponse(
 function toClient(request: Request, response: Response): Response {
   const headers = new Headers(response.headers);
   headers.delete('Cache-Tag');
+  // Cloudflare can apply the zone browser TTL to a cached response. HTML must
+  // revalidate in the browser even when the edge retains its own copy.
+  if (headers.get('Content-Type')?.includes('text/html')) {
+    headers.set(
+      'Cache-Control',
+      (headers.get('Cache-Control') ?? 'public, max-age=0').replace(
+        /(^|,\s*)max-age=\d+/g,
+        '$1max-age=0'
+      )
+    );
+  }
   const etag = headers.get('ETag');
   const ifNoneMatch = request.headers.get('If-None-Match');
   if (
@@ -172,15 +187,23 @@ export async function handleRequest(
 ): Promise<Response> {
   const url = new URL(request.url);
   const { pathname } = url;
+  const route = pathname.replace(/^\/(?:uk|en)(?=\/|$)/, '') || '/';
   if (
     (request.method !== 'GET' && request.method !== 'HEAD') ||
-    NODE_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+    NODE_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
+    /^\/(?:auth|account|cart|checkout|api|graphql|apps|newsletter|search)(?:\/|$)/.test(
+      route
+    )
   ) {
     return toNode(request, env, fetcher);
   }
 
   let key = staticKeyForPath(pathname);
-  let cacheControl = PAGE_CACHE_CONTROL;
+  const ttl = Number(env.PAGE_TTL || 600);
+  let cacheControl =
+    env.PAGE_TTL && Number.isFinite(ttl) && ttl > 0
+      ? `public, max-age=0, s-maxage=${Math.min(Math.floor(ttl), 3600)}`
+      : PAGE_CACHE_CONTROL;
   const page = key !== null;
   if (!key) {
     // A file of `public/` (`/favicon.ico`), else the node (old assets, React Router data).
@@ -196,12 +219,25 @@ export async function handleRequest(
   // One entry per address: tracking parameters are no part of the page.
   const cacheKey = new Request(`${url.origin}${pathname}`, { method: 'GET' });
   const cached = await cache.match(cacheKey);
-  if (cached) return toClient(request, cached);
+  if (cached) {
+    const hit = new Response(cached.body, cached);
+    hit.headers.set('x-shopana-cdn', 'HIT');
+    return toClient(request, hit);
+  }
 
-  const object = await env.SITE.get(objectKey(env, key));
+  let object: SiteObject | null;
+  try {
+    object = await env.SITE.get(objectKey(env, key));
+  } catch {
+    return toNode(request, env, fetcher);
+  }
   if (object) {
     const response = objectResponse(object, 200, cacheControl);
-    ctx.waitUntil(cache.put(cacheKey, response.clone()));
+    response.headers.set('x-shopana-cdn', 'MISS');
+    response.headers.set('x-shopana-static-server', 'worker');
+    if (env.NOINDEX === 'true')
+      response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    ctx.waitUntil(cache.put(cacheKey, response.clone()).catch(() => undefined));
     if (page) report(env, key, ctx, fetcher);
     return toClient(request, response);
   }

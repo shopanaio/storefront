@@ -355,6 +355,10 @@ Runtime URL должны совпадать с Terraform outputs. Отключа
 
 ### Stage: публичный Neon S3 и Traefik
 
+CDN Worker поверх этой схемы управляется отдельным профилем
+[`terraform/cdn`](terraform/cdn/README.ru.md); в нём описаны владение Cache Rules,
+параметры Neon и команды обновления Worker.
+
 Фактический порядок выполненного выката, состав файлов, проверки и оставшиеся ручные шаги:
 [выкат static + SSR от 20 ноября 2026](stage-static-ssr-2026-11-20.ru.md).
 
