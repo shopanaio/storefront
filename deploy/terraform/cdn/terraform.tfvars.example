@@ -2,6 +2,9 @@ account_id  = "REPLACE_WITH_ACCOUNT_ID"
 zone_id     = "REPLACE_WITH_ZONE_ID"
 hostname    = "pet.shopana.dev"
 worker_name = "storefront-static-stage"
+api_worker_name = "storefront-api-stage"
+# off при первой выкладке, затем on.
+cdn_mode = "off"
 site_origin = "https://NEON_ENDPOINT/theme-static"
 noindex     = true
 # coordinator_token передаётся через TF_VAR_coordinator_token, не хранится в этом файле.

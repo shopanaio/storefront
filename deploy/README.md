@@ -130,10 +130,11 @@ Tunnel сохраняет публичный адрес `pet.shopana.dev`, но 
 существующие Traefik routers; входящие browser Origin и bearer headers сохраняются.
 Параметры origin и Host заданы явно в Terraform.
 
-Для gateway сохраняется `STOREFRONT_TRUSTED_PROXY_HOPS=2` (Cloudflare → Traefik),
-для самой темы — `2` (Cloudflare → Traefik → theme). Traefik уже доверяет forwarded headers из
-edge-сети `10.81.0.0/16`. `check` проверяет gateway hops, подключение Traefik/backend
-к edge-сети и совпадение IAM public URL.
+Gateway берёт адрес покупателя только из `CF-Connecting-IP`, который ставит Cloudflare;
+`X-Forwarded-For` он не читает. Для самой темы `STOREFRONT_TRUSTED_PROXY_HOPS` — `2`
+(Cloudflare → Traefik → theme). Traefik уже доверяет forwarded headers из edge-сети
+`10.81.0.0/16`. `check` проверяет подключение Traefik/backend к edge-сети и совпадение IAM
+public URL.
 
 Авторизация использует существующий `https://auth.shopana.dev` и его issuer.
 `/auth/login`, `/auth/callback`, `/auth/token`, `/auth/refresh`, `/auth/logout` остаются
@@ -156,7 +157,7 @@ docker --context internal-stage service rollback shopana-theme-stage_theme
 | Stage URL                                       | Назначение                           |
 | ----------------------------------------------- | ------------------------------------ |
 | `https://pet.shopana.dev`                       | Тема                                 |
-| `https://pet.shopana.dev/graphql`               | Storefront API через Traefik         |
+| `https://pet.shopana.dev/graphql`               | Storefront API: Worker API → Traefik |
 | `https://pet.shopana.dev/apps/pet-assistant/v1` | API агента и streaming через Traefik |
 | `https://auth.shopana.dev`                      | Канонический IAM origin/issuer       |
 | `https://pet.shopana.dev/auth/callback`         | OAuth callback темы                  |
@@ -168,7 +169,9 @@ Account/zone IDs в stage-примере взяты из Terraform `internal`; �
 ## Маршрутизация через существующий Traefik
 
 ```text
-pet.shopana.dev → Cloudflare → Tunnel → cloudflared
+pet.shopana.dev → Cloudflare ─ /graphql* → Worker API ─┬─ POST как есть ─────────────┐
+                                                       └─ GET ?__cdn=… → кеш зоны ──┤ (MISS)
+                    → Tunnel → cloudflared                                          │
                                        ├─ /graphql → Traefik (Host: api.shopana.dev) → gateway
                                        ├─ /apps/pet-assistant/v1... → Traefik (Host: apps.shopana.dev) → агент
                                        └─ остальные пути → theme:3000
@@ -183,6 +186,15 @@ auth.shopana.dev → существующий Tunnel/Traefik internal → IAM
 Один и тот же публичный URL `https://<hostname>/graphql` используется браузером и SSR. Он
 проходит через Cloudflare, поэтому нодам нужны исходящий HTTPS и доступ к публичному hostname.
 Публиковать входящие порты темы, gateway или connector на хостах не требуется.
+
+Маршрут `<hostname>/graphql*` обслуживает Worker API (`deploy/worker/src/api-worker.ts`,
+state `deploy/terraform/cdn`). Анонимный публичный `query` браузера он переводит в GET-подзапрос
+`/graphql?__cdn=…` к своей зоне: ответ хранит кеш зоны (Cache Rule `theme_graphql_cdn`, Smart
+Tiered Cache), а кешируемость и срок решает шлюз заголовками `Cloudflare-CDN-Cache-Control` и
+`Cache-Tag`. Мутации, вошедший покупатель, приватный токен, пакеты и multipart идут POST к шлюзу
+как есть. Ответ Worker несёт `Shopana-Cdn: hit | miss | expired | bypass:<причина>` и
+`Cache-Control: private, no-store`. Требуются Workers Paid на аккаунте (через Worker идёт каждый
+`/graphql` браузера) и зона production не ниже Pro (лимит purge by tag).
 
 ## Что используется на Free
 
@@ -286,12 +298,10 @@ terraform -chdir=deploy/terraform/environments/stage apply release.tfplan
 `STOREFRONT_SERVER_GRAPHQL_URL` — внутренний адрес шлюза для серверных запросов темы (на stage
 `http://gateway-storefront:4000/graphql`, сервис доступен через сеть `BACKEND_NETWORK`). Браузер и
 боты по-прежнему ходят на `NEXT_PUBLIC_GRAPHQL_URL`; этот адрес в браузер не передаётся. Без
-переменной сервер тоже ходит на публичный адрес. Мимо Cloudflare и Traefik тема сама задаёт
-`X-Forwarded-For: <адрес покупателя>, storefront-server` и `User-Agent` покупателя: шлюз с
-`STOREFRONT_TRUSTED_PROXY_HOPS=2` читает адрес покупателя тем же правилом. Адрес берётся по
-`STOREFRONT_TRUSTED_PROXY_HOPS` темы, поэтому подделанные клиентом записи до шлюза не доходят.
-Не подключайте подсеть `BACKEND_NETWORK` к `STOREFRONT_TRUSTED_FORWARDER_CIDRS`: в ней же работает
-Traefik, и шлюз начнёт отвечать `STOREFRONT_BUYER_IP_INVALID` на все запросы браузера.
+переменной сервер тоже ходит на публичный адрес. Мимо Cloudflare и Traefik тема передаёт
+`User-Agent` покупателя и `CF-Connecting-IP`, который Cloudflare поставил на запрос к теме:
+шлюз берёт адрес покупателя только из этого заголовка. Без Cloudflare перед темой (локальный
+запуск) адреса покупателя у серверных запросов нет.
 Application ID, client ID, resource и зарегистрированные redirect URI должны принадлежать
 одному IAM application соответствующего окружения.
 
@@ -419,7 +429,9 @@ http:
 - Tunnel: `/__builder/*` публичного hostname идёт на `theme-static:3100`
   (`static_coordinator_origin` окружения в Terraform), Cache Rules и challenge его не трогают.
 - `deploy.env`: `STATIC_ENV_SECRET` (имя Docker secret), необязательные
-  `STATIC_RENDER_CONCURRENCY` и, для шага B, `CLOUDFLARE_ZONE_ID`.
+  `STATIC_RENDER_CONCURRENCY` и, для шага B, `CLOUDFLARE_ZONE_ID` и `CLOUDFLARE_PURGE_PLAN`
+  (план зоны, по умолчанию `free`; на production задать фактический: координатору достаётся
+  половина лимита purge аккаунта).
 - Настройки темы координатор берёт из того же secret `server-env.json`, что и тема (без её
   ключа чтения бакета). `static-env.json` (рядом с `server-env.json`, игнорируется Git):
   `STATIC_OPERATOR_TOKEN`, internal token `STOREFRONT_STATIC_COORDINATOR_TOKEN` (тот же, что в
@@ -455,7 +467,7 @@ http:
   `public/` в бакет, координатор чистит `pg:<pageKey>` изменившихся страниц;
   `CLOUDFLARE_PURGE_TOKEN` и `CLOUDFLARE_ZONE_ID` у координатора.
 - `STATIC_CDN=on` в `deploy.env`: `smoke` ждёт `cf-cache-status: HIT` второй загрузки страницы и
-  не-`HIT` у `/auth/login`; `STOREFRONT_TRUSTED_PROXY_HOPS` может стать `2` (проверить на stage).
+  не-`HIT` у `/auth/login`.
 
 ## Secrets и запуск stack
 
@@ -477,9 +489,10 @@ API token Cloudflare в контейнеры не передаётся.
   `theme-static` — `1/1`.
 - Откройте домен в браузере: проверьте главную, категорию, товар, login и streaming агента.
 - В Network браузера GraphQL должен идти на `https://<тот же hostname>/graphql` без CORS.
-- Cache Rules/WAF пока отложены: `HIT` и challenge не являются условиями текущего деплоя.
-  HTML и `/graphql` не должны становиться `HIT`. Healthcheck темы ходит прямо в контейнер
-  и проверяет SSR.
+- WAF пока отложен: challenge не является условием текущего деплоя. `Shopana-Cdn: hit`
+  допустим только у анонимных запросов каталога; корзина, оформление заказа, вход и ответы
+  вошедшего покупателя всегда `bypass:*`. Healthcheck темы ходит прямо в контейнер и проверяет
+  SSR.
 
 Без Cloudflare credentials, настоящего домена и `terraform apply` проверяются только схемы,
 план с mock provider и локальная конфигурация stack. Проверка реального edge выполняется

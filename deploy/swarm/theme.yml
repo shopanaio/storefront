@@ -79,6 +79,8 @@ services:
       STATIC_RENDER_CONCURRENCY: ${STATIC_RENDER_CONCURRENCY:-2}
       # Step B: the zone whose CDN tags are purged (the token is in the static env secret).
       CLOUDFLARE_ZONE_ID: ${CLOUDFLARE_ZONE_ID:-}
+      # The plan of the zone: half of its purge limit is this purger's, half the API cache's.
+      CLOUDFLARE_PURGE_PLAN: ${CLOUDFLARE_PURGE_PLAN:-free}
     networks: [frontend, backend]
     volumes:
       - theme-static-data:/data
