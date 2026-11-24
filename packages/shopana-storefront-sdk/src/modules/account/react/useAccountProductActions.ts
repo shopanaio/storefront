@@ -78,7 +78,7 @@ export function useAccountProductActions({
         return;
       }
       const item = wishlistItems?.find(
-        (candidate) => candidate.product?.id === targetProductId
+        (candidate) => candidate.card?.productId === targetProductId
       );
       if (!item) return;
       await removeWishlistItem(item.id);
@@ -107,7 +107,7 @@ export function useAccountProductActions({
   return {
     requiresSignIn: !isAuthenticated,
     isWishlisted: Boolean(
-      wishlistItems?.some((item) => item.product?.id === productId)
+      wishlistItems?.some((item) => item.card?.productId === productId)
     ),
     isCompared: Boolean(comparedVariantIds?.includes(variantId)),
     loading: wishlistLoading || comparisonLoading,

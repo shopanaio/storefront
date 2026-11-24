@@ -62,8 +62,6 @@ export interface Review {
   helpfulYes: number;
   /** Total "not helpful" votes */
   helpfulNo: number;
-  /** Did the current user mark the review as helpful? */
-  meHelpful: boolean;
   /** Creation date */
   createdAt: string;
   /** Last edit date */

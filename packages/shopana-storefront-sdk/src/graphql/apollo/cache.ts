@@ -1,4 +1,5 @@
 import type {
+  ApolloCache,
   Cache,
   DocumentNode,
   FieldPolicy,
@@ -30,11 +31,26 @@ type HandleTypename = (typeof HANDLE_LOOKUPS)[keyof typeof HANDLE_LOOKUPS];
 
 const HANDLE_TYPENAMES = new Set<string>(Object.values(HANDLE_LOOKUPS));
 
+/** The types indexed by handle: those of the lookups and the listing card (`cachedProductCardId`). */
+const INDEXED_TYPENAMES = new Set<string>([...HANDLE_TYPENAMES, 'ProductCard']);
+
 /** Ids of the cached entities with a handle, by `Typename:handle`. */
 type HandleIndex = Map<string, string>;
+type NodeIndex = Map<string, HandleTypename>;
 
-function indexHandle(index: HandleIndex, object: Readonly<StoreObject>): void {
+function indexHandle(
+  index: HandleIndex,
+  nodes: NodeIndex,
+  object: Readonly<StoreObject>
+): void {
   const { __typename, id, handle } = object;
+  if (
+    typeof __typename === 'string' &&
+    HANDLE_TYPENAMES.has(__typename) &&
+    typeof id === 'string'
+  ) {
+    nodes.set(id, __typename as HandleTypename);
+  }
   if (
     typeof __typename === 'string' &&
     typeof id === 'string' &&
@@ -48,19 +64,22 @@ function indexHandle(index: HandleIndex, object: Readonly<StoreObject>): void {
  * Entities keyed by id as usual, and one selected without id (`vendor { name }`) stays inside
  * its parent; each one written with its handle is indexed on the way.
  */
-function handleKeyFields(index: HandleIndex): TypePolicy['keyFields'] {
+function handleKeyFields(
+  index: HandleIndex,
+  nodes: NodeIndex
+): TypePolicy['keyFields'] {
   return (object) => {
     if (object.id === undefined || object.id === null) return false;
-    indexHandle(index, object);
+    indexHandle(index, nodes, object);
     return ['id'];
   };
 }
 
 /**
  * `productByHandle(handle)` and the like answer from the entity already cached under that
- * handle (a product card of a listing, a category of a menu) when the query itself never ran,
- * so a page opened from a card renders what the card had. Fields the page needs beyond that
- * are missing, so a cache-first query still goes to the network for them.
+ * handle (a product another query read, a category of a menu) when the query itself never ran.
+ * A listing card is a `ProductCard`, not a `Product`, and answers none of them. Fields the page
+ * needs beyond the cached ones are missing, so a cache-first query still goes to the network.
  */
 function handleLookupPolicy(
   index: HandleIndex,
@@ -79,6 +98,20 @@ function handleLookupPolicy(
   };
 }
 
+/** Relay lookup of an entity already loaded by its handle. Missing connection fields still cause a network read. */
+function nodeLookupPolicy(nodes: NodeIndex): FieldPolicy {
+  return {
+    read(existing, { args, toReference, canRead }) {
+      if (existing !== undefined) return existing;
+      const id = args?.id;
+      const typename = typeof id === 'string' ? nodes.get(id) : undefined;
+      if (!typename) return undefined;
+      const reference = toReference({ __typename: typename, id });
+      return reference && canRead(reference) ? reference : undefined;
+    },
+  };
+}
+
 /** An `InMemoryCache` class: Apollo's own, or the one of a framework integration. */
 export type InMemoryCacheClass = new (
   config: InMemoryCacheConfig
@@ -89,6 +122,7 @@ const storefrontCacheClasses = new WeakMap<
   new (
     config: InMemoryCacheConfig,
     handles: HandleIndex,
+    nodes: NodeIndex,
     results: readonly RequestQueryResult[]
   ) => InMemoryCache
 >();
@@ -104,15 +138,18 @@ function storefrontCacheClass(Base: InMemoryCacheClass) {
   if (!StorefrontCache) {
     StorefrontCache = class extends Base {
       readonly #handles: HandleIndex;
+      readonly #nodes: NodeIndex;
       readonly #pending: Map<string, RequestQueryResult>;
 
       constructor(
         config: InMemoryCacheConfig,
         handles: HandleIndex,
+        nodes: NodeIndex,
         results: readonly RequestQueryResult[]
       ) {
         super(config);
         this.#handles = handles;
+        this.#nodes = nodes;
         this.#pending = indexRequestResults(results);
       }
 
@@ -175,9 +212,9 @@ function storefrontCacheClass(Base: InMemoryCacheClass) {
           if (
             record &&
             typeof record === 'object' &&
-            HANDLE_TYPENAMES.has(String(record.__typename))
+            INDEXED_TYPENAMES.has(String(record.__typename))
           ) {
-            indexHandle(this.#handles, record as StoreObject);
+            indexHandle(this.#handles, this.#nodes, record as StoreObject);
           }
         }
         return super.restore(data);
@@ -199,21 +236,22 @@ export function createApolloCache(
   results: readonly RequestQueryResult[] = []
 ): InMemoryCache {
   const handles: HandleIndex = new Map();
+  const nodes: NodeIndex = new Map();
   const ownTypePolicies: NonNullable<InMemoryCacheConfig['typePolicies']> = {
     Collection: {
-      keyFields: handleKeyFields(handles),
+      keyFields: handleKeyFields(handles, nodes),
       fields: {
         products: cursorConnectionPolicy(['query', 'sort', 'filters']),
       },
     },
     Category: {
-      keyFields: handleKeyFields(handles),
+      keyFields: handleKeyFields(handles, nodes),
       fields: {
         products: cursorConnectionPolicy(['sort', 'filters']),
       },
     },
     Product: {
-      keyFields: handleKeyFields(handles),
+      keyFields: handleKeyFields(handles, nodes),
       fields: {
         frequentlyBoughtTogether: cursorConnectionPolicy([]),
         questions: cursorConnectionPolicy(['sort']),
@@ -227,7 +265,19 @@ export function createApolloCache(
       },
     },
     Vendor: {
-      keyFields: handleKeyFields(handles),
+      keyFields: handleKeyFields(handles, nodes),
+      fields: {
+        products: cursorConnectionPolicy(['query', 'sort', 'filters']),
+      },
+    },
+    // A card id holds the product and the variant its source fixed, so two listings that show
+    // one product with different variants keep two cards. A card variant is the variant itself
+    // (ADR-023). Indexed by the product's handle for `cachedProductCardId`.
+    ProductCard: {
+      keyFields: handleKeyFields(handles, nodes),
+    },
+    ProductCardVariant: {
+      keyFields: ['id'],
     },
     // A filter and its values are ids within one listing, with that listing's counts: stored
     // inside it, or another listing would overwrite the filters every page reads.
@@ -254,6 +304,7 @@ export function createApolloCache(
     },
     Query: {
       fields: {
+        node: nodeLookupPolicy(nodes),
         searchProducts: cursorConnectionPolicy(['query', 'sort', 'filters']),
         ...Object.fromEntries(
           Object.entries(HANDLE_LOOKUPS).map(([field, typename]) => [
@@ -312,7 +363,7 @@ export function createApolloCache(
   }
 
   const StorefrontCache = storefrontCacheClass(Base);
-  return new StorefrontCache(
+  const cache = new StorefrontCache(
     {
       // A server cache lives for one request, so remembering results between reads saves
       // little and costs a dependency graph. The browser's cache lives as long as the page,
@@ -328,8 +379,27 @@ export function createApolloCache(
       typePolicies,
     },
     handles,
+    nodes,
     results
   );
+  cacheHandles.set(cache, handles);
+  return cache;
+}
+
+/** The handle index of every cache `createApolloCache` made. */
+const cacheHandles = new WeakMap<ApolloCache, HandleIndex>();
+
+/**
+ * The cache id of a listing card of the product with this handle (the last one cached), or null.
+ * A card is a `ProductCard`, which `productByHandle` never answers: the product page reads it
+ * itself while it loads (its cover and title).
+ */
+export function cachedProductCardId(
+  cache: ApolloCache,
+  handle: string
+): string | null {
+  const id = cacheHandles.get(cache)?.get(`ProductCard:${handle}`);
+  return id ? (cache.identify({ __typename: 'ProductCard', id }) ?? null) : null;
 }
 
 /**

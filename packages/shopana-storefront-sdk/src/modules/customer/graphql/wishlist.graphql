@@ -1,16 +1,12 @@
 fragment SdkWishlistItemFragment on CustomerWishlistItem {
   id
   addedAt
-  product {
-    ...SdkCustomerProductFragment
+  card {
+    ...SdkProductCard
   }
 }
 
-query SdkCustomerWishlistQuery(
-  $first: Int
-  $after: Cursor
-  $imageTransform: ImageTransformInput
-) {
+query SdkCustomerWishlistQuery($first: Int, $after: Cursor) {
   customer {
     id
     defaultWishlist {
@@ -38,8 +34,9 @@ mutation SdkWishlistProductAddMutation($input: WishlistProductAddInput!) {
     wishlistItem {
       id
       addedAt
-      product {
+      card {
         id
+        productId
       }
       wishlist {
         id

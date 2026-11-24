@@ -54,13 +54,11 @@ export const possibleTypes: Record<string, readonly string[]> = {
     'UserError',
   ],
   LoyaltyRewardPresentation: [
-    'LoyaltyFreeProductRewardPresentation',
+    'LoyaltyDiscountRewardPresentation',
     'LoyaltyFreeShippingRewardPresentation',
     'LoyaltyMemberBenefitRewardPresentation',
     'LoyaltyMoneyRewardPresentation',
-    'LoyaltyPercentageRewardPresentation',
     'LoyaltyPointsRewardPresentation',
-    'LoyaltyVoucherRewardPresentation',
   ],
   Media: ['ExternalVideo', 'MediaImage', 'Model3d', 'Video'],
   Node: [

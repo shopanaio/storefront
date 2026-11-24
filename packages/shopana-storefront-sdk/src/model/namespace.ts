@@ -50,6 +50,9 @@ import type * as ProductRatingTypes from './Product/ProductRating';
 // Product
 import type * as ProductTypes from './Product/product';
 
+// Product Card
+import type * as ProductCardTypes from './Product/ProductCard';
+
 // Product Recommendation
 import type * as ProductRecommendationTypes from './Product/ProductRecommendation';
 
@@ -160,6 +163,10 @@ export namespace model {
 
   // Product
   export type Product = ProductTypes.Product;
+
+  // Product Card
+  export type ProductCard = ProductCardTypes.ProductCard;
+  export type ProductCardVariant = ProductCardTypes.ProductCardVariant;
 
   // Product Recommendation
   export type ProductRecommendationSource =

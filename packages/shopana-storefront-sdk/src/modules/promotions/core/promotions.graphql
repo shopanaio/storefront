@@ -43,49 +43,14 @@ fragment SdkStorefrontPromotion on StorefrontPromotion {
   benefitScope
 }
 
-# An item a promotion gives its benefit to, as the cart shows it on the promotion banner.
-fragment SdkPromotionBenefitVariant on ProductVariant {
-  id
-  handle
-  title
-  product {
-    id
-    handle
-    title
-    vendor {
-      name
-    }
-  }
-  cover: featuredMedia {
-    id
-    ... on MediaImage {
-      image {
-        url
-      }
-    }
-  }
-  price {
-    amount
-    currencyCode
-  }
-  compareAtPrice {
-    amount
-    currencyCode
-  }
-  availableForSale
-}
-
-# The items the merchant chose for the benefit of a buy X get Y promotion: the variants, or the
-# products whose first available variant the cart offers.
+# The items the merchant chose for the benefit of a buy X get Y promotion: the cards of its
+# variants, each showing its gift variant, or of its products, with the variant the listing picked.
 fragment SdkPromotionBenefitItems on StorefrontPromotion {
-  benefitVariants {
-    ...SdkPromotionBenefitVariant
+  benefitVariantCards {
+    ...SdkProductCard
   }
-  benefitProducts {
-    id
-    selectedOrFirstAvailableVariant {
-      ...SdkPromotionBenefitVariant
-    }
+  benefitProductCards {
+    ...SdkProductCard
   }
 }
 
@@ -106,9 +71,9 @@ query SdkPromotionBenefitProducts($promotionKey: ID!, $first: Int!) {
     filters: [{ promotionId: $promotionKey, promotionRole: BENEFIT }]
   ) {
     nodes {
-      id
-      selectedOrFirstAvailableVariant {
-        ...SdkPromotionBenefitVariant
+      ...SdkProductCard
+      variant {
+        id
         benefitPrice(promotionKey: $promotionKey) {
           amount
           currencyCode

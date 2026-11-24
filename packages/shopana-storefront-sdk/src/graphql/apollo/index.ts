@@ -1,5 +1,9 @@
 export { createApolloClient } from './Environment';
-export { createApolloCache, mergeApolloCacheStates } from './cache';
+export {
+  cachedProductCardId,
+  createApolloCache,
+  mergeApolloCacheStates,
+} from './cache';
 export {
   readRequestResults,
   type RequestQueryResult,

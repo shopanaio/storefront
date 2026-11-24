@@ -14,6 +14,7 @@
  * | `STATIC_NIGHTLY_HOUR` (1) | the hour (UTC) of the nightly full build |
  * | `STATIC_OPERATOR_TOKEN`, `STOREFRONT_STATIC_COORDINATOR_TOKEN` | the operator's and the servers' tokens |
  * | `CLOUDFLARE_PURGE_TOKEN`, `CLOUDFLARE_ZONE_ID` | purges of the pages a render changed (step B) |
+ * | `CLOUDFLARE_PURGE_PLAN` (`free`) | the zone's plan: this purger keeps to half of its purge limit |
  * | `THEME_IMAGE` | the image of the theme, for the status |
  */
 import { existsSync, readFileSync, statSync } from 'node:fs';

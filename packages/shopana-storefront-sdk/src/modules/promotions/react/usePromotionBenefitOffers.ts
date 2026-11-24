@@ -7,7 +7,7 @@ import { SdkPromotionBenefitProductsDocument } from '../../../graphql/apollo/gen
 import { mapPromotionBenefitOffer } from '../core/mapStorefrontPromotion';
 
 export interface PromotionBenefitOffersState {
-  /** The first available variant of each product, with its price as the benefit. */
+  /** The card variant of each product, with its price as the benefit. */
   offers: readonly model.PromotionBenefitOffer[];
   loading: boolean;
   error: Error | null;
@@ -32,10 +32,8 @@ export function usePromotionBenefitOffers(
   const nodes = query.data?.products.nodes;
   const offers = useMemo(
     () =>
-      nodes?.flatMap((product) =>
-        product.selectedOrFirstAvailableVariant
-          ? [mapPromotionBenefitOffer(product.selectedOrFirstAvailableVariant)]
-          : []
+      nodes?.map((card) =>
+        mapPromotionBenefitOffer(card, card.variant.benefitPrice)
       ) ?? EMPTY,
     [nodes]
   );

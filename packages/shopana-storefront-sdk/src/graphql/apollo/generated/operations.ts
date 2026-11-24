@@ -94,12 +94,12 @@ export type Availability = 'AVAILABLE' | 'UNAVAILABLE';
 export type CartRecommendation = {
   readonly __typename: 'CartRecommendation';
   /**
-   * Cart products that contributed this item, most significant first; at most
-   * three. Empty for a store-level fallback item.
+   * Global ids of the cart products that contributed this item, most significant
+   * first; at most three. Empty for a store-level fallback item.
    */
-  readonly anchors: ReadonlyArray<Product>;
-  /** Current federated Product presentation resolved by Catalog. */
-  readonly product: Product;
+  readonly anchorProductIds: ReadonlyArray<Scalars['ID']['output']>;
+  /** The recommended product card, without a variant in its id. */
+  readonly product: ProductCard;
   /** Strongest source among the cart products that contributed this item. */
   readonly source: ProductRecommendationSource;
 };
@@ -3132,16 +3132,17 @@ export type CustomerWishlistItem = Node & {
   readonly __typename: 'CustomerWishlistItem';
   /** Date and time when the product was added to the wishlist. */
   readonly addedAt: Scalars['DateTime']['output'];
+  /**
+   * Storefront product card of the saved product, filled by the Listing subgraph.
+   *
+   * The card has no fixed variant: Listing picks it as on a category page. The
+   * saved item remains present when the product leaves the storefront. This field
+   * is null when the product is unpublished, deleted, belongs to another store,
+   * or is not in the storefront listing index.
+   */
+  readonly card?: Maybe<ProductCard>;
   /** Globally unique CustomerWishlistItem ID. */
   readonly id: Scalars['ID']['output'];
-  /**
-   * The currently published storefront product represented by this item.
-   *
-   * The saved item remains present when the product is unpublished. This field
-   * is null when the product is unpublished, deleted, belongs to another store,
-   * or its federated reference cannot be resolved.
-   */
-  readonly product?: Maybe<Product>;
   /** Wishlist containing this saved item. */
   readonly wishlist: CustomerWishlist;
 };
@@ -4254,13 +4255,23 @@ export type LoyaltyBalance = {
   readonly reservedPoints: Scalars['UnsignedInt64']['output'];
 };
 
-export type LoyaltyFreeProductRewardPresentation = LoyaltyRewardPresentation & {
-  readonly __typename: 'LoyaltyFreeProductRewardPresentation';
+/**
+ * A reward applied as a Pricing discount: a voucher, a fixed or percentage discount, or a free
+ * product. Its value and gifts belong to the discount and are read from `promotion`.
+ */
+export type LoyaltyDiscountRewardPresentation = LoyaltyRewardPresentation & {
+  readonly __typename: 'LoyaltyDiscountRewardPresentation';
+  /**
+   * Customer-visible discount code of an issued reward. Null for an opportunity that has not yet
+   * issued an entitlement.
+   */
+  readonly code?: Maybe<Scalars['String']['output']>;
   readonly copy: LoyaltyOpportunityCopy;
   readonly kind: LoyaltyRewardKind;
-  readonly product: Product;
+  /** The Pricing discount the reward applies, with its value and, for a free product, its gifts. */
+  readonly promotion: StorefrontPromotion;
+  /** Units of the reward; one for an opportunity. */
   readonly quantity: Scalars['UnsignedInt64']['output'];
-  readonly variant?: Maybe<ProductVariant>;
 };
 
 export type LoyaltyFreeShippingRewardPresentation =
@@ -4285,7 +4296,7 @@ export type LoyaltyMoneyRange = {
   readonly minimum: Money;
 };
 
-/** Cashback, store credit, or a fixed monetary discount. */
+/** Cashback or store credit. */
 export type LoyaltyMoneyRewardPresentation = LoyaltyRewardPresentation & {
   readonly __typename: 'LoyaltyMoneyRewardPresentation';
   readonly accuracy: LoyaltyValueAccuracy;
@@ -4363,14 +4374,6 @@ export type LoyaltyOpportunityType =
   | 'REVIEW'
   | 'SIGNUP'
   | 'SUBSCRIPTION_RENEWAL';
-
-export type LoyaltyPercentageRewardPresentation = LoyaltyRewardPresentation & {
-  readonly __typename: 'LoyaltyPercentageRewardPresentation';
-  readonly copy: LoyaltyOpportunityCopy;
-  readonly kind: LoyaltyRewardKind;
-  /** Percentage expressed as a decimal value, for example `5` for five percent. */
-  readonly percentage: Scalars['Decimal']['output'];
-};
 
 /** Points scheduled to expire at the same time. */
 export type LoyaltyPointsExpiration = {
@@ -4525,17 +4528,6 @@ export type LoyaltyValueAccuracy =
   | 'ESTIMATED'
   /** The value cannot change for the evaluated subject and context. */
   | 'EXACT';
-
-export type LoyaltyVoucherRewardPresentation = LoyaltyRewardPresentation & {
-  readonly __typename: 'LoyaltyVoucherRewardPresentation';
-  /**
-   * Customer-visible voucher code. Null for an opportunity that has not yet issued
-   * an entitlement.
-   */
-  readonly code?: Maybe<Scalars['String']['output']>;
-  readonly copy: LoyaltyOpportunityCopy;
-  readonly kind: LoyaltyRewardKind;
-};
 
 export type MarketingSubscribeInput = {
   /**
@@ -6931,6 +6923,123 @@ export type ProductVariantsArgs = {
 };
 
 /**
+ * A product as listing surfaces show it: content from Catalog at request time, price,
+ * availability, rating and media links as of the last listing indexing. The price is
+ * informational: the cart prices the line again.
+ */
+export type ProductCard = {
+  readonly __typename: 'ProductCard';
+  /** At least one variant of the product is available for sale. */
+  readonly availableForSale: Scalars['Boolean']['output'];
+  readonly createdAt: Scalars['DateTime']['output'];
+  /** The first media of the product gallery. */
+  readonly featuredMedia?: Maybe<Media>;
+  readonly handle: Scalars['String']['output'];
+  /**
+   * Opaque id of the card: the product and, when the source fixed one, the variant.
+   * A card without a variant and a card of the same product with a variant are
+   * different records of the client cache.
+   */
+  readonly id: Scalars['ID']['output'];
+  /**
+   * Media of the product gallery. Cursors of ProductCard.media and Product.media are
+   * not interchangeable.
+   */
+  readonly media: ProductMediaConnection;
+  readonly options: ReadonlyArray<ProductOption>;
+  /** Global id of the product. */
+  readonly productId: Scalars['ID']['output'];
+  readonly publishedAt: Scalars['DateTime']['output'];
+  readonly reviewSummary: ProductCardReviewSummary;
+  readonly tags: ReadonlyArray<Tag>;
+  readonly title: Scalars['String']['output'];
+  /**
+   * The variant of the card: the one matching the variant conditions or the price sort
+   * of the listing; otherwise the default variant, then the first available one, then
+   * the first one.
+   */
+  readonly variant: ProductCardVariant;
+  readonly vendor?: Maybe<Vendor>;
+};
+
+/**
+ * A product as listing surfaces show it: content from Catalog at request time, price,
+ * availability, rating and media links as of the last listing indexing. The price is
+ * informational: the cart prices the line again.
+ */
+export type ProductCardMediaArgs = {
+  after?: InputMaybe<Scalars['Cursor']['input']>;
+  before?: InputMaybe<Scalars['Cursor']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type ProductCardLoyalty = {
+  readonly __typename: 'ProductCardLoyalty';
+  readonly primaryOpportunity?: Maybe<ProductCardLoyaltyOpportunity>;
+};
+
+/** Audience the card reward is calculated for. Segment programs are not shown on cards. */
+export type ProductCardLoyaltyAudience =
+  /** Every buyer of the store, signed in or not. */
+  'GENERAL';
+
+export type ProductCardLoyaltyOpportunity = {
+  readonly __typename: 'ProductCardLoyaltyOpportunity';
+  readonly audience: ProductCardLoyaltyAudience;
+  readonly key: Scalars['String']['output'];
+  readonly presentation: LoyaltyOpportunityCopy;
+  readonly reward: LoyaltyRewardPresentation;
+  readonly type: LoyaltyOpportunityType;
+};
+
+export type ProductCardReviewSummary = {
+  readonly __typename: 'ProductCardReviewSummary';
+  /** Zero without reviews. */
+  readonly averageRating: Scalars['Float']['output'];
+  readonly reviewCount: Scalars['Int']['output'];
+};
+
+/**
+ * The variant of a product card. Price fields come from the listing offer price index,
+ * the same row ProductVariant price fields read.
+ */
+export type ProductCardVariant = {
+  readonly __typename: 'ProductCardVariant';
+  readonly appliedDiscountIds: ReadonlyArray<Scalars['ID']['output']>;
+  readonly availableForSale: Scalars['Boolean']['output'];
+  readonly benefitPrice?: Maybe<Money>;
+  readonly cartOnlyDiscountIds: ReadonlyArray<Scalars['ID']['output']>;
+  readonly compareAtPrice?: Maybe<Money>;
+  /** The variant cover; the first media of the product gallery without one. */
+  readonly featuredMedia?: Maybe<Media>;
+  readonly handle: Scalars['String']['output'];
+  readonly id: Scalars['ID']['output'];
+  readonly inventoryItem?: Maybe<InventoryItem>;
+  readonly isDefault: Scalars['Boolean']['output'];
+  /**
+   * The loyalty reward of the general audience. Null when the variant is not available,
+   * has no offer price or no reward applies.
+   */
+  readonly loyalty?: Maybe<ProductCardLoyalty>;
+  /** Null when the variant is not in the offer price index yet. */
+  readonly price?: Maybe<Money>;
+  /** Storefront promotions of the variant offer: a subset of ProductVariant.promotions. */
+  readonly promotions: StorefrontPromotionPresentation;
+  readonly selectedOptions: ReadonlyArray<SelectedOption>;
+  readonly sku?: Maybe<Scalars['String']['output']>;
+  readonly title: Scalars['String']['output'];
+};
+
+/**
+ * The variant of a product card. Price fields come from the listing offer price index,
+ * the same row ProductVariant price fields read.
+ */
+export type ProductCardVariantBenefitPriceArgs = {
+  promotionKey: Scalars['ID']['input'];
+};
+
+/**
  * A fully prepared comparison of concrete variants from one product category.
  *
  * Catalog validates publication, ownership and effective-profile compatibility,
@@ -7236,8 +7345,8 @@ export type ProductConnection = Connection & {
    * vendor is pinned, and `availability` when an inStock rule is present.
    */
   readonly filters: ReadonlyArray<Filter>;
-  /** The products contained in the returned edges. */
-  readonly nodes: ReadonlyArray<Product>;
+  /** The product cards contained in the returned edges. */
+  readonly nodes: ReadonlyArray<ProductCard>;
   /**
    * Page boundaries and availability of adjacent pages. Use the returned cursors with the pagination
    * arguments.
@@ -7265,16 +7374,11 @@ export type ProductEdge = {
   /** An opaque cursor for this product in the current listing. */
   readonly cursor: Scalars['Cursor']['output'];
   /**
-   * The product variant that satisfies the variant conditions of this listing:
-   * collection rules, option, price, sale, promotion and availability filters. Available
-   * variants come first, then the lower price in the context currency, then the
-   * index order. With a price or discount sort it is always the variant that
-   * ordered the product. Null with other sorts when the listing has no variant
-   * conditions; clients then fall back to their default variant selection.
+   * The product card at the end of the edge. A product whose card is not available (it
+   * was unpublished and the index is not updated yet) leaves no edge: the page can be
+   * shorter than first while totalCount is unchanged.
    */
-  readonly matchedVariant?: Maybe<ProductVariant>;
-  /** The product at the end of the edge. */
-  readonly node: Product;
+  readonly node: ProductCard;
 };
 
 /** A localized product specification such as material or screen size. */
@@ -7642,8 +7746,11 @@ export type ProductRatingCriterionSummary = {
  */
 export type ProductRecommendation = {
   readonly __typename: 'ProductRecommendation';
-  /** Current federated Product presentation resolved by Catalog. */
-  readonly product: Product;
+  /**
+   * The recommended product card. The card has no variant in its id: the variant is the
+   * default one, then the first available one, then the first one.
+   */
+  readonly product: ProductCard;
   /** Primary source that contributed this recommendation. */
   readonly source: ProductRecommendationSource;
 };
@@ -7663,7 +7770,10 @@ export type ProductRecommendationConnection = Connection & {
   readonly __typename: 'ProductRecommendationConnection';
   /** Recommendation edges in their published display order. */
   readonly edges: ReadonlyArray<ProductRecommendationEdge>;
-  /** Recommendations contained in the returned edges. */
+  /**
+   * Recommendations contained in the returned edges. A recommendation whose product has
+   * no card is left out.
+   */
   readonly nodes: ReadonlyArray<ProductRecommendation>;
   /** Whether another page is available and the cursor to pass as after when requesting it. */
   readonly pageInfo: PageInfo;
@@ -7974,6 +8084,12 @@ export type Query = {
   readonly product?: Maybe<Product>;
   /** Returns a published product by its stable storefront handle. */
   readonly productByHandle?: Maybe<Product>;
+  /**
+   * Product cards by id, in the order of ids; at most 100 ids. Each card has the id it
+   * was requested with. Null for an unknown id, a product that is not published, deleted
+   * or not indexed yet, and for a variant that does not belong to the product.
+   */
+  readonly productCards: ReadonlyArray<Maybe<ProductCard>>;
   /** Returns a product question visible in the current storefront context. */
   readonly productQuestion?: Maybe<ProductQuestion>;
   /** Returns a published product-question answer by its global ID. */
@@ -8174,6 +8290,11 @@ export type QueryProductArgs = {
 /** Public Catalog entry points for the active storefront context. */
 export type QueryProductByHandleArgs = {
   handle: Scalars['String']['input'];
+};
+
+/** Public Catalog entry points for the active storefront context. */
+export type QueryProductCardsArgs = {
+  ids: ReadonlyArray<Scalars['ID']['input']>;
 };
 
 /** Public Catalog entry points for the active storefront context. */
@@ -9241,19 +9362,20 @@ export type StorefrontPromotion = {
   readonly appliesOnOneTimePurchase: Scalars['Boolean']['output'];
   readonly appliesOnSubscription: Scalars['Boolean']['output'];
   /**
-   * Products a buy X get Y promotion gives its benefit to when the merchant chose products; an item is
-   * null for a product the storefront does not show. Null when the benefit is chosen otherwise or for
-   * any other kind.
+   * Product cards of the products a buy X get Y promotion gives its benefit to when the merchant chose
+   * products; the listing picks each card variant. An item is null for a product the storefront does
+   * not show. Null when the benefit is chosen otherwise or for any other kind.
    */
-  readonly benefitProducts?: Maybe<ReadonlyArray<Maybe<Product>>>;
+  readonly benefitProductCards?: Maybe<ReadonlyArray<Maybe<ProductCard>>>;
   /** What a buy X get Y promotion gives its benefit to; null for any other kind. */
   readonly benefitScope?: Maybe<StorefrontPromotionBenefitScope>;
   /**
-   * Variants a buy X get Y promotion gives its benefit to when the merchant chose variants, such as
-   * the gifts to choose from; only variants the storefront shows and the promotion does not exclude.
-   * Null when the benefit is chosen otherwise or for any other kind.
+   * Product cards of the variants a buy X get Y promotion gives its benefit to when the merchant chose
+   * variants, such as the gifts to choose from; each card shows its gift variant. Only variants the
+   * storefront shows and the promotion does not exclude; an item is null for a variant the listing
+   * index does not have. Null when the benefit is chosen otherwise or for any other kind.
    */
-  readonly benefitVariants?: Maybe<ReadonlyArray<ProductVariant>>;
+  readonly benefitVariantCards?: Maybe<ReadonlyArray<Maybe<ProductCard>>>;
   readonly endsAt?: Maybe<Scalars['DateTime']['output']>;
   /** Stable opaque key of the promotion. */
   readonly key: Scalars['ID']['output'];
@@ -9305,7 +9427,7 @@ export type StorefrontPromotionPlacement =
   /** The list of the store promotions. */
   | 'PROMOTION_LIST';
 
-/** A set of promotions with cache hints for the storefront. */
+/** Storefront promotions with the nearest change of the promotion set. */
 export type StorefrontPromotionPresentation = {
   readonly __typename: 'StorefrontPromotionPresentation';
   /** Ordered by sort order, then by discount priority. */
@@ -9556,9 +9678,10 @@ export type SdkAccountProductActionsQuery = {
         readonly nodes: ReadonlyArray<{
           readonly __typename: 'CustomerWishlistItem';
           readonly id: string;
-          readonly product?: {
-            readonly __typename: 'Product';
+          readonly card?: {
+            readonly __typename: 'ProductCard';
             readonly id: string;
+            readonly productId: string;
           } | null;
         }>;
       };
@@ -9800,65 +9923,23 @@ export type SdkCartFragment_CartFragment = {
         readonly amount: any;
         readonly currencyCode: CurrencyCode;
       } | null;
-      readonly benefitVariants?: ReadonlyArray<{
-        readonly __typename: 'ProductVariant';
+      readonly benefitVariantCards?: ReadonlyArray<{
+        readonly __typename: 'ProductCard';
         readonly id: string;
+        readonly productId: string;
         readonly handle: string;
         readonly title: string;
         readonly availableForSale: boolean;
-        readonly product: {
-          readonly __typename: 'Product';
-          readonly id: string;
-          readonly handle: string;
-          readonly title: string;
-          readonly vendor?: {
-            readonly __typename: 'Vendor';
-            readonly name: string;
-          } | null;
-        };
-        readonly cover?:
-          | { readonly __typename: 'ExternalVideo'; readonly id: string }
-          | {
-              readonly __typename: 'MediaImage';
-              readonly id: string;
-              readonly image: {
-                readonly __typename: 'Image';
-                readonly url: any;
-              };
-            }
-          | { readonly __typename: 'Model3d'; readonly id: string }
-          | { readonly __typename: 'Video'; readonly id: string }
-          | null;
-        readonly price?: {
-          readonly __typename: 'Money';
-          readonly amount: any;
-          readonly currencyCode: CurrencyCode;
+        readonly vendor?: {
+          readonly __typename: 'Vendor';
+          readonly name: string;
         } | null;
-        readonly compareAtPrice?: {
-          readonly __typename: 'Money';
-          readonly amount: any;
-          readonly currencyCode: CurrencyCode;
-        } | null;
-      }> | null;
-      readonly benefitProducts?: ReadonlyArray<{
-        readonly __typename: 'Product';
-        readonly id: string;
-        readonly selectedOrFirstAvailableVariant?: {
-          readonly __typename: 'ProductVariant';
+        readonly variant: {
+          readonly __typename: 'ProductCardVariant';
           readonly id: string;
           readonly handle: string;
           readonly title: string;
           readonly availableForSale: boolean;
-          readonly product: {
-            readonly __typename: 'Product';
-            readonly id: string;
-            readonly handle: string;
-            readonly title: string;
-            readonly vendor?: {
-              readonly __typename: 'Vendor';
-              readonly name: string;
-            } | null;
-          };
           readonly cover?:
             | { readonly __typename: 'ExternalVideo'; readonly id: string }
             | {
@@ -9882,7 +9963,49 @@ export type SdkCartFragment_CartFragment = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
+        };
+      } | null> | null;
+      readonly benefitProductCards?: ReadonlyArray<{
+        readonly __typename: 'ProductCard';
+        readonly id: string;
+        readonly productId: string;
+        readonly handle: string;
+        readonly title: string;
+        readonly availableForSale: boolean;
+        readonly vendor?: {
+          readonly __typename: 'Vendor';
+          readonly name: string;
         } | null;
+        readonly variant: {
+          readonly __typename: 'ProductCardVariant';
+          readonly id: string;
+          readonly handle: string;
+          readonly title: string;
+          readonly availableForSale: boolean;
+          readonly cover?:
+            | { readonly __typename: 'ExternalVideo'; readonly id: string }
+            | {
+                readonly __typename: 'MediaImage';
+                readonly id: string;
+                readonly image: {
+                  readonly __typename: 'Image';
+                  readonly url: any;
+                };
+              }
+            | { readonly __typename: 'Model3d'; readonly id: string }
+            | { readonly __typename: 'Video'; readonly id: string }
+            | null;
+          readonly price?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+          readonly compareAtPrice?: {
+            readonly __typename: 'Money';
+            readonly amount: any;
+            readonly currencyCode: CurrencyCode;
+          } | null;
+        };
       } | null> | null;
     } | null;
     readonly requirement: {
@@ -11250,65 +11373,23 @@ export type SdkAddPromoCodeMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
-          readonly benefitVariants?: ReadonlyArray<{
-            readonly __typename: 'ProductVariant';
+          readonly benefitVariantCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
             readonly id: string;
+            readonly productId: string;
             readonly handle: string;
             readonly title: string;
             readonly availableForSale: boolean;
-            readonly product: {
-              readonly __typename: 'Product';
-              readonly id: string;
-              readonly handle: string;
-              readonly title: string;
-              readonly vendor?: {
-                readonly __typename: 'Vendor';
-                readonly name: string;
-              } | null;
-            };
-            readonly cover?:
-              | { readonly __typename: 'ExternalVideo'; readonly id: string }
-              | {
-                  readonly __typename: 'MediaImage';
-                  readonly id: string;
-                  readonly image: {
-                    readonly __typename: 'Image';
-                    readonly url: any;
-                  };
-                }
-              | { readonly __typename: 'Model3d'; readonly id: string }
-              | { readonly __typename: 'Video'; readonly id: string }
-              | null;
-            readonly price?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
-            readonly compareAtPrice?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
-            } | null;
-          }> | null;
-          readonly benefitProducts?: ReadonlyArray<{
-            readonly __typename: 'Product';
-            readonly id: string;
-            readonly selectedOrFirstAvailableVariant?: {
-              readonly __typename: 'ProductVariant';
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
               readonly id: string;
               readonly handle: string;
               readonly title: string;
               readonly availableForSale: boolean;
-              readonly product: {
-                readonly __typename: 'Product';
-                readonly id: string;
-                readonly handle: string;
-                readonly title: string;
-                readonly vendor?: {
-                  readonly __typename: 'Vendor';
-                  readonly name: string;
-                } | null;
-              };
               readonly cover?:
                 | { readonly __typename: 'ExternalVideo'; readonly id: string }
                 | {
@@ -11332,7 +11413,49 @@ export type SdkAddPromoCodeMutation = {
                 readonly amount: any;
                 readonly currencyCode: CurrencyCode;
               } | null;
+            };
+          } | null> | null;
+          readonly benefitProductCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
+            readonly id: string;
+            readonly productId: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            };
           } | null> | null;
         } | null;
         readonly requirement: {
@@ -12134,65 +12257,23 @@ export type SdkAddToCartMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
-          readonly benefitVariants?: ReadonlyArray<{
-            readonly __typename: 'ProductVariant';
+          readonly benefitVariantCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
             readonly id: string;
+            readonly productId: string;
             readonly handle: string;
             readonly title: string;
             readonly availableForSale: boolean;
-            readonly product: {
-              readonly __typename: 'Product';
-              readonly id: string;
-              readonly handle: string;
-              readonly title: string;
-              readonly vendor?: {
-                readonly __typename: 'Vendor';
-                readonly name: string;
-              } | null;
-            };
-            readonly cover?:
-              | { readonly __typename: 'ExternalVideo'; readonly id: string }
-              | {
-                  readonly __typename: 'MediaImage';
-                  readonly id: string;
-                  readonly image: {
-                    readonly __typename: 'Image';
-                    readonly url: any;
-                  };
-                }
-              | { readonly __typename: 'Model3d'; readonly id: string }
-              | { readonly __typename: 'Video'; readonly id: string }
-              | null;
-            readonly price?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
-            readonly compareAtPrice?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
-            } | null;
-          }> | null;
-          readonly benefitProducts?: ReadonlyArray<{
-            readonly __typename: 'Product';
-            readonly id: string;
-            readonly selectedOrFirstAvailableVariant?: {
-              readonly __typename: 'ProductVariant';
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
               readonly id: string;
               readonly handle: string;
               readonly title: string;
               readonly availableForSale: boolean;
-              readonly product: {
-                readonly __typename: 'Product';
-                readonly id: string;
-                readonly handle: string;
-                readonly title: string;
-                readonly vendor?: {
-                  readonly __typename: 'Vendor';
-                  readonly name: string;
-                } | null;
-              };
               readonly cover?:
                 | { readonly __typename: 'ExternalVideo'; readonly id: string }
                 | {
@@ -12216,7 +12297,49 @@ export type SdkAddToCartMutation = {
                 readonly amount: any;
                 readonly currencyCode: CurrencyCode;
               } | null;
+            };
+          } | null> | null;
+          readonly benefitProductCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
+            readonly id: string;
+            readonly productId: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            };
           } | null> | null;
         } | null;
         readonly requirement: {
@@ -13019,65 +13142,23 @@ export type SdkClaimCartMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
-          readonly benefitVariants?: ReadonlyArray<{
-            readonly __typename: 'ProductVariant';
+          readonly benefitVariantCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
             readonly id: string;
+            readonly productId: string;
             readonly handle: string;
             readonly title: string;
             readonly availableForSale: boolean;
-            readonly product: {
-              readonly __typename: 'Product';
-              readonly id: string;
-              readonly handle: string;
-              readonly title: string;
-              readonly vendor?: {
-                readonly __typename: 'Vendor';
-                readonly name: string;
-              } | null;
-            };
-            readonly cover?:
-              | { readonly __typename: 'ExternalVideo'; readonly id: string }
-              | {
-                  readonly __typename: 'MediaImage';
-                  readonly id: string;
-                  readonly image: {
-                    readonly __typename: 'Image';
-                    readonly url: any;
-                  };
-                }
-              | { readonly __typename: 'Model3d'; readonly id: string }
-              | { readonly __typename: 'Video'; readonly id: string }
-              | null;
-            readonly price?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
-            readonly compareAtPrice?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
-            } | null;
-          }> | null;
-          readonly benefitProducts?: ReadonlyArray<{
-            readonly __typename: 'Product';
-            readonly id: string;
-            readonly selectedOrFirstAvailableVariant?: {
-              readonly __typename: 'ProductVariant';
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
               readonly id: string;
               readonly handle: string;
               readonly title: string;
               readonly availableForSale: boolean;
-              readonly product: {
-                readonly __typename: 'Product';
-                readonly id: string;
-                readonly handle: string;
-                readonly title: string;
-                readonly vendor?: {
-                  readonly __typename: 'Vendor';
-                  readonly name: string;
-                } | null;
-              };
               readonly cover?:
                 | { readonly __typename: 'ExternalVideo'; readonly id: string }
                 | {
@@ -13101,7 +13182,49 @@ export type SdkClaimCartMutation = {
                 readonly amount: any;
                 readonly currencyCode: CurrencyCode;
               } | null;
+            };
+          } | null> | null;
+          readonly benefitProductCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
+            readonly id: string;
+            readonly productId: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            };
           } | null> | null;
         } | null;
         readonly requirement: {
@@ -13903,65 +14026,23 @@ export type SdkClearCartMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
-          readonly benefitVariants?: ReadonlyArray<{
-            readonly __typename: 'ProductVariant';
+          readonly benefitVariantCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
             readonly id: string;
+            readonly productId: string;
             readonly handle: string;
             readonly title: string;
             readonly availableForSale: boolean;
-            readonly product: {
-              readonly __typename: 'Product';
-              readonly id: string;
-              readonly handle: string;
-              readonly title: string;
-              readonly vendor?: {
-                readonly __typename: 'Vendor';
-                readonly name: string;
-              } | null;
-            };
-            readonly cover?:
-              | { readonly __typename: 'ExternalVideo'; readonly id: string }
-              | {
-                  readonly __typename: 'MediaImage';
-                  readonly id: string;
-                  readonly image: {
-                    readonly __typename: 'Image';
-                    readonly url: any;
-                  };
-                }
-              | { readonly __typename: 'Model3d'; readonly id: string }
-              | { readonly __typename: 'Video'; readonly id: string }
-              | null;
-            readonly price?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
-            readonly compareAtPrice?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
-            } | null;
-          }> | null;
-          readonly benefitProducts?: ReadonlyArray<{
-            readonly __typename: 'Product';
-            readonly id: string;
-            readonly selectedOrFirstAvailableVariant?: {
-              readonly __typename: 'ProductVariant';
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
               readonly id: string;
               readonly handle: string;
               readonly title: string;
               readonly availableForSale: boolean;
-              readonly product: {
-                readonly __typename: 'Product';
-                readonly id: string;
-                readonly handle: string;
-                readonly title: string;
-                readonly vendor?: {
-                  readonly __typename: 'Vendor';
-                  readonly name: string;
-                } | null;
-              };
               readonly cover?:
                 | { readonly __typename: 'ExternalVideo'; readonly id: string }
                 | {
@@ -13985,7 +14066,49 @@ export type SdkClearCartMutation = {
                 readonly amount: any;
                 readonly currencyCode: CurrencyCode;
               } | null;
+            };
+          } | null> | null;
+          readonly benefitProductCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
+            readonly id: string;
+            readonly productId: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            };
           } | null> | null;
         } | null;
         readonly requirement: {
@@ -14787,65 +14910,23 @@ export type SdkCreateCartMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
-          readonly benefitVariants?: ReadonlyArray<{
-            readonly __typename: 'ProductVariant';
+          readonly benefitVariantCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
             readonly id: string;
+            readonly productId: string;
             readonly handle: string;
             readonly title: string;
             readonly availableForSale: boolean;
-            readonly product: {
-              readonly __typename: 'Product';
-              readonly id: string;
-              readonly handle: string;
-              readonly title: string;
-              readonly vendor?: {
-                readonly __typename: 'Vendor';
-                readonly name: string;
-              } | null;
-            };
-            readonly cover?:
-              | { readonly __typename: 'ExternalVideo'; readonly id: string }
-              | {
-                  readonly __typename: 'MediaImage';
-                  readonly id: string;
-                  readonly image: {
-                    readonly __typename: 'Image';
-                    readonly url: any;
-                  };
-                }
-              | { readonly __typename: 'Model3d'; readonly id: string }
-              | { readonly __typename: 'Video'; readonly id: string }
-              | null;
-            readonly price?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
-            readonly compareAtPrice?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
-            } | null;
-          }> | null;
-          readonly benefitProducts?: ReadonlyArray<{
-            readonly __typename: 'Product';
-            readonly id: string;
-            readonly selectedOrFirstAvailableVariant?: {
-              readonly __typename: 'ProductVariant';
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
               readonly id: string;
               readonly handle: string;
               readonly title: string;
               readonly availableForSale: boolean;
-              readonly product: {
-                readonly __typename: 'Product';
-                readonly id: string;
-                readonly handle: string;
-                readonly title: string;
-                readonly vendor?: {
-                  readonly __typename: 'Vendor';
-                  readonly name: string;
-                } | null;
-              };
               readonly cover?:
                 | { readonly __typename: 'ExternalVideo'; readonly id: string }
                 | {
@@ -14869,7 +14950,49 @@ export type SdkCreateCartMutation = {
                 readonly amount: any;
                 readonly currencyCode: CurrencyCode;
               } | null;
+            };
+          } | null> | null;
+          readonly benefitProductCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
+            readonly id: string;
+            readonly productId: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            };
           } | null> | null;
         } | null;
         readonly requirement: {
@@ -15671,65 +15794,23 @@ export type SdkRemoveFromCartMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
-          readonly benefitVariants?: ReadonlyArray<{
-            readonly __typename: 'ProductVariant';
+          readonly benefitVariantCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
             readonly id: string;
+            readonly productId: string;
             readonly handle: string;
             readonly title: string;
             readonly availableForSale: boolean;
-            readonly product: {
-              readonly __typename: 'Product';
-              readonly id: string;
-              readonly handle: string;
-              readonly title: string;
-              readonly vendor?: {
-                readonly __typename: 'Vendor';
-                readonly name: string;
-              } | null;
-            };
-            readonly cover?:
-              | { readonly __typename: 'ExternalVideo'; readonly id: string }
-              | {
-                  readonly __typename: 'MediaImage';
-                  readonly id: string;
-                  readonly image: {
-                    readonly __typename: 'Image';
-                    readonly url: any;
-                  };
-                }
-              | { readonly __typename: 'Model3d'; readonly id: string }
-              | { readonly __typename: 'Video'; readonly id: string }
-              | null;
-            readonly price?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
-            readonly compareAtPrice?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
-            } | null;
-          }> | null;
-          readonly benefitProducts?: ReadonlyArray<{
-            readonly __typename: 'Product';
-            readonly id: string;
-            readonly selectedOrFirstAvailableVariant?: {
-              readonly __typename: 'ProductVariant';
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
               readonly id: string;
               readonly handle: string;
               readonly title: string;
               readonly availableForSale: boolean;
-              readonly product: {
-                readonly __typename: 'Product';
-                readonly id: string;
-                readonly handle: string;
-                readonly title: string;
-                readonly vendor?: {
-                  readonly __typename: 'Vendor';
-                  readonly name: string;
-                } | null;
-              };
               readonly cover?:
                 | { readonly __typename: 'ExternalVideo'; readonly id: string }
                 | {
@@ -15753,7 +15834,49 @@ export type SdkRemoveFromCartMutation = {
                 readonly amount: any;
                 readonly currencyCode: CurrencyCode;
               } | null;
+            };
+          } | null> | null;
+          readonly benefitProductCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
+            readonly id: string;
+            readonly productId: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            };
           } | null> | null;
         } | null;
         readonly requirement: {
@@ -16555,65 +16678,23 @@ export type SdkRemovePromoCodeMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
-          readonly benefitVariants?: ReadonlyArray<{
-            readonly __typename: 'ProductVariant';
+          readonly benefitVariantCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
             readonly id: string;
+            readonly productId: string;
             readonly handle: string;
             readonly title: string;
             readonly availableForSale: boolean;
-            readonly product: {
-              readonly __typename: 'Product';
-              readonly id: string;
-              readonly handle: string;
-              readonly title: string;
-              readonly vendor?: {
-                readonly __typename: 'Vendor';
-                readonly name: string;
-              } | null;
-            };
-            readonly cover?:
-              | { readonly __typename: 'ExternalVideo'; readonly id: string }
-              | {
-                  readonly __typename: 'MediaImage';
-                  readonly id: string;
-                  readonly image: {
-                    readonly __typename: 'Image';
-                    readonly url: any;
-                  };
-                }
-              | { readonly __typename: 'Model3d'; readonly id: string }
-              | { readonly __typename: 'Video'; readonly id: string }
-              | null;
-            readonly price?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
-            readonly compareAtPrice?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
-            } | null;
-          }> | null;
-          readonly benefitProducts?: ReadonlyArray<{
-            readonly __typename: 'Product';
-            readonly id: string;
-            readonly selectedOrFirstAvailableVariant?: {
-              readonly __typename: 'ProductVariant';
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
               readonly id: string;
               readonly handle: string;
               readonly title: string;
               readonly availableForSale: boolean;
-              readonly product: {
-                readonly __typename: 'Product';
-                readonly id: string;
-                readonly handle: string;
-                readonly title: string;
-                readonly vendor?: {
-                  readonly __typename: 'Vendor';
-                  readonly name: string;
-                } | null;
-              };
               readonly cover?:
                 | { readonly __typename: 'ExternalVideo'; readonly id: string }
                 | {
@@ -16637,7 +16718,49 @@ export type SdkRemovePromoCodeMutation = {
                 readonly amount: any;
                 readonly currencyCode: CurrencyCode;
               } | null;
+            };
+          } | null> | null;
+          readonly benefitProductCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
+            readonly id: string;
+            readonly productId: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            };
           } | null> | null;
         } | null;
         readonly requirement: {
@@ -17439,65 +17562,23 @@ export type SdkReplaceCartItemMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
-          readonly benefitVariants?: ReadonlyArray<{
-            readonly __typename: 'ProductVariant';
+          readonly benefitVariantCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
             readonly id: string;
+            readonly productId: string;
             readonly handle: string;
             readonly title: string;
             readonly availableForSale: boolean;
-            readonly product: {
-              readonly __typename: 'Product';
-              readonly id: string;
-              readonly handle: string;
-              readonly title: string;
-              readonly vendor?: {
-                readonly __typename: 'Vendor';
-                readonly name: string;
-              } | null;
-            };
-            readonly cover?:
-              | { readonly __typename: 'ExternalVideo'; readonly id: string }
-              | {
-                  readonly __typename: 'MediaImage';
-                  readonly id: string;
-                  readonly image: {
-                    readonly __typename: 'Image';
-                    readonly url: any;
-                  };
-                }
-              | { readonly __typename: 'Model3d'; readonly id: string }
-              | { readonly __typename: 'Video'; readonly id: string }
-              | null;
-            readonly price?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
-            readonly compareAtPrice?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
-            } | null;
-          }> | null;
-          readonly benefitProducts?: ReadonlyArray<{
-            readonly __typename: 'Product';
-            readonly id: string;
-            readonly selectedOrFirstAvailableVariant?: {
-              readonly __typename: 'ProductVariant';
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
               readonly id: string;
               readonly handle: string;
               readonly title: string;
               readonly availableForSale: boolean;
-              readonly product: {
-                readonly __typename: 'Product';
-                readonly id: string;
-                readonly handle: string;
-                readonly title: string;
-                readonly vendor?: {
-                  readonly __typename: 'Vendor';
-                  readonly name: string;
-                } | null;
-              };
               readonly cover?:
                 | { readonly __typename: 'ExternalVideo'; readonly id: string }
                 | {
@@ -17521,7 +17602,49 @@ export type SdkReplaceCartItemMutation = {
                 readonly amount: any;
                 readonly currencyCode: CurrencyCode;
               } | null;
+            };
+          } | null> | null;
+          readonly benefitProductCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
+            readonly id: string;
+            readonly productId: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            };
           } | null> | null;
         } | null;
         readonly requirement: {
@@ -18323,65 +18446,23 @@ export type SdkUpdateCartCurrencyCodeMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
-          readonly benefitVariants?: ReadonlyArray<{
-            readonly __typename: 'ProductVariant';
+          readonly benefitVariantCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
             readonly id: string;
+            readonly productId: string;
             readonly handle: string;
             readonly title: string;
             readonly availableForSale: boolean;
-            readonly product: {
-              readonly __typename: 'Product';
-              readonly id: string;
-              readonly handle: string;
-              readonly title: string;
-              readonly vendor?: {
-                readonly __typename: 'Vendor';
-                readonly name: string;
-              } | null;
-            };
-            readonly cover?:
-              | { readonly __typename: 'ExternalVideo'; readonly id: string }
-              | {
-                  readonly __typename: 'MediaImage';
-                  readonly id: string;
-                  readonly image: {
-                    readonly __typename: 'Image';
-                    readonly url: any;
-                  };
-                }
-              | { readonly __typename: 'Model3d'; readonly id: string }
-              | { readonly __typename: 'Video'; readonly id: string }
-              | null;
-            readonly price?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
-            readonly compareAtPrice?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
-            } | null;
-          }> | null;
-          readonly benefitProducts?: ReadonlyArray<{
-            readonly __typename: 'Product';
-            readonly id: string;
-            readonly selectedOrFirstAvailableVariant?: {
-              readonly __typename: 'ProductVariant';
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
               readonly id: string;
               readonly handle: string;
               readonly title: string;
               readonly availableForSale: boolean;
-              readonly product: {
-                readonly __typename: 'Product';
-                readonly id: string;
-                readonly handle: string;
-                readonly title: string;
-                readonly vendor?: {
-                  readonly __typename: 'Vendor';
-                  readonly name: string;
-                } | null;
-              };
               readonly cover?:
                 | { readonly __typename: 'ExternalVideo'; readonly id: string }
                 | {
@@ -18405,7 +18486,49 @@ export type SdkUpdateCartCurrencyCodeMutation = {
                 readonly amount: any;
                 readonly currencyCode: CurrencyCode;
               } | null;
+            };
+          } | null> | null;
+          readonly benefitProductCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
+            readonly id: string;
+            readonly productId: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            };
           } | null> | null;
         } | null;
         readonly requirement: {
@@ -19207,65 +19330,23 @@ export type SdkUpdateCartLanguageCodeMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
-          readonly benefitVariants?: ReadonlyArray<{
-            readonly __typename: 'ProductVariant';
+          readonly benefitVariantCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
             readonly id: string;
+            readonly productId: string;
             readonly handle: string;
             readonly title: string;
             readonly availableForSale: boolean;
-            readonly product: {
-              readonly __typename: 'Product';
-              readonly id: string;
-              readonly handle: string;
-              readonly title: string;
-              readonly vendor?: {
-                readonly __typename: 'Vendor';
-                readonly name: string;
-              } | null;
-            };
-            readonly cover?:
-              | { readonly __typename: 'ExternalVideo'; readonly id: string }
-              | {
-                  readonly __typename: 'MediaImage';
-                  readonly id: string;
-                  readonly image: {
-                    readonly __typename: 'Image';
-                    readonly url: any;
-                  };
-                }
-              | { readonly __typename: 'Model3d'; readonly id: string }
-              | { readonly __typename: 'Video'; readonly id: string }
-              | null;
-            readonly price?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
-            readonly compareAtPrice?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
-            } | null;
-          }> | null;
-          readonly benefitProducts?: ReadonlyArray<{
-            readonly __typename: 'Product';
-            readonly id: string;
-            readonly selectedOrFirstAvailableVariant?: {
-              readonly __typename: 'ProductVariant';
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
               readonly id: string;
               readonly handle: string;
               readonly title: string;
               readonly availableForSale: boolean;
-              readonly product: {
-                readonly __typename: 'Product';
-                readonly id: string;
-                readonly handle: string;
-                readonly title: string;
-                readonly vendor?: {
-                  readonly __typename: 'Vendor';
-                  readonly name: string;
-                } | null;
-              };
               readonly cover?:
                 | { readonly __typename: 'ExternalVideo'; readonly id: string }
                 | {
@@ -19289,7 +19370,49 @@ export type SdkUpdateCartLanguageCodeMutation = {
                 readonly amount: any;
                 readonly currencyCode: CurrencyCode;
               } | null;
+            };
+          } | null> | null;
+          readonly benefitProductCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
+            readonly id: string;
+            readonly productId: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            };
           } | null> | null;
         } | null;
         readonly requirement: {
@@ -20091,65 +20214,23 @@ export type SdkUpdateCartLineQuantityMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
-          readonly benefitVariants?: ReadonlyArray<{
-            readonly __typename: 'ProductVariant';
+          readonly benefitVariantCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
             readonly id: string;
+            readonly productId: string;
             readonly handle: string;
             readonly title: string;
             readonly availableForSale: boolean;
-            readonly product: {
-              readonly __typename: 'Product';
-              readonly id: string;
-              readonly handle: string;
-              readonly title: string;
-              readonly vendor?: {
-                readonly __typename: 'Vendor';
-                readonly name: string;
-              } | null;
-            };
-            readonly cover?:
-              | { readonly __typename: 'ExternalVideo'; readonly id: string }
-              | {
-                  readonly __typename: 'MediaImage';
-                  readonly id: string;
-                  readonly image: {
-                    readonly __typename: 'Image';
-                    readonly url: any;
-                  };
-                }
-              | { readonly __typename: 'Model3d'; readonly id: string }
-              | { readonly __typename: 'Video'; readonly id: string }
-              | null;
-            readonly price?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
-            readonly compareAtPrice?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
-            } | null;
-          }> | null;
-          readonly benefitProducts?: ReadonlyArray<{
-            readonly __typename: 'Product';
-            readonly id: string;
-            readonly selectedOrFirstAvailableVariant?: {
-              readonly __typename: 'ProductVariant';
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
               readonly id: string;
               readonly handle: string;
               readonly title: string;
               readonly availableForSale: boolean;
-              readonly product: {
-                readonly __typename: 'Product';
-                readonly id: string;
-                readonly handle: string;
-                readonly title: string;
-                readonly vendor?: {
-                  readonly __typename: 'Vendor';
-                  readonly name: string;
-                } | null;
-              };
               readonly cover?:
                 | { readonly __typename: 'ExternalVideo'; readonly id: string }
                 | {
@@ -20173,7 +20254,49 @@ export type SdkUpdateCartLineQuantityMutation = {
                 readonly amount: any;
                 readonly currencyCode: CurrencyCode;
               } | null;
+            };
+          } | null> | null;
+          readonly benefitProductCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
+            readonly id: string;
+            readonly productId: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            };
           } | null> | null;
         } | null;
         readonly requirement: {
@@ -20974,65 +21097,23 @@ export type SdkLoadAccountCartQuery = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
-          readonly benefitVariants?: ReadonlyArray<{
-            readonly __typename: 'ProductVariant';
+          readonly benefitVariantCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
             readonly id: string;
+            readonly productId: string;
             readonly handle: string;
             readonly title: string;
             readonly availableForSale: boolean;
-            readonly product: {
-              readonly __typename: 'Product';
-              readonly id: string;
-              readonly handle: string;
-              readonly title: string;
-              readonly vendor?: {
-                readonly __typename: 'Vendor';
-                readonly name: string;
-              } | null;
-            };
-            readonly cover?:
-              | { readonly __typename: 'ExternalVideo'; readonly id: string }
-              | {
-                  readonly __typename: 'MediaImage';
-                  readonly id: string;
-                  readonly image: {
-                    readonly __typename: 'Image';
-                    readonly url: any;
-                  };
-                }
-              | { readonly __typename: 'Model3d'; readonly id: string }
-              | { readonly __typename: 'Video'; readonly id: string }
-              | null;
-            readonly price?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
-            readonly compareAtPrice?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
-            } | null;
-          }> | null;
-          readonly benefitProducts?: ReadonlyArray<{
-            readonly __typename: 'Product';
-            readonly id: string;
-            readonly selectedOrFirstAvailableVariant?: {
-              readonly __typename: 'ProductVariant';
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
               readonly id: string;
               readonly handle: string;
               readonly title: string;
               readonly availableForSale: boolean;
-              readonly product: {
-                readonly __typename: 'Product';
-                readonly id: string;
-                readonly handle: string;
-                readonly title: string;
-                readonly vendor?: {
-                  readonly __typename: 'Vendor';
-                  readonly name: string;
-                } | null;
-              };
               readonly cover?:
                 | { readonly __typename: 'ExternalVideo'; readonly id: string }
                 | {
@@ -21056,7 +21137,49 @@ export type SdkLoadAccountCartQuery = {
                 readonly amount: any;
                 readonly currencyCode: CurrencyCode;
               } | null;
+            };
+          } | null> | null;
+          readonly benefitProductCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
+            readonly id: string;
+            readonly productId: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            };
           } | null> | null;
         } | null;
         readonly requirement: {
@@ -21849,65 +21972,23 @@ export type SdkLoadCartQuery = {
           readonly amount: any;
           readonly currencyCode: CurrencyCode;
         } | null;
-        readonly benefitVariants?: ReadonlyArray<{
-          readonly __typename: 'ProductVariant';
+        readonly benefitVariantCards?: ReadonlyArray<{
+          readonly __typename: 'ProductCard';
           readonly id: string;
+          readonly productId: string;
           readonly handle: string;
           readonly title: string;
           readonly availableForSale: boolean;
-          readonly product: {
-            readonly __typename: 'Product';
-            readonly id: string;
-            readonly handle: string;
-            readonly title: string;
-            readonly vendor?: {
-              readonly __typename: 'Vendor';
-              readonly name: string;
-            } | null;
-          };
-          readonly cover?:
-            | { readonly __typename: 'ExternalVideo'; readonly id: string }
-            | {
-                readonly __typename: 'MediaImage';
-                readonly id: string;
-                readonly image: {
-                  readonly __typename: 'Image';
-                  readonly url: any;
-                };
-              }
-            | { readonly __typename: 'Model3d'; readonly id: string }
-            | { readonly __typename: 'Video'; readonly id: string }
-            | null;
-          readonly price?: {
-            readonly __typename: 'Money';
-            readonly amount: any;
-            readonly currencyCode: CurrencyCode;
+          readonly vendor?: {
+            readonly __typename: 'Vendor';
+            readonly name: string;
           } | null;
-          readonly compareAtPrice?: {
-            readonly __typename: 'Money';
-            readonly amount: any;
-            readonly currencyCode: CurrencyCode;
-          } | null;
-        }> | null;
-        readonly benefitProducts?: ReadonlyArray<{
-          readonly __typename: 'Product';
-          readonly id: string;
-          readonly selectedOrFirstAvailableVariant?: {
-            readonly __typename: 'ProductVariant';
+          readonly variant: {
+            readonly __typename: 'ProductCardVariant';
             readonly id: string;
             readonly handle: string;
             readonly title: string;
             readonly availableForSale: boolean;
-            readonly product: {
-              readonly __typename: 'Product';
-              readonly id: string;
-              readonly handle: string;
-              readonly title: string;
-              readonly vendor?: {
-                readonly __typename: 'Vendor';
-                readonly name: string;
-              } | null;
-            };
             readonly cover?:
               | { readonly __typename: 'ExternalVideo'; readonly id: string }
               | {
@@ -21931,7 +22012,49 @@ export type SdkLoadCartQuery = {
               readonly amount: any;
               readonly currencyCode: CurrencyCode;
             } | null;
+          };
+        } | null> | null;
+        readonly benefitProductCards?: ReadonlyArray<{
+          readonly __typename: 'ProductCard';
+          readonly id: string;
+          readonly productId: string;
+          readonly handle: string;
+          readonly title: string;
+          readonly availableForSale: boolean;
+          readonly vendor?: {
+            readonly __typename: 'Vendor';
+            readonly name: string;
           } | null;
+          readonly variant: {
+            readonly __typename: 'ProductCardVariant';
+            readonly id: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
+            readonly price?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+            readonly compareAtPrice?: {
+              readonly __typename: 'Money';
+              readonly amount: any;
+              readonly currencyCode: CurrencyCode;
+            } | null;
+          };
         } | null> | null;
       } | null;
       readonly requirement: {
@@ -24861,7 +24984,8 @@ export type SdkLoyaltyAccountFragment = {
       };
       readonly reward:
         | {
-            readonly __typename: 'LoyaltyFreeProductRewardPresentation';
+            readonly __typename: 'LoyaltyDiscountRewardPresentation';
+            readonly code?: string | null;
             readonly kind: LoyaltyRewardKind;
           }
         | {
@@ -24877,16 +25001,7 @@ export type SdkLoyaltyAccountFragment = {
             readonly kind: LoyaltyRewardKind;
           }
         | {
-            readonly __typename: 'LoyaltyPercentageRewardPresentation';
-            readonly kind: LoyaltyRewardKind;
-          }
-        | {
             readonly __typename: 'LoyaltyPointsRewardPresentation';
-            readonly kind: LoyaltyRewardKind;
-          }
-        | {
-            readonly __typename: 'LoyaltyVoucherRewardPresentation';
-            readonly code?: string | null;
             readonly kind: LoyaltyRewardKind;
           };
     }>;
@@ -25006,7 +25121,8 @@ export type SdkLoyaltyAccountQuery = {
           };
           readonly reward:
             | {
-                readonly __typename: 'LoyaltyFreeProductRewardPresentation';
+                readonly __typename: 'LoyaltyDiscountRewardPresentation';
+                readonly code?: string | null;
                 readonly kind: LoyaltyRewardKind;
               }
             | {
@@ -25022,16 +25138,7 @@ export type SdkLoyaltyAccountQuery = {
                 readonly kind: LoyaltyRewardKind;
               }
             | {
-                readonly __typename: 'LoyaltyPercentageRewardPresentation';
-                readonly kind: LoyaltyRewardKind;
-              }
-            | {
                 readonly __typename: 'LoyaltyPointsRewardPresentation';
-                readonly kind: LoyaltyRewardKind;
-              }
-            | {
-                readonly __typename: 'LoyaltyVoucherRewardPresentation';
-                readonly code?: string | null;
                 readonly kind: LoyaltyRewardKind;
               };
         }>;
@@ -25654,48 +25761,33 @@ export type SdkWishlistItemFragment = {
   readonly __typename: 'CustomerWishlistItem';
   readonly id: string;
   readonly addedAt: string;
-  readonly product?: {
-    readonly __typename: 'Product';
+  readonly card?: {
+    readonly __typename: 'ProductCard';
     readonly id: string;
+    readonly productId: string;
     readonly handle: string;
     readonly title: string;
     readonly availableForSale: boolean;
-    readonly featuredMedia?:
-      | {
-          readonly __typename: 'ExternalVideo';
-          readonly id: string;
-          readonly alt?: string | null;
-        }
-      | {
-          readonly __typename: 'MediaImage';
-          readonly id: string;
-          readonly alt?: string | null;
-          readonly image: {
-            readonly __typename: 'Image';
-            readonly id: string;
-            readonly url: any;
-            readonly altText?: string | null;
-            readonly width?: number | null;
-            readonly height?: number | null;
-          };
-        }
-      | {
-          readonly __typename: 'Model3d';
-          readonly id: string;
-          readonly alt?: string | null;
-        }
-      | {
-          readonly __typename: 'Video';
-          readonly id: string;
-          readonly alt?: string | null;
-        }
-      | null;
-    readonly selectedOrFirstAvailableVariant?: {
-      readonly __typename: 'ProductVariant';
+    readonly vendor?: {
+      readonly __typename: 'Vendor';
+      readonly name: string;
+    } | null;
+    readonly variant: {
+      readonly __typename: 'ProductCardVariant';
       readonly id: string;
       readonly handle: string;
       readonly title: string;
       readonly availableForSale: boolean;
+      readonly cover?:
+        | { readonly __typename: 'ExternalVideo'; readonly id: string }
+        | {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly image: { readonly __typename: 'Image'; readonly url: any };
+          }
+        | { readonly __typename: 'Model3d'; readonly id: string }
+        | { readonly __typename: 'Video'; readonly id: string }
+        | null;
       readonly price?: {
         readonly __typename: 'Money';
         readonly amount: any;
@@ -25706,14 +25798,13 @@ export type SdkWishlistItemFragment = {
         readonly amount: any;
         readonly currencyCode: CurrencyCode;
       } | null;
-    } | null;
+    };
   } | null;
 };
 
 export type SdkCustomerWishlistQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
   after?: InputMaybe<Scalars['Cursor']['input']>;
-  imageTransform?: InputMaybe<ImageTransformInput>;
 }>;
 
 export type SdkCustomerWishlistQuery = {
@@ -25736,48 +25827,39 @@ export type SdkCustomerWishlistQuery = {
             readonly __typename: 'CustomerWishlistItem';
             readonly id: string;
             readonly addedAt: string;
-            readonly product?: {
-              readonly __typename: 'Product';
+            readonly card?: {
+              readonly __typename: 'ProductCard';
               readonly id: string;
+              readonly productId: string;
               readonly handle: string;
               readonly title: string;
               readonly availableForSale: boolean;
-              readonly featuredMedia?:
-                | {
-                    readonly __typename: 'ExternalVideo';
-                    readonly id: string;
-                    readonly alt?: string | null;
-                  }
-                | {
-                    readonly __typename: 'MediaImage';
-                    readonly id: string;
-                    readonly alt?: string | null;
-                    readonly image: {
-                      readonly __typename: 'Image';
-                      readonly id: string;
-                      readonly url: any;
-                      readonly altText?: string | null;
-                      readonly width?: number | null;
-                      readonly height?: number | null;
-                    };
-                  }
-                | {
-                    readonly __typename: 'Model3d';
-                    readonly id: string;
-                    readonly alt?: string | null;
-                  }
-                | {
-                    readonly __typename: 'Video';
-                    readonly id: string;
-                    readonly alt?: string | null;
-                  }
-                | null;
-              readonly selectedOrFirstAvailableVariant?: {
-                readonly __typename: 'ProductVariant';
+              readonly vendor?: {
+                readonly __typename: 'Vendor';
+                readonly name: string;
+              } | null;
+              readonly variant: {
+                readonly __typename: 'ProductCardVariant';
                 readonly id: string;
                 readonly handle: string;
                 readonly title: string;
                 readonly availableForSale: boolean;
+                readonly cover?:
+                  | {
+                      readonly __typename: 'ExternalVideo';
+                      readonly id: string;
+                    }
+                  | {
+                      readonly __typename: 'MediaImage';
+                      readonly id: string;
+                      readonly image: {
+                        readonly __typename: 'Image';
+                        readonly url: any;
+                      };
+                    }
+                  | { readonly __typename: 'Model3d'; readonly id: string }
+                  | { readonly __typename: 'Video'; readonly id: string }
+                  | null;
                 readonly price?: {
                   readonly __typename: 'Money';
                   readonly amount: any;
@@ -25788,7 +25870,7 @@ export type SdkCustomerWishlistQuery = {
                   readonly amount: any;
                   readonly currencyCode: CurrencyCode;
                 } | null;
-              } | null;
+              };
             } | null;
           };
         }>;
@@ -25814,9 +25896,10 @@ export type SdkWishlistProductAddMutation = {
       readonly __typename: 'CustomerWishlistItem';
       readonly id: string;
       readonly addedAt: string;
-      readonly product?: {
-        readonly __typename: 'Product';
+      readonly card?: {
+        readonly __typename: 'ProductCard';
         readonly id: string;
+        readonly productId: string;
       } | null;
       readonly wishlist: {
         readonly __typename: 'CustomerWishlist';
@@ -25970,102 +26053,25 @@ export type SdkStorefrontPromotionFragment = {
   } | null;
 };
 
-export type SdkPromotionBenefitVariantFragment = {
-  readonly __typename: 'ProductVariant';
-  readonly id: string;
-  readonly handle: string;
-  readonly title: string;
-  readonly availableForSale: boolean;
-  readonly product: {
-    readonly __typename: 'Product';
+export type SdkPromotionBenefitItemsFragment = {
+  readonly __typename: 'StorefrontPromotion';
+  readonly benefitVariantCards?: ReadonlyArray<{
+    readonly __typename: 'ProductCard';
     readonly id: string;
+    readonly productId: string;
     readonly handle: string;
     readonly title: string;
+    readonly availableForSale: boolean;
     readonly vendor?: {
       readonly __typename: 'Vendor';
       readonly name: string;
     } | null;
-  };
-  readonly cover?:
-    | { readonly __typename: 'ExternalVideo'; readonly id: string }
-    | {
-        readonly __typename: 'MediaImage';
-        readonly id: string;
-        readonly image: { readonly __typename: 'Image'; readonly url: any };
-      }
-    | { readonly __typename: 'Model3d'; readonly id: string }
-    | { readonly __typename: 'Video'; readonly id: string }
-    | null;
-  readonly price?: {
-    readonly __typename: 'Money';
-    readonly amount: any;
-    readonly currencyCode: CurrencyCode;
-  } | null;
-  readonly compareAtPrice?: {
-    readonly __typename: 'Money';
-    readonly amount: any;
-    readonly currencyCode: CurrencyCode;
-  } | null;
-};
-
-export type SdkPromotionBenefitItemsFragment = {
-  readonly __typename: 'StorefrontPromotion';
-  readonly benefitVariants?: ReadonlyArray<{
-    readonly __typename: 'ProductVariant';
-    readonly id: string;
-    readonly handle: string;
-    readonly title: string;
-    readonly availableForSale: boolean;
-    readonly product: {
-      readonly __typename: 'Product';
-      readonly id: string;
-      readonly handle: string;
-      readonly title: string;
-      readonly vendor?: {
-        readonly __typename: 'Vendor';
-        readonly name: string;
-      } | null;
-    };
-    readonly cover?:
-      | { readonly __typename: 'ExternalVideo'; readonly id: string }
-      | {
-          readonly __typename: 'MediaImage';
-          readonly id: string;
-          readonly image: { readonly __typename: 'Image'; readonly url: any };
-        }
-      | { readonly __typename: 'Model3d'; readonly id: string }
-      | { readonly __typename: 'Video'; readonly id: string }
-      | null;
-    readonly price?: {
-      readonly __typename: 'Money';
-      readonly amount: any;
-      readonly currencyCode: CurrencyCode;
-    } | null;
-    readonly compareAtPrice?: {
-      readonly __typename: 'Money';
-      readonly amount: any;
-      readonly currencyCode: CurrencyCode;
-    } | null;
-  }> | null;
-  readonly benefitProducts?: ReadonlyArray<{
-    readonly __typename: 'Product';
-    readonly id: string;
-    readonly selectedOrFirstAvailableVariant?: {
-      readonly __typename: 'ProductVariant';
+    readonly variant: {
+      readonly __typename: 'ProductCardVariant';
       readonly id: string;
       readonly handle: string;
       readonly title: string;
       readonly availableForSale: boolean;
-      readonly product: {
-        readonly __typename: 'Product';
-        readonly id: string;
-        readonly handle: string;
-        readonly title: string;
-        readonly vendor?: {
-          readonly __typename: 'Vendor';
-          readonly name: string;
-        } | null;
-      };
       readonly cover?:
         | { readonly __typename: 'ExternalVideo'; readonly id: string }
         | {
@@ -26086,7 +26092,46 @@ export type SdkPromotionBenefitItemsFragment = {
         readonly amount: any;
         readonly currencyCode: CurrencyCode;
       } | null;
+    };
+  } | null> | null;
+  readonly benefitProductCards?: ReadonlyArray<{
+    readonly __typename: 'ProductCard';
+    readonly id: string;
+    readonly productId: string;
+    readonly handle: string;
+    readonly title: string;
+    readonly availableForSale: boolean;
+    readonly vendor?: {
+      readonly __typename: 'Vendor';
+      readonly name: string;
     } | null;
+    readonly variant: {
+      readonly __typename: 'ProductCardVariant';
+      readonly id: string;
+      readonly handle: string;
+      readonly title: string;
+      readonly availableForSale: boolean;
+      readonly cover?:
+        | { readonly __typename: 'ExternalVideo'; readonly id: string }
+        | {
+            readonly __typename: 'MediaImage';
+            readonly id: string;
+            readonly image: { readonly __typename: 'Image'; readonly url: any };
+          }
+        | { readonly __typename: 'Model3d'; readonly id: string }
+        | { readonly __typename: 'Video'; readonly id: string }
+        | null;
+      readonly price?: {
+        readonly __typename: 'Money';
+        readonly amount: any;
+        readonly currencyCode: CurrencyCode;
+      } | null;
+      readonly compareAtPrice?: {
+        readonly __typename: 'Money';
+        readonly amount: any;
+        readonly currencyCode: CurrencyCode;
+      } | null;
+    };
   } | null> | null;
 };
 
@@ -26165,10 +26210,14 @@ export type SdkPromotionBenefitProductsQuery = {
   readonly products: {
     readonly __typename: 'ProductConnection';
     readonly nodes: ReadonlyArray<{
-      readonly __typename: 'Product';
+      readonly __typename: 'ProductCard';
       readonly id: string;
-      readonly selectedOrFirstAvailableVariant?: {
-        readonly __typename: 'ProductVariant';
+      readonly productId: string;
+      readonly handle: string;
+      readonly title: string;
+      readonly availableForSale: boolean;
+      readonly variant: {
+        readonly __typename: 'ProductCardVariant';
         readonly id: string;
         readonly handle: string;
         readonly title: string;
@@ -26178,16 +26227,6 @@ export type SdkPromotionBenefitProductsQuery = {
           readonly amount: any;
           readonly currencyCode: CurrencyCode;
         } | null;
-        readonly product: {
-          readonly __typename: 'Product';
-          readonly id: string;
-          readonly handle: string;
-          readonly title: string;
-          readonly vendor?: {
-            readonly __typename: 'Vendor';
-            readonly name: string;
-          } | null;
-        };
         readonly cover?:
           | { readonly __typename: 'ExternalVideo'; readonly id: string }
           | {
@@ -26211,6 +26250,10 @@ export type SdkPromotionBenefitProductsQuery = {
           readonly amount: any;
           readonly currencyCode: CurrencyCode;
         } | null;
+      };
+      readonly vendor?: {
+        readonly __typename: 'Vendor';
+        readonly name: string;
       } | null;
     }>;
   };
@@ -26767,65 +26810,23 @@ export type SdkLoyaltyRedemptionUpdateMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
-          readonly benefitVariants?: ReadonlyArray<{
-            readonly __typename: 'ProductVariant';
+          readonly benefitVariantCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
             readonly id: string;
+            readonly productId: string;
             readonly handle: string;
             readonly title: string;
             readonly availableForSale: boolean;
-            readonly product: {
-              readonly __typename: 'Product';
-              readonly id: string;
-              readonly handle: string;
-              readonly title: string;
-              readonly vendor?: {
-                readonly __typename: 'Vendor';
-                readonly name: string;
-              } | null;
-            };
-            readonly cover?:
-              | { readonly __typename: 'ExternalVideo'; readonly id: string }
-              | {
-                  readonly __typename: 'MediaImage';
-                  readonly id: string;
-                  readonly image: {
-                    readonly __typename: 'Image';
-                    readonly url: any;
-                  };
-                }
-              | { readonly __typename: 'Model3d'; readonly id: string }
-              | { readonly __typename: 'Video'; readonly id: string }
-              | null;
-            readonly price?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
-            readonly compareAtPrice?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
-            } | null;
-          }> | null;
-          readonly benefitProducts?: ReadonlyArray<{
-            readonly __typename: 'Product';
-            readonly id: string;
-            readonly selectedOrFirstAvailableVariant?: {
-              readonly __typename: 'ProductVariant';
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
               readonly id: string;
               readonly handle: string;
               readonly title: string;
               readonly availableForSale: boolean;
-              readonly product: {
-                readonly __typename: 'Product';
-                readonly id: string;
-                readonly handle: string;
-                readonly title: string;
-                readonly vendor?: {
-                  readonly __typename: 'Vendor';
-                  readonly name: string;
-                } | null;
-              };
               readonly cover?:
                 | { readonly __typename: 'ExternalVideo'; readonly id: string }
                 | {
@@ -26849,7 +26850,49 @@ export type SdkLoyaltyRedemptionUpdateMutation = {
                 readonly amount: any;
                 readonly currencyCode: CurrencyCode;
               } | null;
+            };
+          } | null> | null;
+          readonly benefitProductCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
+            readonly id: string;
+            readonly productId: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            };
           } | null> | null;
         } | null;
         readonly requirement: {
@@ -27651,65 +27694,23 @@ export type SdkLoyaltyRedemptionRemoveMutation = {
             readonly amount: any;
             readonly currencyCode: CurrencyCode;
           } | null;
-          readonly benefitVariants?: ReadonlyArray<{
-            readonly __typename: 'ProductVariant';
+          readonly benefitVariantCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
             readonly id: string;
+            readonly productId: string;
             readonly handle: string;
             readonly title: string;
             readonly availableForSale: boolean;
-            readonly product: {
-              readonly __typename: 'Product';
-              readonly id: string;
-              readonly handle: string;
-              readonly title: string;
-              readonly vendor?: {
-                readonly __typename: 'Vendor';
-                readonly name: string;
-              } | null;
-            };
-            readonly cover?:
-              | { readonly __typename: 'ExternalVideo'; readonly id: string }
-              | {
-                  readonly __typename: 'MediaImage';
-                  readonly id: string;
-                  readonly image: {
-                    readonly __typename: 'Image';
-                    readonly url: any;
-                  };
-                }
-              | { readonly __typename: 'Model3d'; readonly id: string }
-              | { readonly __typename: 'Video'; readonly id: string }
-              | null;
-            readonly price?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
-            readonly compareAtPrice?: {
-              readonly __typename: 'Money';
-              readonly amount: any;
-              readonly currencyCode: CurrencyCode;
-            } | null;
-          }> | null;
-          readonly benefitProducts?: ReadonlyArray<{
-            readonly __typename: 'Product';
-            readonly id: string;
-            readonly selectedOrFirstAvailableVariant?: {
-              readonly __typename: 'ProductVariant';
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
               readonly id: string;
               readonly handle: string;
               readonly title: string;
               readonly availableForSale: boolean;
-              readonly product: {
-                readonly __typename: 'Product';
-                readonly id: string;
-                readonly handle: string;
-                readonly title: string;
-                readonly vendor?: {
-                  readonly __typename: 'Vendor';
-                  readonly name: string;
-                } | null;
-              };
               readonly cover?:
                 | { readonly __typename: 'ExternalVideo'; readonly id: string }
                 | {
@@ -27733,7 +27734,49 @@ export type SdkLoyaltyRedemptionRemoveMutation = {
                 readonly amount: any;
                 readonly currencyCode: CurrencyCode;
               } | null;
+            };
+          } | null> | null;
+          readonly benefitProductCards?: ReadonlyArray<{
+            readonly __typename: 'ProductCard';
+            readonly id: string;
+            readonly productId: string;
+            readonly handle: string;
+            readonly title: string;
+            readonly availableForSale: boolean;
+            readonly vendor?: {
+              readonly __typename: 'Vendor';
+              readonly name: string;
             } | null;
+            readonly variant: {
+              readonly __typename: 'ProductCardVariant';
+              readonly id: string;
+              readonly handle: string;
+              readonly title: string;
+              readonly availableForSale: boolean;
+              readonly cover?:
+                | { readonly __typename: 'ExternalVideo'; readonly id: string }
+                | {
+                    readonly __typename: 'MediaImage';
+                    readonly id: string;
+                    readonly image: {
+                      readonly __typename: 'Image';
+                      readonly url: any;
+                    };
+                  }
+                | { readonly __typename: 'Model3d'; readonly id: string }
+                | { readonly __typename: 'Video'; readonly id: string }
+                | null;
+              readonly price?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+              readonly compareAtPrice?: {
+                readonly __typename: 'Money';
+                readonly amount: any;
+                readonly currencyCode: CurrencyCode;
+              } | null;
+            };
           } | null> | null;
         } | null;
         readonly requirement: {
@@ -28547,6 +28590,46 @@ export type SdkCollectionByHandleQuery = {
   } | null;
 };
 
+export type SdkProductCardFragment = {
+  readonly __typename: 'ProductCard';
+  readonly id: string;
+  readonly productId: string;
+  readonly handle: string;
+  readonly title: string;
+  readonly availableForSale: boolean;
+  readonly vendor?: {
+    readonly __typename: 'Vendor';
+    readonly name: string;
+  } | null;
+  readonly variant: {
+    readonly __typename: 'ProductCardVariant';
+    readonly id: string;
+    readonly handle: string;
+    readonly title: string;
+    readonly availableForSale: boolean;
+    readonly cover?:
+      | { readonly __typename: 'ExternalVideo'; readonly id: string }
+      | {
+          readonly __typename: 'MediaImage';
+          readonly id: string;
+          readonly image: { readonly __typename: 'Image'; readonly url: any };
+        }
+      | { readonly __typename: 'Model3d'; readonly id: string }
+      | { readonly __typename: 'Video'; readonly id: string }
+      | null;
+    readonly price?: {
+      readonly __typename: 'Money';
+      readonly amount: any;
+      readonly currencyCode: CurrencyCode;
+    } | null;
+    readonly compareAtPrice?: {
+      readonly __typename: 'Money';
+      readonly amount: any;
+      readonly currencyCode: CurrencyCode;
+    } | null;
+  };
+};
+
 export type SdkCollectionProductsQueryVariables = Exact<{
   id: Scalars['ID']['input'];
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -28570,16 +28653,35 @@ export type SdkCollectionProductsQuery = {
         readonly __typename: 'ProductEdge';
         readonly cursor: string;
         readonly node: {
-          readonly __typename: 'Product';
+          readonly __typename: 'ProductCard';
           readonly id: string;
+          readonly productId: string;
           readonly handle: string;
           readonly title: string;
-          readonly selectedOrFirstAvailableVariant?: {
-            readonly __typename: 'ProductVariant';
+          readonly availableForSale: boolean;
+          readonly vendor?: {
+            readonly __typename: 'Vendor';
+            readonly name: string;
+          } | null;
+          readonly variant: {
+            readonly __typename: 'ProductCardVariant';
             readonly id: string;
             readonly handle: string;
             readonly title: string;
             readonly availableForSale: boolean;
+            readonly cover?:
+              | { readonly __typename: 'ExternalVideo'; readonly id: string }
+              | {
+                  readonly __typename: 'MediaImage';
+                  readonly id: string;
+                  readonly image: {
+                    readonly __typename: 'Image';
+                    readonly url: any;
+                  };
+                }
+              | { readonly __typename: 'Model3d'; readonly id: string }
+              | { readonly __typename: 'Video'; readonly id: string }
+              | null;
             readonly price?: {
               readonly __typename: 'Money';
               readonly amount: any;
@@ -28590,7 +28692,7 @@ export type SdkCollectionProductsQuery = {
               readonly amount: any;
               readonly currencyCode: CurrencyCode;
             } | null;
-          } | null;
+          };
         };
       }>;
       readonly pageInfo: {
@@ -29041,7 +29143,6 @@ export type SdkProductComparisonQuery = {
           readonly __typename: 'ProductComparisonColumn';
           readonly key: string;
           readonly position: number;
-          readonly savedForComparison: boolean;
           readonly product: {
             readonly __typename: 'Product';
             readonly id: string;
@@ -29124,7 +29225,7 @@ export type SdkStaticProductsQuery = {
       readonly endCursor?: string | null;
     };
     readonly nodes: ReadonlyArray<{
-      readonly __typename: 'Product';
+      readonly __typename: 'ProductCard';
       readonly id: string;
       readonly handle: string;
     }>;
@@ -29926,25 +30027,37 @@ export const SdkStorefrontPromotionFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<SdkStorefrontPromotionFragment, unknown>;
-export const SdkPromotionBenefitVariantFragmentDoc = {
+export const SdkProductCardFragmentDoc = {
   kind: 'Document',
   definitions: [
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -29953,43 +30066,33 @@ export const SdkPromotionBenefitVariantFragmentDoc = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -29997,43 +30100,52 @@ export const SdkPromotionBenefitVariantFragmentDoc = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
   ],
-} as unknown as DocumentNode<SdkPromotionBenefitVariantFragment, unknown>;
+} as unknown as DocumentNode<SdkProductCardFragment, unknown>;
 export const SdkPromotionBenefitItemsFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -30049,42 +30161,26 @@ export const SdkPromotionBenefitItemsFragmentDoc = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitVariants' },
+            name: { kind: 'Name', value: 'benefitVariantCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
           },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitProducts' },
+            name: { kind: 'Name', value: 'benefitProductCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
-                  kind: 'Field',
-                  name: {
-                    kind: 'Name',
-                    value: 'selectedOrFirstAvailableVariant',
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkPromotionBenefitVariant',
-                        },
-                      },
-                    ],
-                  },
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -30094,20 +30190,32 @@ export const SdkPromotionBenefitItemsFragmentDoc = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -30116,43 +30224,33 @@ export const SdkPromotionBenefitItemsFragmentDoc = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -30160,38 +30258,47 @@ export const SdkPromotionBenefitItemsFragmentDoc = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
@@ -32061,20 +32168,32 @@ export const SdkCartFragment_CartFragmentDoc = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -32083,43 +32202,33 @@ export const SdkCartFragment_CartFragmentDoc = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -32127,38 +32236,47 @@ export const SdkCartFragment_CartFragmentDoc = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
@@ -32769,42 +32887,26 @@ export const SdkCartFragment_CartFragmentDoc = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitVariants' },
+            name: { kind: 'Name', value: 'benefitVariantCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
           },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitProducts' },
+            name: { kind: 'Name', value: 'benefitProductCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
-                  kind: 'Field',
-                  name: {
-                    kind: 'Name',
-                    value: 'selectedOrFirstAvailableVariant',
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkPromotionBenefitVariant',
-                        },
-                      },
-                    ],
-                  },
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -33978,7 +34080,7 @@ export const SdkLoyaltyAccountFragmentDoc = {
                                 kind: 'NamedType',
                                 name: {
                                   kind: 'Name',
-                                  value: 'LoyaltyVoucherRewardPresentation',
+                                  value: 'LoyaltyDiscountRewardPresentation',
                                 },
                               },
                               selectionSet: {
@@ -34787,13 +34889,13 @@ export const SdkWishlistItemFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'addedAt' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'card' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkCustomerProductFragment' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -34803,109 +34905,32 @@ export const SdkWishlistItemFragmentDoc = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCustomerMediaFragment' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'Media' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'alt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
-            kind: 'InlineFragment',
-            typeCondition: {
-              kind: 'NamedType',
-              name: { kind: 'Name', value: 'MediaImage' },
-            },
+            kind: 'Field',
+            name: { kind: 'Name', value: 'vendor' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'image' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'url' },
-                        arguments: [
-                          {
-                            kind: 'Argument',
-                            name: { kind: 'Name', value: 'transform' },
-                            value: {
-                              kind: 'Variable',
-                              name: { kind: 'Name', value: 'imageTransform' },
-                            },
-                          },
-                        ],
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'altText' },
-                      },
-                      { kind: 'Field', name: { kind: 'Name', value: 'width' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'height' },
-                      },
-                    ],
-                  },
-                },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
               ],
             },
           },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCustomerMoneyFragment' },
-      typeCondition: {
-        kind: 'NamedType',
-        name: { kind: 'Name', value: 'Money' },
-      },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'currencyCode' } },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCustomerProductFragment' },
-      typeCondition: {
-        kind: 'NamedType',
-        name: { kind: 'Name', value: 'Product' },
-      },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkCustomerMediaFragment' },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'selectedOrFirstAvailableVariant' },
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -34914,16 +34939,53 @@ export const SdkWishlistItemFragmentDoc = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'price' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
                       {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkCustomerMoneyFragment',
-                        },
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
                       },
                     ],
                   },
@@ -34935,11 +34997,12 @@ export const SdkWishlistItemFragmentDoc = {
                     kind: 'SelectionSet',
                     selections: [
                       {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkCustomerMoneyFragment',
-                        },
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
                       },
                     ],
                   },
@@ -35561,13 +35624,20 @@ export const SdkAccountProductActionsQueryDocument = {
                                   },
                                   {
                                     kind: 'Field',
-                                    name: { kind: 'Name', value: 'product' },
+                                    name: { kind: 'Name', value: 'card' },
                                     selectionSet: {
                                       kind: 'SelectionSet',
                                       selections: [
                                         {
                                           kind: 'Field',
                                           name: { kind: 'Name', value: 'id' },
+                                        },
+                                        {
+                                          kind: 'Field',
+                                          name: {
+                                            kind: 'Name',
+                                            value: 'productId',
+                                          },
                                         },
                                       ],
                                     },
@@ -35870,20 +35940,32 @@ export const SdkAddPromoCodeMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -35892,43 +35974,33 @@ export const SdkAddPromoCodeMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -35936,38 +36008,47 @@ export const SdkAddPromoCodeMutationDocument = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
@@ -35983,42 +36064,26 @@ export const SdkAddPromoCodeMutationDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitVariants' },
+            name: { kind: 'Name', value: 'benefitVariantCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
           },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitProducts' },
+            name: { kind: 'Name', value: 'benefitProductCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
-                  kind: 'Field',
-                  name: {
-                    kind: 'Name',
-                    value: 'selectedOrFirstAvailableVariant',
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkPromotionBenefitVariant',
-                        },
-                      },
-                    ],
-                  },
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -37363,20 +37428,32 @@ export const SdkAddToCartMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -37385,43 +37462,33 @@ export const SdkAddToCartMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -37429,38 +37496,47 @@ export const SdkAddToCartMutationDocument = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
@@ -37476,42 +37552,26 @@ export const SdkAddToCartMutationDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitVariants' },
+            name: { kind: 'Name', value: 'benefitVariantCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
           },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitProducts' },
+            name: { kind: 'Name', value: 'benefitProductCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
-                  kind: 'Field',
-                  name: {
-                    kind: 'Name',
-                    value: 'selectedOrFirstAvailableVariant',
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkPromotionBenefitVariant',
-                        },
-                      },
-                    ],
-                  },
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -38861,20 +38921,32 @@ export const SdkClaimCartMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -38883,43 +38955,33 @@ export const SdkClaimCartMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -38927,38 +38989,47 @@ export const SdkClaimCartMutationDocument = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
@@ -38974,42 +39045,26 @@ export const SdkClaimCartMutationDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitVariants' },
+            name: { kind: 'Name', value: 'benefitVariantCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
           },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitProducts' },
+            name: { kind: 'Name', value: 'benefitProductCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
-                  kind: 'Field',
-                  name: {
-                    kind: 'Name',
-                    value: 'selectedOrFirstAvailableVariant',
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkPromotionBenefitVariant',
-                        },
-                      },
-                    ],
-                  },
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -40354,20 +40409,32 @@ export const SdkClearCartMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -40376,43 +40443,33 @@ export const SdkClearCartMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -40420,38 +40477,47 @@ export const SdkClearCartMutationDocument = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
@@ -40467,42 +40533,26 @@ export const SdkClearCartMutationDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitVariants' },
+            name: { kind: 'Name', value: 'benefitVariantCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
           },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitProducts' },
+            name: { kind: 'Name', value: 'benefitProductCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
-                  kind: 'Field',
-                  name: {
-                    kind: 'Name',
-                    value: 'selectedOrFirstAvailableVariant',
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkPromotionBenefitVariant',
-                        },
-                      },
-                    ],
-                  },
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -41848,20 +41898,32 @@ export const SdkCreateCartMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -41870,43 +41932,33 @@ export const SdkCreateCartMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -41914,38 +41966,47 @@ export const SdkCreateCartMutationDocument = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
@@ -41961,42 +42022,26 @@ export const SdkCreateCartMutationDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitVariants' },
+            name: { kind: 'Name', value: 'benefitVariantCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
           },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitProducts' },
+            name: { kind: 'Name', value: 'benefitProductCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
-                  kind: 'Field',
-                  name: {
-                    kind: 'Name',
-                    value: 'selectedOrFirstAvailableVariant',
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkPromotionBenefitVariant',
-                        },
-                      },
-                    ],
-                  },
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -43341,20 +43386,32 @@ export const SdkRemoveFromCartMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -43363,43 +43420,33 @@ export const SdkRemoveFromCartMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -43407,38 +43454,47 @@ export const SdkRemoveFromCartMutationDocument = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
@@ -43454,42 +43510,26 @@ export const SdkRemoveFromCartMutationDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitVariants' },
+            name: { kind: 'Name', value: 'benefitVariantCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
           },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitProducts' },
+            name: { kind: 'Name', value: 'benefitProductCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
-                  kind: 'Field',
-                  name: {
-                    kind: 'Name',
-                    value: 'selectedOrFirstAvailableVariant',
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkPromotionBenefitVariant',
-                        },
-                      },
-                    ],
-                  },
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -44833,20 +44873,32 @@ export const SdkRemovePromoCodeMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -44855,43 +44907,33 @@ export const SdkRemovePromoCodeMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -44899,38 +44941,47 @@ export const SdkRemovePromoCodeMutationDocument = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
@@ -44946,42 +44997,26 @@ export const SdkRemovePromoCodeMutationDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitVariants' },
+            name: { kind: 'Name', value: 'benefitVariantCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
           },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitProducts' },
+            name: { kind: 'Name', value: 'benefitProductCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
-                  kind: 'Field',
-                  name: {
-                    kind: 'Name',
-                    value: 'selectedOrFirstAvailableVariant',
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkPromotionBenefitVariant',
-                        },
-                      },
-                    ],
-                  },
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -46326,20 +46361,32 @@ export const SdkReplaceCartItemMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -46348,43 +46395,33 @@ export const SdkReplaceCartItemMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -46392,38 +46429,47 @@ export const SdkReplaceCartItemMutationDocument = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
@@ -46439,42 +46485,26 @@ export const SdkReplaceCartItemMutationDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitVariants' },
+            name: { kind: 'Name', value: 'benefitVariantCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
           },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitProducts' },
+            name: { kind: 'Name', value: 'benefitProductCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
-                  kind: 'Field',
-                  name: {
-                    kind: 'Name',
-                    value: 'selectedOrFirstAvailableVariant',
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkPromotionBenefitVariant',
-                        },
-                      },
-                    ],
-                  },
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -47819,20 +47849,32 @@ export const SdkUpdateCartCurrencyCodeMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -47841,43 +47883,33 @@ export const SdkUpdateCartCurrencyCodeMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -47885,38 +47917,47 @@ export const SdkUpdateCartCurrencyCodeMutationDocument = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
@@ -47932,42 +47973,26 @@ export const SdkUpdateCartCurrencyCodeMutationDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitVariants' },
+            name: { kind: 'Name', value: 'benefitVariantCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
           },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitProducts' },
+            name: { kind: 'Name', value: 'benefitProductCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
-                  kind: 'Field',
-                  name: {
-                    kind: 'Name',
-                    value: 'selectedOrFirstAvailableVariant',
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkPromotionBenefitVariant',
-                        },
-                      },
-                    ],
-                  },
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -49312,20 +49337,32 @@ export const SdkUpdateCartLanguageCodeMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -49334,43 +49371,33 @@ export const SdkUpdateCartLanguageCodeMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -49378,38 +49405,47 @@ export const SdkUpdateCartLanguageCodeMutationDocument = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
@@ -49425,42 +49461,26 @@ export const SdkUpdateCartLanguageCodeMutationDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitVariants' },
+            name: { kind: 'Name', value: 'benefitVariantCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
           },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitProducts' },
+            name: { kind: 'Name', value: 'benefitProductCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
-                  kind: 'Field',
-                  name: {
-                    kind: 'Name',
-                    value: 'selectedOrFirstAvailableVariant',
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkPromotionBenefitVariant',
-                        },
-                      },
-                    ],
-                  },
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -50805,20 +50825,32 @@ export const SdkUpdateCartLineQuantityMutationDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -50827,43 +50859,33 @@ export const SdkUpdateCartLineQuantityMutationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -50871,38 +50893,47 @@ export const SdkUpdateCartLineQuantityMutationDocument = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
@@ -50918,42 +50949,26 @@ export const SdkUpdateCartLineQuantityMutationDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitVariants' },
+            name: { kind: 'Name', value: 'benefitVariantCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
           },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitProducts' },
+            name: { kind: 'Name', value: 'benefitProductCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
-                  kind: 'Field',
-                  name: {
-                    kind: 'Name',
-                    value: 'selectedOrFirstAvailableVariant',
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkPromotionBenefitVariant',
-                        },
-                      },
-                    ],
-                  },
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -52254,20 +52269,32 @@ export const SdkLoadAccountCartQueryDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -52276,43 +52303,33 @@ export const SdkLoadAccountCartQueryDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -52320,38 +52337,47 @@ export const SdkLoadAccountCartQueryDocument = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
@@ -52367,42 +52393,26 @@ export const SdkLoadAccountCartQueryDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitVariants' },
+            name: { kind: 'Name', value: 'benefitVariantCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
           },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitProducts' },
+            name: { kind: 'Name', value: 'benefitProductCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
-                  kind: 'Field',
-                  name: {
-                    kind: 'Name',
-                    value: 'selectedOrFirstAvailableVariant',
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkPromotionBenefitVariant',
-                        },
-                      },
-                    ],
-                  },
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -53715,20 +53725,32 @@ export const SdkLoadCartQueryDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -53737,43 +53759,33 @@ export const SdkLoadCartQueryDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -53781,38 +53793,47 @@ export const SdkLoadCartQueryDocument = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
@@ -53828,42 +53849,26 @@ export const SdkLoadCartQueryDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitVariants' },
+            name: { kind: 'Name', value: 'benefitVariantCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
           },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitProducts' },
+            name: { kind: 'Name', value: 'benefitProductCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
-                  kind: 'Field',
-                  name: {
-                    kind: 'Name',
-                    value: 'selectedOrFirstAvailableVariant',
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkPromotionBenefitVariant',
-                        },
-                      },
-                    ],
-                  },
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -58507,7 +58512,7 @@ export const SdkLoyaltyAccountQueryDocument = {
                                 kind: 'NamedType',
                                 name: {
                                   kind: 'Name',
-                                  value: 'LoyaltyVoucherRewardPresentation',
+                                  value: 'LoyaltyDiscountRewardPresentation',
                                 },
                               },
                               selectionSet: {
@@ -59876,17 +59881,6 @@ export const SdkCustomerWishlistQueryDocument = {
           },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'Cursor' } },
         },
-        {
-          kind: 'VariableDefinition',
-          variable: {
-            kind: 'Variable',
-            name: { kind: 'Name', value: 'imageTransform' },
-          },
-          type: {
-            kind: 'NamedType',
-            name: { kind: 'Name', value: 'ImageTransformInput' },
-          },
-        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -59997,109 +59991,32 @@ export const SdkCustomerWishlistQueryDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCustomerMediaFragment' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'Media' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'alt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
-            kind: 'InlineFragment',
-            typeCondition: {
-              kind: 'NamedType',
-              name: { kind: 'Name', value: 'MediaImage' },
-            },
+            kind: 'Field',
+            name: { kind: 'Name', value: 'vendor' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'image' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'url' },
-                        arguments: [
-                          {
-                            kind: 'Argument',
-                            name: { kind: 'Name', value: 'transform' },
-                            value: {
-                              kind: 'Variable',
-                              name: { kind: 'Name', value: 'imageTransform' },
-                            },
-                          },
-                        ],
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'altText' },
-                      },
-                      { kind: 'Field', name: { kind: 'Name', value: 'width' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'height' },
-                      },
-                    ],
-                  },
-                },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
               ],
             },
           },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCustomerMoneyFragment' },
-      typeCondition: {
-        kind: 'NamedType',
-        name: { kind: 'Name', value: 'Money' },
-      },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'currencyCode' } },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkCustomerProductFragment' },
-      typeCondition: {
-        kind: 'NamedType',
-        name: { kind: 'Name', value: 'Product' },
-      },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkCustomerMediaFragment' },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'selectedOrFirstAvailableVariant' },
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -60108,16 +60025,53 @@ export const SdkCustomerWishlistQueryDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
                   name: { kind: 'Name', value: 'price' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
                       {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkCustomerMoneyFragment',
-                        },
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
                       },
                     ],
                   },
@@ -60129,11 +60083,12 @@ export const SdkCustomerWishlistQueryDocument = {
                     kind: 'SelectionSet',
                     selections: [
                       {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkCustomerMoneyFragment',
-                        },
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
                       },
                     ],
                   },
@@ -60162,13 +60117,13 @@ export const SdkCustomerWishlistQueryDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'addedAt' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'card' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkCustomerProductFragment' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -60251,13 +60206,17 @@ export const SdkWishlistProductAddMutationDocument = {
                       },
                       {
                         kind: 'Field',
-                        name: { kind: 'Name', value: 'product' },
+                        name: { kind: 'Name', value: 'card' },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'id' },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'productId' },
                             },
                           ],
                         },
@@ -60947,22 +60906,19 @@ export const SdkPromotionBenefitProductsDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'SdkProductCard' },
+                      },
                       {
                         kind: 'Field',
-                        name: {
-                          kind: 'Name',
-                          value: 'selectedOrFirstAvailableVariant',
-                        },
+                        name: { kind: 'Name', value: 'variant' },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
-                              kind: 'FragmentSpread',
-                              name: {
-                                kind: 'Name',
-                                value: 'SdkPromotionBenefitVariant',
-                              },
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'id' },
                             },
                             {
                               kind: 'Field',
@@ -61011,20 +60967,32 @@ export const SdkPromotionBenefitProductsDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -61033,43 +61001,33 @@ export const SdkPromotionBenefitProductsDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -61077,38 +61035,47 @@ export const SdkPromotionBenefitProductsDocument = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
@@ -61838,20 +61805,32 @@ export const SdkLoyaltyRedemptionUpdateDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -61860,43 +61839,33 @@ export const SdkLoyaltyRedemptionUpdateDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -61904,38 +61873,47 @@ export const SdkLoyaltyRedemptionUpdateDocument = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
@@ -61951,42 +61929,26 @@ export const SdkLoyaltyRedemptionUpdateDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitVariants' },
+            name: { kind: 'Name', value: 'benefitVariantCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
           },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitProducts' },
+            name: { kind: 'Name', value: 'benefitProductCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
-                  kind: 'Field',
-                  name: {
-                    kind: 'Name',
-                    value: 'selectedOrFirstAvailableVariant',
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkPromotionBenefitVariant',
-                        },
-                      },
-                    ],
-                  },
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -63333,20 +63295,32 @@ export const SdkLoyaltyRedemptionRemoveDocument = {
     },
     {
       kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+      name: { kind: 'Name', value: 'SdkProductCard' },
       typeCondition: {
         kind: 'NamedType',
-        name: { kind: 'Name', value: 'ProductVariant' },
+        name: { kind: 'Name', value: 'ProductCard' },
       },
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
           { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'product' },
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
@@ -63355,43 +63329,33 @@ export const SdkLoyaltyRedemptionRemoveDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'vendor' },
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'cover' },
-            name: { kind: 'Name', value: 'featuredMedia' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'MediaImage' },
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'image' },
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'url' },
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -63399,38 +63363,47 @@ export const SdkLoyaltyRedemptionRemoveDocument = {
                     ],
                   },
                 },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'price' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
           },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'compareAtPrice' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'currencyCode' },
-                },
-              ],
-            },
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
         ],
       },
     },
@@ -63446,42 +63419,26 @@ export const SdkLoyaltyRedemptionRemoveDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitVariants' },
+            name: { kind: 'Name', value: 'benefitVariantCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {
                   kind: 'FragmentSpread',
-                  name: { kind: 'Name', value: 'SdkPromotionBenefitVariant' },
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
           },
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'benefitProducts' },
+            name: { kind: 'Name', value: 'benefitProductCards' },
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 {
-                  kind: 'Field',
-                  name: {
-                    kind: 'Name',
-                    value: 'selectedOrFirstAvailableVariant',
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: {
-                          kind: 'Name',
-                          value: 'SdkPromotionBenefitVariant',
-                        },
-                      },
-                    ],
-                  },
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'SdkProductCard' },
                 },
               ],
             },
@@ -65280,104 +65237,10 @@ export const SdkCollectionProductsDocument = {
                                 kind: 'SelectionSet',
                                 selections: [
                                   {
-                                    kind: 'Field',
-                                    name: { kind: 'Name', value: 'id' },
-                                  },
-                                  {
-                                    kind: 'Field',
-                                    name: { kind: 'Name', value: 'handle' },
-                                  },
-                                  {
-                                    kind: 'Field',
-                                    name: { kind: 'Name', value: 'title' },
-                                  },
-                                  {
-                                    kind: 'Field',
+                                    kind: 'FragmentSpread',
                                     name: {
                                       kind: 'Name',
-                                      value: 'selectedOrFirstAvailableVariant',
-                                    },
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [
-                                        {
-                                          kind: 'Field',
-                                          name: { kind: 'Name', value: 'id' },
-                                        },
-                                        {
-                                          kind: 'Field',
-                                          name: {
-                                            kind: 'Name',
-                                            value: 'handle',
-                                          },
-                                        },
-                                        {
-                                          kind: 'Field',
-                                          name: {
-                                            kind: 'Name',
-                                            value: 'title',
-                                          },
-                                        },
-                                        {
-                                          kind: 'Field',
-                                          name: {
-                                            kind: 'Name',
-                                            value: 'price',
-                                          },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              {
-                                                kind: 'Field',
-                                                name: {
-                                                  kind: 'Name',
-                                                  value: 'amount',
-                                                },
-                                              },
-                                              {
-                                                kind: 'Field',
-                                                name: {
-                                                  kind: 'Name',
-                                                  value: 'currencyCode',
-                                                },
-                                              },
-                                            ],
-                                          },
-                                        },
-                                        {
-                                          kind: 'Field',
-                                          name: {
-                                            kind: 'Name',
-                                            value: 'compareAtPrice',
-                                          },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              {
-                                                kind: 'Field',
-                                                name: {
-                                                  kind: 'Name',
-                                                  value: 'amount',
-                                                },
-                                              },
-                                              {
-                                                kind: 'Field',
-                                                name: {
-                                                  kind: 'Name',
-                                                  value: 'currencyCode',
-                                                },
-                                              },
-                                            ],
-                                          },
-                                        },
-                                        {
-                                          kind: 'Field',
-                                          name: {
-                                            kind: 'Name',
-                                            value: 'availableForSale',
-                                          },
-                                        },
-                                      ],
+                                      value: 'SdkProductCard',
                                     },
                                   },
                                 ],
@@ -65628,6 +65491,120 @@ export const SdkCollectionProductsDocument = {
                       },
                     ],
                   },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SdkProductCard' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ProductCard' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'productId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'vendor' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'availableForSale' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'variant' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  alias: { kind: 'Name', value: 'cover' },
+                  name: { kind: 'Name', value: 'featuredMedia' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'MediaImage' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'image' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'url' },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'price' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'compareAtPrice' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'amount' },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'currencyCode' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'availableForSale' },
                 },
               ],
             },
@@ -66669,13 +66646,6 @@ export const SdkProductComparisonDocument = {
                                           name: { kind: 'Name', value: 'id' },
                                         },
                                       ],
-                                    },
-                                  },
-                                  {
-                                    kind: 'Field',
-                                    name: {
-                                      kind: 'Name',
-                                      value: 'savedForComparison',
                                     },
                                   },
                                 ],

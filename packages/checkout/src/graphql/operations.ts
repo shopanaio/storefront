@@ -52,8 +52,6 @@ export type Scalars = {
   UnsignedInt64: { input: string; output: string };
   /** A file sent as a multipart GraphQL request part. */
   Upload: { input: any; output: any };
-  join__FieldSet: { input: any; output: any };
-  link__Import: { input: any; output: any };
 };
 
 /** How one filter of the request was used. */
@@ -96,12 +94,12 @@ export type Availability = 'AVAILABLE' | 'UNAVAILABLE';
 export type CartRecommendation = {
   readonly __typename: 'CartRecommendation';
   /**
-   * Cart products that contributed this item, most significant first; at most
-   * three. Empty for a store-level fallback item.
+   * Global ids of the cart products that contributed this item, most significant
+   * first; at most three. Empty for a store-level fallback item.
    */
-  readonly anchors: ReadonlyArray<Product>;
-  /** Current federated Product presentation resolved by Catalog. */
-  readonly product: Product;
+  readonly anchorProductIds: ReadonlyArray<Scalars['ID']['output']>;
+  /** The recommended product card, without a variant in its id. */
+  readonly product: ProductCard;
   /** Strongest source among the cart products that contributed this item. */
   readonly source: ProductRecommendationSource;
 };
@@ -1623,7 +1621,6 @@ export type Collection = Node & {
   readonly featuredMedia?: Maybe<Media>;
   readonly handle: Scalars['String']['output'];
   readonly id: Scalars['ID']['output'];
-  readonly listingUpdatedAt: Scalars['DateTime']['output'];
   readonly media: CollectionMediaConnection;
   readonly name: Scalars['String']['output'];
   readonly products: ProductConnection;
@@ -3135,16 +3132,17 @@ export type CustomerWishlistItem = Node & {
   readonly __typename: 'CustomerWishlistItem';
   /** Date and time when the product was added to the wishlist. */
   readonly addedAt: Scalars['DateTime']['output'];
+  /**
+   * Storefront product card of the saved product, filled by the Listing subgraph.
+   *
+   * The card has no fixed variant: Listing picks it as on a category page. The
+   * saved item remains present when the product leaves the storefront. This field
+   * is null when the product is unpublished, deleted, belongs to another store,
+   * or is not in the storefront listing index.
+   */
+  readonly card?: Maybe<ProductCard>;
   /** Globally unique CustomerWishlistItem ID. */
   readonly id: Scalars['ID']['output'];
-  /**
-   * The currently published storefront product represented by this item.
-   *
-   * The saved item remains present when the product is unpublished. This field
-   * is null when the product is unpublished, deleted, belongs to another store,
-   * or its federated reference cannot be resolved.
-   */
-  readonly product?: Maybe<Product>;
   /** Wishlist containing this saved item. */
   readonly wishlist: CustomerWishlist;
 };
@@ -3736,7 +3734,8 @@ export type ListingFilterInput = {
   readonly price?: InputMaybe<PriceRangeFilterInput>;
   /**
    * Products with a variant that is a target of the storefront promotion, by
-   * StorefrontPromotion.key. Repeated promotion filters are combined with OR. Evaluated
+   * StorefrontPromotion.key; for a Buy X Get Y promotion only the products to buy, not the
+   * items it gives. Repeated promotion filters are combined with OR. Evaluated
    * against the same variant as price and availability. Not applied (OUTSIDE_SCOPE) when
    * the store's PROMOTION facet is outside the facet set of the scope. A promotion that is
    * not published to the storefront matches no product.
@@ -4207,7 +4206,6 @@ export type LoyaltyAccountTransactionsArgs = {
  */
 export type LoyaltyAccountOpportunityPresentation = {
   readonly __typename: 'LoyaltyAccountOpportunityPresentation';
-  readonly evaluatedAt: Scalars['DateTime']['output'];
   readonly opportunities: ReadonlyArray<LoyaltyOpportunity>;
   readonly primaryOpportunity?: Maybe<LoyaltyOpportunity>;
   readonly revision: Scalars['String']['output'];
@@ -4257,13 +4255,23 @@ export type LoyaltyBalance = {
   readonly reservedPoints: Scalars['UnsignedInt64']['output'];
 };
 
-export type LoyaltyFreeProductRewardPresentation = LoyaltyRewardPresentation & {
-  readonly __typename: 'LoyaltyFreeProductRewardPresentation';
+/**
+ * A reward applied as a Pricing discount: a voucher, a fixed or percentage discount, or a free
+ * product. Its value and gifts belong to the discount and are read from `promotion`.
+ */
+export type LoyaltyDiscountRewardPresentation = LoyaltyRewardPresentation & {
+  readonly __typename: 'LoyaltyDiscountRewardPresentation';
+  /**
+   * Customer-visible discount code of an issued reward. Null for an opportunity that has not yet
+   * issued an entitlement.
+   */
+  readonly code?: Maybe<Scalars['String']['output']>;
   readonly copy: LoyaltyOpportunityCopy;
   readonly kind: LoyaltyRewardKind;
-  readonly product: Product;
+  /** The Pricing discount the reward applies, with its value and, for a free product, its gifts. */
+  readonly promotion: StorefrontPromotion;
+  /** Units of the reward; one for an opportunity. */
   readonly quantity: Scalars['UnsignedInt64']['output'];
-  readonly variant?: Maybe<ProductVariant>;
 };
 
 export type LoyaltyFreeShippingRewardPresentation =
@@ -4288,7 +4296,7 @@ export type LoyaltyMoneyRange = {
   readonly minimum: Money;
 };
 
-/** Cashback, store credit, or a fixed monetary discount. */
+/** Cashback or store credit. */
 export type LoyaltyMoneyRewardPresentation = LoyaltyRewardPresentation & {
   readonly __typename: 'LoyaltyMoneyRewardPresentation';
   readonly accuracy: LoyaltyValueAccuracy;
@@ -4366,14 +4374,6 @@ export type LoyaltyOpportunityType =
   | 'REVIEW'
   | 'SIGNUP'
   | 'SUBSCRIPTION_RENEWAL';
-
-export type LoyaltyPercentageRewardPresentation = LoyaltyRewardPresentation & {
-  readonly __typename: 'LoyaltyPercentageRewardPresentation';
-  readonly copy: LoyaltyOpportunityCopy;
-  readonly kind: LoyaltyRewardKind;
-  /** Percentage expressed as a decimal value, for example `5` for five percent. */
-  readonly percentage: Scalars['Decimal']['output'];
-};
 
 /** Points scheduled to expire at the same time. */
 export type LoyaltyPointsExpiration = {
@@ -4528,17 +4528,6 @@ export type LoyaltyValueAccuracy =
   | 'ESTIMATED'
   /** The value cannot change for the evaluated subject and context. */
   | 'EXACT';
-
-export type LoyaltyVoucherRewardPresentation = LoyaltyRewardPresentation & {
-  readonly __typename: 'LoyaltyVoucherRewardPresentation';
-  /**
-   * Customer-visible voucher code. Null for an opportunity that has not yet issued
-   * an entitlement.
-   */
-  readonly code?: Maybe<Scalars['String']['output']>;
-  readonly copy: LoyaltyOpportunityCopy;
-  readonly kind: LoyaltyRewardKind;
-};
 
 export type MarketingSubscribeInput = {
   /**
@@ -6934,6 +6923,123 @@ export type ProductVariantsArgs = {
 };
 
 /**
+ * A product as listing surfaces show it: content from Catalog at request time, price,
+ * availability, rating and media links as of the last listing indexing. The price is
+ * informational: the cart prices the line again.
+ */
+export type ProductCard = {
+  readonly __typename: 'ProductCard';
+  /** At least one variant of the product is available for sale. */
+  readonly availableForSale: Scalars['Boolean']['output'];
+  readonly createdAt: Scalars['DateTime']['output'];
+  /** The first media of the product gallery. */
+  readonly featuredMedia?: Maybe<Media>;
+  readonly handle: Scalars['String']['output'];
+  /**
+   * Opaque id of the card: the product and, when the source fixed one, the variant.
+   * A card without a variant and a card of the same product with a variant are
+   * different records of the client cache.
+   */
+  readonly id: Scalars['ID']['output'];
+  /**
+   * Media of the product gallery. Cursors of ProductCard.media and Product.media are
+   * not interchangeable.
+   */
+  readonly media: ProductMediaConnection;
+  readonly options: ReadonlyArray<ProductOption>;
+  /** Global id of the product. */
+  readonly productId: Scalars['ID']['output'];
+  readonly publishedAt: Scalars['DateTime']['output'];
+  readonly reviewSummary: ProductCardReviewSummary;
+  readonly tags: ReadonlyArray<Tag>;
+  readonly title: Scalars['String']['output'];
+  /**
+   * The variant of the card: the one matching the variant conditions or the price sort
+   * of the listing; otherwise the default variant, then the first available one, then
+   * the first one.
+   */
+  readonly variant: ProductCardVariant;
+  readonly vendor?: Maybe<Vendor>;
+};
+
+/**
+ * A product as listing surfaces show it: content from Catalog at request time, price,
+ * availability, rating and media links as of the last listing indexing. The price is
+ * informational: the cart prices the line again.
+ */
+export type ProductCardMediaArgs = {
+  after?: InputMaybe<Scalars['Cursor']['input']>;
+  before?: InputMaybe<Scalars['Cursor']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type ProductCardLoyalty = {
+  readonly __typename: 'ProductCardLoyalty';
+  readonly primaryOpportunity?: Maybe<ProductCardLoyaltyOpportunity>;
+};
+
+/** Audience the card reward is calculated for. Segment programs are not shown on cards. */
+export type ProductCardLoyaltyAudience =
+  /** Every buyer of the store, signed in or not. */
+  'GENERAL';
+
+export type ProductCardLoyaltyOpportunity = {
+  readonly __typename: 'ProductCardLoyaltyOpportunity';
+  readonly audience: ProductCardLoyaltyAudience;
+  readonly key: Scalars['String']['output'];
+  readonly presentation: LoyaltyOpportunityCopy;
+  readonly reward: LoyaltyRewardPresentation;
+  readonly type: LoyaltyOpportunityType;
+};
+
+export type ProductCardReviewSummary = {
+  readonly __typename: 'ProductCardReviewSummary';
+  /** Zero without reviews. */
+  readonly averageRating: Scalars['Float']['output'];
+  readonly reviewCount: Scalars['Int']['output'];
+};
+
+/**
+ * The variant of a product card. Price fields come from the listing offer price index,
+ * the same row ProductVariant price fields read.
+ */
+export type ProductCardVariant = {
+  readonly __typename: 'ProductCardVariant';
+  readonly appliedDiscountIds: ReadonlyArray<Scalars['ID']['output']>;
+  readonly availableForSale: Scalars['Boolean']['output'];
+  readonly benefitPrice?: Maybe<Money>;
+  readonly cartOnlyDiscountIds: ReadonlyArray<Scalars['ID']['output']>;
+  readonly compareAtPrice?: Maybe<Money>;
+  /** The variant cover; the first media of the product gallery without one. */
+  readonly featuredMedia?: Maybe<Media>;
+  readonly handle: Scalars['String']['output'];
+  readonly id: Scalars['ID']['output'];
+  readonly inventoryItem?: Maybe<InventoryItem>;
+  readonly isDefault: Scalars['Boolean']['output'];
+  /**
+   * The loyalty reward of the general audience. Null when the variant is not available,
+   * has no offer price or no reward applies.
+   */
+  readonly loyalty?: Maybe<ProductCardLoyalty>;
+  /** Null when the variant is not in the offer price index yet. */
+  readonly price?: Maybe<Money>;
+  /** Storefront promotions of the variant offer: a subset of ProductVariant.promotions. */
+  readonly promotions: StorefrontPromotionPresentation;
+  readonly selectedOptions: ReadonlyArray<SelectedOption>;
+  readonly sku?: Maybe<Scalars['String']['output']>;
+  readonly title: Scalars['String']['output'];
+};
+
+/**
+ * The variant of a product card. Price fields come from the listing offer price index,
+ * the same row ProductVariant price fields read.
+ */
+export type ProductCardVariantBenefitPriceArgs = {
+  promotionKey: Scalars['ID']['input'];
+};
+
+/**
  * A fully prepared comparison of concrete variants from one product category.
  *
  * Catalog validates publication, ownership and effective-profile compatibility,
@@ -7239,8 +7345,8 @@ export type ProductConnection = Connection & {
    * vendor is pinned, and `availability` when an inStock rule is present.
    */
   readonly filters: ReadonlyArray<Filter>;
-  /** The products contained in the returned edges. */
-  readonly nodes: ReadonlyArray<Product>;
+  /** The product cards contained in the returned edges. */
+  readonly nodes: ReadonlyArray<ProductCard>;
   /**
    * Page boundaries and availability of adjacent pages. Use the returned cursors with the pagination
    * arguments.
@@ -7268,16 +7374,11 @@ export type ProductEdge = {
   /** An opaque cursor for this product in the current listing. */
   readonly cursor: Scalars['Cursor']['output'];
   /**
-   * The product variant that satisfies the variant conditions of this listing:
-   * collection rules, option, price, sale, promotion and availability filters. Available
-   * variants come first, then the lower price in the context currency, then the
-   * index order. With a price or discount sort it is always the variant that
-   * ordered the product. Null with other sorts when the listing has no variant
-   * conditions; clients then fall back to their default variant selection.
+   * The product card at the end of the edge. A product whose card is not available (it
+   * was unpublished and the index is not updated yet) leaves no edge: the page can be
+   * shorter than first while totalCount is unchanged.
    */
-  readonly matchedVariant?: Maybe<ProductVariant>;
-  /** The product at the end of the edge. */
-  readonly node: Product;
+  readonly node: ProductCard;
 };
 
 /** A localized product specification such as material or screen size. */
@@ -7324,8 +7425,6 @@ export type ProductLoyaltyPresentation = {
   readonly __typename: 'ProductLoyaltyPresentation';
   /** Server-ranked non-purchase rewards such as a verified-review reward. */
   readonly engagementOpportunities: ReadonlyArray<LoyaltyOpportunity>;
-  /** When this complete presentation snapshot was calculated. */
-  readonly evaluatedAt: Scalars['DateTime']['output'];
   /**
    * The single opportunity selected by server-side priority for compact surfaces.
    *
@@ -7647,8 +7746,11 @@ export type ProductRatingCriterionSummary = {
  */
 export type ProductRecommendation = {
   readonly __typename: 'ProductRecommendation';
-  /** Current federated Product presentation resolved by Catalog. */
-  readonly product: Product;
+  /**
+   * The recommended product card. The card has no variant in its id: the variant is the
+   * default one, then the first available one, then the first one.
+   */
+  readonly product: ProductCard;
   /** Primary source that contributed this recommendation. */
   readonly source: ProductRecommendationSource;
 };
@@ -7668,7 +7770,10 @@ export type ProductRecommendationConnection = Connection & {
   readonly __typename: 'ProductRecommendationConnection';
   /** Recommendation edges in their published display order. */
   readonly edges: ReadonlyArray<ProductRecommendationEdge>;
-  /** Recommendations contained in the returned edges. */
+  /**
+   * Recommendations contained in the returned edges. A recommendation whose product has
+   * no card is left out.
+   */
   readonly nodes: ReadonlyArray<ProductRecommendation>;
   /** Whether another page is available and the cursor to pass as after when requesting it. */
   readonly pageInfo: PageInfo;
@@ -7979,6 +8084,12 @@ export type Query = {
   readonly product?: Maybe<Product>;
   /** Returns a published product by its stable storefront handle. */
   readonly productByHandle?: Maybe<Product>;
+  /**
+   * Product cards by id, in the order of ids; at most 100 ids. Each card has the id it
+   * was requested with. Null for an unknown id, a product that is not published, deleted
+   * or not indexed yet, and for a variant that does not belong to the product.
+   */
+  readonly productCards: ReadonlyArray<Maybe<ProductCard>>;
   /** Returns a product question visible in the current storefront context. */
   readonly productQuestion?: Maybe<ProductQuestion>;
   /** Returns a published product-question answer by its global ID. */
@@ -8179,6 +8290,11 @@ export type QueryProductArgs = {
 /** Public Catalog entry points for the active storefront context. */
 export type QueryProductByHandleArgs = {
   handle: Scalars['String']['input'];
+};
+
+/** Public Catalog entry points for the active storefront context. */
+export type QueryProductCardsArgs = {
+  ids: ReadonlyArray<Scalars['ID']['input']>;
 };
 
 /** Public Catalog entry points for the active storefront context. */
@@ -9246,19 +9362,20 @@ export type StorefrontPromotion = {
   readonly appliesOnOneTimePurchase: Scalars['Boolean']['output'];
   readonly appliesOnSubscription: Scalars['Boolean']['output'];
   /**
-   * Products a buy X get Y promotion gives its benefit to when the merchant chose products; an item is
-   * null for a product the storefront does not show. Null when the benefit is chosen otherwise or for
-   * any other kind.
+   * Product cards of the products a buy X get Y promotion gives its benefit to when the merchant chose
+   * products; the listing picks each card variant. An item is null for a product the storefront does
+   * not show. Null when the benefit is chosen otherwise or for any other kind.
    */
-  readonly benefitProducts?: Maybe<ReadonlyArray<Maybe<Product>>>;
+  readonly benefitProductCards?: Maybe<ReadonlyArray<Maybe<ProductCard>>>;
   /** What a buy X get Y promotion gives its benefit to; null for any other kind. */
   readonly benefitScope?: Maybe<StorefrontPromotionBenefitScope>;
   /**
-   * Variants a buy X get Y promotion gives its benefit to when the merchant chose variants, such as
-   * the gifts to choose from; only variants the storefront shows and the promotion does not exclude.
-   * Null when the benefit is chosen otherwise or for any other kind.
+   * Product cards of the variants a buy X get Y promotion gives its benefit to when the merchant chose
+   * variants, such as the gifts to choose from; each card shows its gift variant. Only variants the
+   * storefront shows and the promotion does not exclude; an item is null for a variant the listing
+   * index does not have. Null when the benefit is chosen otherwise or for any other kind.
    */
-  readonly benefitVariants?: Maybe<ReadonlyArray<ProductVariant>>;
+  readonly benefitVariantCards?: Maybe<ReadonlyArray<Maybe<ProductCard>>>;
   readonly endsAt?: Maybe<Scalars['DateTime']['output']>;
   /** Stable opaque key of the promotion. */
   readonly key: Scalars['ID']['output'];
@@ -9310,10 +9427,9 @@ export type StorefrontPromotionPlacement =
   /** The list of the store promotions. */
   | 'PROMOTION_LIST';
 
-/** A set of promotions with cache hints for the storefront. */
+/** Storefront promotions with the nearest change of the promotion set. */
 export type StorefrontPromotionPresentation = {
   readonly __typename: 'StorefrontPromotionPresentation';
-  readonly evaluatedAt: Scalars['DateTime']['output'];
   /** Ordered by sort order, then by discount priority. */
   readonly promotions: ReadonlyArray<StorefrontPromotion>;
   /** Changes whenever the visible promotions or their texts change. */
@@ -9544,29 +9660,6 @@ export type WishlistUpdatePayload = {
   /** The updated wishlist, or null when the update failed. */
   readonly wishlist?: Maybe<CustomerWishlist>;
 };
-
-export type Join__Graph =
-  | 'APPS_CONTACT_REQUESTS_STOREFRONT'
-  | 'APPS_HEADLESS_STOREFRONT'
-  | 'APPS_NOVA_POSHTA_STOREFRONT'
-  | 'APPS_ONLINE_STORE_STOREFRONT'
-  | 'APPS_PET_ASSISTANT_STOREFRONT'
-  | 'CATALOG_STOREFRONT'
-  | 'CHECKOUT_STOREFRONT'
-  | 'CUSTOMERS_STOREFRONT'
-  | 'LISTING_STOREFRONT'
-  | 'LOYALTY_STOREFRONT'
-  | 'MEDIA_STOREFRONT'
-  | 'ORDERS_STOREFRONT'
-  | 'PRICING_STOREFRONT'
-  | 'PROJECT_STOREFRONT'
-  | 'REVIEWS_STOREFRONT';
-
-export type Link__Purpose =
-  /** `EXECUTION` features provide metadata necessary for operation execution. */
-  | 'EXECUTION'
-  /** `SECURITY` features provide metadata necessary to securely resolve fields. */
-  | 'SECURITY';
 
 export type StorefrontPlaceOrderPayloadFragment = {
   readonly __typename: 'PlaceOrderPayload';

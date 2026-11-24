@@ -163,6 +163,8 @@ export function createApolloClient(
   const httpLink = new HttpLink({
     uri: IS_SERVER ? serverGraphqlUrl(config) : config.graphqlUrl,
     credentials: 'include',
+    // Метаданные библиотеки не меняют ответ и мешают публичному CDN-пути без extensions.
+    enhancedClientAwareness: { transport: false },
   });
 
   // Files are uploaded from the browser only (customer media), as a multipart request.

@@ -278,7 +278,24 @@ describe('Storefront API', () => {
             ? 'product-2'
             : 'product-1';
         return {
-          edges: [{ cursor: id, node: { id, handle: id, title: id } }],
+          edges: [
+            {
+              cursor: id,
+              node: {
+                id: `card-${id}`,
+                productId: id,
+                handle: id,
+                title: id,
+                availableForSale: true,
+                variant: {
+                  id: `${id}-variant`,
+                  handle: id,
+                  title: id,
+                  availableForSale: true,
+                },
+              },
+            },
+          ],
           pageInfo: {
             hasNextPage: !args.after,
             hasPreviousPage: Boolean(args.after),
@@ -302,7 +319,7 @@ describe('Storefront API', () => {
       after: 'product-1',
     });
     expect(products).toHaveBeenCalledTimes(2);
-    expect(second?.edges.map(({ node }) => node.id)).toEqual([
+    expect(second?.edges.map(({ node }) => node.productId)).toEqual([
       'product-1',
       'product-2',
     ]);
@@ -311,6 +328,6 @@ describe('Storefront API', () => {
       first: 1,
       query: 'filtered',
     });
-    expect(filtered?.edges.map(({ node }) => node.id)).toEqual(['filtered']);
+    expect(filtered?.edges.map(({ node }) => node.productId)).toEqual(['filtered']);
   });
 });

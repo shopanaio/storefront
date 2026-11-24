@@ -79,7 +79,7 @@ fragment SdkLoyaltyAccountFragment on LoyaltyAccount {
       }
       reward {
         kind
-        ... on LoyaltyVoucherRewardPresentation {
+        ... on LoyaltyDiscountRewardPresentation {
           code
         }
       }

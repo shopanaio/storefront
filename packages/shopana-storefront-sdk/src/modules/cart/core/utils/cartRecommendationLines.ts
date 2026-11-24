@@ -8,7 +8,8 @@ const MAX_COMPONENTS = 200;
  * Input lines of `cartRecommendations` for a cart: root lines, the most recently added first
  * (the checkout lists lines in the order they were added), with the variants of their bundle
  * components so the components are not recommended either. Child lines are not separate
- * anchors. Within the API limits: 100 lines and 200 components.
+ * anchors (`anchorProductIds` of the answer). Within the API limits: 100 lines and 200
+ * components.
  */
 export function cartRecommendationLines(
   lines: readonly model.CartLine[]

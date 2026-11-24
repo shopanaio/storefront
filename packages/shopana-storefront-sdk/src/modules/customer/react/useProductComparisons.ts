@@ -7,7 +7,6 @@ import {
   SdkCustomerComparisonVariantAddMutationDocument,
   SdkCustomerComparisonVariantRemoveMutationDocument,
   SdkCustomerProductComparisonsQueryDocument,
-  SdkProductComparisonDocument,
   type ImageTransformInput,
   type SdkComparisonMutationResultFragment,
 } from '../../../graphql/apollo/generated/operations';
@@ -55,11 +54,9 @@ export function useProductComparisons({
   };
 }
 
-// The comparisons page, the product comparison table and the product actions all read which
-// variants are saved.
+// The comparisons page and the product actions read which variants are saved.
 const refetchQueries = [
   SdkCustomerProductComparisonsQueryDocument,
-  SdkProductComparisonDocument,
   SdkAccountProductActionsQueryDocument,
 ];
 

@@ -6,7 +6,6 @@ import {
   SdkCustomerWishlistQueryDocument,
   SdkWishlistProductAddMutationDocument,
   SdkWishlistProductRemoveMutationDocument,
-  type ImageTransformInput,
   type SdkWishlistProductAddMutation,
   type SdkWishlistProductRemoveMutation,
 } from '../../../graphql/apollo/generated/operations';
@@ -26,10 +25,7 @@ import type {
   WishlistItem,
 } from './types.js';
 
-export interface WishlistOptions extends CustomerConnectionOptions {
-  /** Transform of the product images. */
-  imageTransform?: ImageTransformInput;
-}
+export type WishlistOptions = CustomerConnectionOptions;
 
 export interface WishlistState extends CustomerConnectionState<WishlistItem> {
   /** The default wishlist; `null` until the customer saves the first product. */
@@ -39,11 +35,10 @@ export interface WishlistState extends CustomerConnectionState<WishlistItem> {
 /** Items of the default wishlist of the signed-in customer, page by page. */
 export function useWishlist({
   first = DEFAULT_PAGE_SIZE,
-  imageTransform,
 }: WishlistOptions = {}): WishlistState {
   const { data, state } = useCustomerConnectionQuery(
     SdkCustomerWishlistQueryDocument,
-    { first, imageTransform },
+    { first },
     (value) => value.customer?.defaultWishlist?.items
   );
   const apiWishlist = data?.customer?.defaultWishlist;

@@ -138,6 +138,40 @@ query SdkCollectionByHandle(
     ...SdkCollectionFields
   }
 }
+# A product card of listing surfaces (ADR-023): the listing picked the variant the card shows,
+# links to and adds to the cart.
+fragment SdkProductCard on ProductCard {
+  id
+  productId
+  handle
+  title
+  vendor {
+    name
+  }
+  availableForSale
+  variant {
+    id
+    handle
+    title
+    cover: featuredMedia {
+      id
+      ... on MediaImage {
+        image {
+          url
+        }
+      }
+    }
+    price {
+      amount
+      currencyCode
+    }
+    compareAtPrice {
+      amount
+      currencyCode
+    }
+    availableForSale
+  }
+}
 query SdkCollectionProducts(
   $id: ID!
   $first: Int
@@ -158,23 +192,7 @@ query SdkCollectionProducts(
       edges {
         cursor
         node {
-          id
-          handle
-          title
-          selectedOrFirstAvailableVariant {
-            id
-            handle
-            title
-            price {
-              amount
-              currencyCode
-            }
-            compareAtPrice {
-              amount
-              currencyCode
-            }
-            availableForSale
-          }
+          ...SdkProductCard
         }
       }
       pageInfo {
@@ -376,6 +394,8 @@ query SdkReviewMedia($id: ID!) {
     }
   }
 }
+# The comparison as every viewer sees it: which variants the customer saved is the customer's
+# own (SdkAccountProductActionsQuery), so the gateway caches the matrix for both audiences.
 query SdkProductComparison($id: ID!) {
   product(id: $id) {
     id
@@ -392,7 +412,6 @@ query SdkProductComparison($id: ID!) {
           variant {
             id
           }
-          savedForComparison
         }
         groups {
           key

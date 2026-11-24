@@ -1,4 +1,4 @@
-import type { Product } from './product';
+import type { ProductCard } from './ProductCard';
 import type { Connection, Edge } from '../Connection';
 
 /** Public signal that produced a product recommendation. */
@@ -12,7 +12,8 @@ export type ProductRecommendationSource =
 /** One ranked product recommendation. */
 export interface ProductRecommendation {
   __typename?: 'ProductRecommendation';
-  product: Product;
+  /** The card of the recommended product, with the variant the listing picked. */
+  product: ProductCard;
   source: ProductRecommendationSource;
 }
 

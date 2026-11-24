@@ -6,8 +6,9 @@ query SdkAccountProductActionsQuery {
       items(first: 100) {
         nodes {
           id
-          product {
+          card {
             id
+            productId
           }
         }
       }

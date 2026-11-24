@@ -50,40 +50,31 @@ describe('directGatewayHeaders', () => {
 
   it('adds nothing when requests go through the public address', () => {
     expect(
-      directGatewayHeaders(incoming({ 'x-forwarded-for': '203.0.113.7' }))
+      directGatewayHeaders(incoming({ 'cf-connecting-ip': '203.0.113.7' }))
     ).toBeUndefined();
   });
 
-  it('sends the address of the trusted proxy in the form the gateway reads', () => {
+  it('passes on the buyer address Cloudflare set, the one the gateway reads', () => {
     vi.stubEnv('STOREFRONT_SERVER_GRAPHQL_URL', SERVER_URL);
-    const sent = directGatewayHeaders(
-      incoming({
-        'x-forwarded-for': '198.51.100.66, 203.0.113.7',
-        'user-agent': 'Buyer Browser',
-      })
-    );
-    expect(sent).toEqual({
-      'x-forwarded-for': '203.0.113.7, storefront-server',
-      'user-agent': 'Buyer Browser',
-    });
-    // The buyer entry stands where the gateway takes it, two hops from the right.
-    const chain = sent!['x-forwarded-for']!.split(', ');
-    expect(chain[chain.length - 2]).toBe('203.0.113.7');
-  });
-
-  it('counts the hops of this server', () => {
-    vi.stubEnv('STOREFRONT_SERVER_GRAPHQL_URL', SERVER_URL);
-    vi.stubEnv('STOREFRONT_TRUSTED_PROXY_HOPS', '2');
     expect(
       directGatewayHeaders(
-        incoming({ 'x-forwarded-for': '198.51.100.66, 203.0.113.7, 10.0.0.1' })
+        incoming({
+          'cf-connecting-ip': '203.0.113.7',
+          'x-forwarded-for': '198.51.100.66, 203.0.113.7',
+          'user-agent': 'Buyer Browser',
+        })
       )
-    ).toEqual({ 'x-forwarded-for': '203.0.113.7, storefront-server' });
+    ).toEqual({
+      'cf-connecting-ip': '203.0.113.7',
+      'user-agent': 'Buyer Browser',
+    });
   });
 
   it('claims no address it does not know', () => {
     vi.stubEnv('STOREFRONT_SERVER_GRAPHQL_URL', SERVER_URL);
-    expect(directGatewayHeaders(incoming({}))).toEqual({});
+    expect(
+      directGatewayHeaders(incoming({ 'x-forwarded-for': '203.0.113.7' }))
+    ).toEqual({});
   });
 });
 
@@ -108,14 +99,14 @@ describe('server requests', () => {
     vi.stubEnv('STOREFRONT_SERVER_GRAPHQL_URL', SERVER_URL);
     const fetchMock = respondWith({ ping: 'pong' });
     const client = createApolloClient(config, {
-      gatewayHeaders: { 'x-forwarded-for': '203.0.113.7, storefront-server' },
+      gatewayHeaders: { 'cf-connecting-ip': '203.0.113.7' },
     });
     await client.query({ query });
     client.stop();
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(url).toBe(SERVER_URL);
-    expect(new Headers(init?.headers).get('x-forwarded-for')).toBe(
-      '203.0.113.7, storefront-server'
+    expect(new Headers(init?.headers).get('cf-connecting-ip')).toBe(
+      '203.0.113.7'
     );
   });
 
@@ -134,6 +125,15 @@ describe('server requests', () => {
     await client.query({ query });
     client.stop();
     expect(fetchMock.mock.calls[0]![0]).toBe(PUBLIC_URL);
+  });
+
+  it('does not add client-library extensions that bypass the public CDN', async () => {
+    const fetchMock = respondWith({ ping: 'pong' });
+    const client = createApolloClient(config);
+    await client.query({ query });
+    client.stop();
+    const init = fetchMock.mock.calls[0]![1];
+    expect(JSON.parse(String(init?.body)).extensions).toBeUndefined();
   });
 
   it('the store languages go to the server address', async () => {
