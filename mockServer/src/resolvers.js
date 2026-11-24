@@ -21,6 +21,7 @@ import {
 } from 'graphql';
 
 import { gid, money } from './fixture-helpers.js';
+import { productCard, productCardsByIds } from './productCards.js';
 import {
   comparisonColumns,
   customerProductComparisons,
@@ -427,10 +428,8 @@ const recommendationsForProduct = (store, product, fieldName, args) => {
   );
   const recommendations = (fixture?.[fieldName] ?? []).flatMap(
     (recommendation) => {
-      const recommendedProduct = store.get(recommendation.productId);
-      return recommendedProduct?.__typename === 'Product'
-        ? [{ product: recommendedProduct, source: recommendation.source }]
-        : [];
+      const card = productCard(store, store.get(recommendation.productId));
+      return card ? [{ product: card, source: recommendation.source }] : [];
     }
   );
 
@@ -481,12 +480,15 @@ const cartRecommendations = (store, { input, first = 8 }) => {
       const product = store.get(recommendation.productId);
       if (product?.__typename !== 'Product' || excluded.has(product.id))
         continue;
+      const card = productCard(store, product);
+      if (!card) continue;
       const item = items.get(product.id) ?? {
-        product,
+        product: card,
         source: recommendation.source,
-        anchors: [],
+        anchorProductIds: [],
       };
-      if (item.anchors.length < 3) item.anchors.push(anchor);
+      if (item.anchorProductIds.length < 3)
+        item.anchorProductIds.push(anchor.id);
       items.set(product.id, item);
     }
   }
@@ -527,7 +529,10 @@ const productConnection = (store, source, args = {}, options = {}) => {
     'PRICE_ASC',
     'PRICE_DESC',
   ];
-  return connection(products, args, {
+  // The card variant is the product's default one: the mock fixes no variant by the listing
+  // conditions.
+  const cards = products.map((product) => productCard(store, product));
+  return connection(cards.filter(Boolean), args, {
     filters: buildListingFilters(
       scopeProducts,
       inputFilters,
@@ -684,10 +689,41 @@ const specialFields = (store) => ({
   'StorefrontPromotion.placements': (promotion) =>
     promotion.placements ?? ['PRODUCT', 'CART', 'PROMOTION_LIST'],
   'StorefrontPromotion.benefitScope': (promotion) => benefitScopeOf(promotion),
-  'StorefrontPromotion.benefitVariants': (promotion) =>
-    benefitVariantsOf(store, promotion),
-  'StorefrontPromotion.benefitProducts': (promotion) =>
-    benefitProductsOf(store, promotion),
+  'StorefrontPromotion.benefitVariantCards': (promotion) =>
+    benefitVariantsOf(store, promotion)?.map((variant) =>
+      productCard(store, store.get(variant.productId), variant)
+    ) ?? null,
+  'StorefrontPromotion.benefitProductCards': (promotion) =>
+    benefitProductsOf(store, promotion)?.map((product) =>
+      productCard(store, product)
+    ) ?? null,
+
+  // A card reads the fields of its product and variant (see applyResolvers).
+  'ProductCard.id': (card) => card.id,
+  'ProductCard.productId': (card) => card.productId,
+  'ProductCard.variant': (card) => card.variant,
+  'ProductCard.reviewSummary': (card) => {
+    const { reviewCount, averageRating } = reviewSummary(store, card.product);
+    return { reviewCount, averageRating };
+  },
+  'ProductCardVariant.isDefault': (variant) => Boolean(variant.isDefault),
+  // The reward of the general audience, without the account opportunities of the variant.
+  'ProductCardVariant.loyalty': (variant) => {
+    const opportunity = loyaltyPresentation(store, variant)?.primaryOpportunity;
+    return opportunity
+      ? {
+          primaryOpportunity: {
+            key: opportunity.key,
+            type: opportunity.type,
+            audience: 'GENERAL',
+            reward: opportunity.reward,
+            presentation: opportunity.presentation,
+          },
+        }
+      : null;
+  },
+  'CustomerWishlistItem.card': (item) =>
+    productCard(store, store.get(item.productId)),
 
   'Product.primaryCategory': (product) => store.get(product.primaryCategoryId),
   'Product.comparison': (product, _args, context) =>
@@ -1023,6 +1059,13 @@ const queryResolvers = (store) => ({
     ) ?? null,
   customer: (_, __, context) => context.customer,
   products: (_, args) => productConnection(store, store.state.products, args),
+  productCards: (_, { ids }) => {
+    if (ids.length > 100)
+      throw new GraphQLError('ids must have at most 100 items', {
+        extensions: { code: 'BAD_USER_INPUT', field: ['ids'] },
+      });
+    return productCardsByIds(store, ids);
+  },
   searchProducts: (_, args) => {
     if (!String(args.query).trim())
       throw new GraphQLError('query must not be empty', {
@@ -1102,6 +1145,12 @@ const abstractType = (value, abstractTypeName) => {
   return value.__typename ?? inferTypeName(value) ?? null;
 };
 
+// The card types repeat the fields of the product and its variant.
+const CARD_SOURCES = {
+  ProductCard: { type: 'Product', of: (card) => card.product },
+  ProductCardVariant: { type: 'ProductVariant', of: (variant) => variant },
+};
+
 export const applyResolvers = (schema, store) => {
   const specials = specialFields(store);
   const query = queryResolvers(store);
@@ -1126,6 +1175,15 @@ export const applyResolvers = (schema, store) => {
       const special = specials[`${type.name}.${field.name}`];
       if (special) {
         field.resolve = special;
+        continue;
+      }
+      const cardSource = CARD_SOURCES[type.name];
+      if (cardSource) {
+        const sourceType = schema.getType(cardSource.type);
+        field.resolve = (parent, ...rest) =>
+          sourceType
+            .getFields()
+            [field.name].resolve(cardSource.of(parent), ...rest);
         continue;
       }
       field.resolve = (parent, args) => {

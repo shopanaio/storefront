@@ -477,6 +477,12 @@ type Query @join__type(graph: APPS_CONTACT_REQUESTS_STOREFRONT)  @join__type(gra
   and NOT_IN with an unknown value excludes nothing.
   """
   dynamicCollection(rules: [DynamicCollectionRuleInput!]!) : DynamicCollection! @join__field(graph: LISTING_STOREFRONT)
+  """
+  Product cards by id, in the order of ids; at most 100 ids. Each card has the id it
+  was requested with. Null for an unknown id, a product that is not published, deleted
+  or not indexed yet, and for a variant that does not belong to the product.
+  """
+  productCards(ids: [ID!]!) : [ProductCard]! @join__field(graph: LISTING_STOREFRONT)
   _media: Boolean @join__field(graph: MEDIA_STOREFRONT)
   """
   Returns an order owned by the authenticated customer.
@@ -1248,12 +1254,12 @@ type OnlineStoreOpenGraphMetadata @join__type(graph: APPS_ONLINE_STORE_STOREFRON
 """
 An image owned and resolved by the Media subgraph.
 """
-type MediaImage implements Media & Node @join__type(graph: APPS_ONLINE_STORE_STOREFRONT, key: "id", resolvable: false)  @join__type(graph: CATALOG_STOREFRONT, key: "id", extension: true)  @join__type(graph: CHECKOUT_STOREFRONT, key: "id", resolvable: false)  @join__type(graph: MEDIA_STOREFRONT, key: "id")  @join__type(graph: PROJECT_STOREFRONT, key: "id", resolvable: false)  @join__implements(graph: CATALOG_STOREFRONT, interface: "Media")  @join__implements(graph: MEDIA_STOREFRONT, interface: "Media")  @join__implements(graph: MEDIA_STOREFRONT, interface: "Node")  {
+type MediaImage implements Media & Node @join__type(graph: APPS_ONLINE_STORE_STOREFRONT, key: "id", resolvable: false)  @join__type(graph: CATALOG_STOREFRONT, key: "id", extension: true)  @join__type(graph: CHECKOUT_STOREFRONT, key: "id", resolvable: false)  @join__type(graph: LISTING_STOREFRONT, key: "id", resolvable: false)  @join__type(graph: MEDIA_STOREFRONT, key: "id")  @join__type(graph: PROJECT_STOREFRONT, key: "id", resolvable: false)  @join__implements(graph: CATALOG_STOREFRONT, interface: "Media")  @join__implements(graph: LISTING_STOREFRONT, interface: "Media")  @join__implements(graph: LISTING_STOREFRONT, interface: "Node")  @join__implements(graph: MEDIA_STOREFRONT, interface: "Media")  @join__implements(graph: MEDIA_STOREFRONT, interface: "Node")  {
   id: ID!
-  alt: String @join__field(graph: MEDIA_STOREFRONT)
-  image: Image! @join__field(graph: MEDIA_STOREFRONT)
-  mediaContentType: MediaContentType! @join__field(graph: MEDIA_STOREFRONT)
-  previewImage: Image @join__field(graph: MEDIA_STOREFRONT)
+  alt: String @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
+  image: Image! @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
+  mediaContentType: MediaContentType! @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
+  previewImage: Image @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
 }
 
 """
@@ -1840,7 +1846,7 @@ type CollectionMediaEdge @join__type(graph: CATALOG_STOREFRONT)  {
 """
 An ordered media item registered on a product.
 """
-type ProductMediaEdge @join__type(graph: CATALOG_STOREFRONT)  {
+type ProductMediaEdge @join__type(graph: CATALOG_STOREFRONT)  @join__type(graph: LISTING_STOREFRONT)  {
   cursor: Cursor!
   node: Media
 }
@@ -1848,7 +1854,7 @@ type ProductMediaEdge @join__type(graph: CATALOG_STOREFRONT)  {
 """
 A Relay connection to the media registered on a product.
 """
-type ProductMediaConnection implements Connection @join__type(graph: CATALOG_STOREFRONT)  @join__implements(graph: CATALOG_STOREFRONT, interface: "Connection")  {
+type ProductMediaConnection implements Connection @join__type(graph: CATALOG_STOREFRONT)  @join__type(graph: LISTING_STOREFRONT)  @join__implements(graph: CATALOG_STOREFRONT, interface: "Connection")  @join__implements(graph: LISTING_STOREFRONT, interface: "Connection")  {
   edges: [ProductMediaEdge!]!
   nodes: [Media]!
   pageInfo: PageInfo!
@@ -1921,7 +1927,7 @@ type Vendor implements Node @join__type(graph: CATALOG_STOREFRONT, key: "id")  @
   """
   The vendor name in the request language, or the base name when no translation exists.
   """
-  name: String! @join__field(graph: CATALOG_STOREFRONT)
+  name: String! @join__field(graph: CATALOG_STOREFRONT)  @join__field(graph: LISTING_STOREFRONT, external: true)
   """
   The sanitized vendor description in the request language.
   """
@@ -1973,10 +1979,10 @@ type VendorEdge @join__type(graph: CATALOG_STOREFRONT)  {
 """
 A localized, stable label used to organize and filter products.
 """
-type Tag implements Node @join__type(graph: CATALOG_STOREFRONT, key: "id")  @join__implements(graph: CATALOG_STOREFRONT, interface: "Node")  {
+type Tag implements Node @join__type(graph: CATALOG_STOREFRONT, key: "id")  @join__type(graph: LISTING_STOREFRONT, key: "id", extension: true)  @join__implements(graph: CATALOG_STOREFRONT, interface: "Node")  {
   id: ID!
-  handle: String!
-  name: String!
+  handle: String! @join__field(graph: CATALOG_STOREFRONT)  @join__field(graph: LISTING_STOREFRONT, external: true)
+  name: String! @join__field(graph: CATALOG_STOREFRONT)  @join__field(graph: LISTING_STOREFRONT, external: true)
 }
 
 """
@@ -1985,16 +1991,16 @@ Buyer-safe inventory information for a product variant.
 Warehouse identities, reservations, unavailable quantities, and unit costs are
 operational data and are intentionally available only through the Admin API.
 """
-type InventoryItem implements Node @join__type(graph: CATALOG_STOREFRONT, key: "id")  @join__implements(graph: CATALOG_STOREFRONT, interface: "Node")  {
+type InventoryItem implements Node @join__type(graph: CATALOG_STOREFRONT, key: "id")  @join__type(graph: LISTING_STOREFRONT, key: "id", resolvable: false)  @join__implements(graph: CATALOG_STOREFRONT, interface: "Node")  @join__implements(graph: LISTING_STOREFRONT, interface: "Node")  {
   id: ID!
-  variant: ProductVariant!
-  sku: String
+  variant: ProductVariant! @join__field(graph: CATALOG_STOREFRONT)
+  sku: String @join__field(graph: CATALOG_STOREFRONT)
   tracked: Boolean!
-  requiresShipping: Boolean!
+  requiresShipping: Boolean! @join__field(graph: CATALOG_STOREFRONT)
   inventoryPolicy: ProductVariantInventoryPolicy!
-  quantityAvailable: Int
-  availableForSale: Boolean!
-  currentlyNotInStock: Boolean!
+  quantityAvailable: Int @join__field(graph: CATALOG_STOREFRONT)
+  availableForSale: Boolean! @join__field(graph: CATALOG_STOREFRONT)
+  currentlyNotInStock: Boolean! @join__field(graph: CATALOG_STOREFRONT)
 }
 
 """
@@ -2411,7 +2417,7 @@ type ProductVariant implements Node @join__type(graph: CATALOG_STOREFRONT, key: 
 """
 A configurable product dimension such as size, color, or material.
 """
-type ProductOption implements Node @join__type(graph: CATALOG_STOREFRONT, key: "id")  @join__implements(graph: CATALOG_STOREFRONT, interface: "Node")  {
+type ProductOption implements Node @join__type(graph: CATALOG_STOREFRONT, key: "id")  @join__type(graph: LISTING_STOREFRONT, key: "id", resolvable: false)  @join__implements(graph: CATALOG_STOREFRONT, interface: "Node")  @join__implements(graph: LISTING_STOREFRONT, interface: "Node")  {
   id: ID!
   handle: String!
   name: String!
@@ -2423,7 +2429,7 @@ type ProductOption implements Node @join__type(graph: CATALOG_STOREFRONT, key: "
 """
 A reusable product option type.
 """
-type ProductOptionType implements Node @join__type(graph: CATALOG_STOREFRONT, key: "id")  @join__implements(graph: CATALOG_STOREFRONT, interface: "Node")  {
+type ProductOptionType implements Node @join__type(graph: CATALOG_STOREFRONT, key: "id")  @join__type(graph: LISTING_STOREFRONT, key: "id", resolvable: false)  @join__implements(graph: CATALOG_STOREFRONT, interface: "Node")  @join__implements(graph: LISTING_STOREFRONT, interface: "Node")  {
   id: ID!
   name: String!
   handle: String!
@@ -2432,7 +2438,7 @@ type ProductOptionType implements Node @join__type(graph: CATALOG_STOREFRONT, ke
 """
 One customer-selectable value of a product option.
 """
-type ProductOptionValue implements Node @join__type(graph: CATALOG_STOREFRONT, key: "id")  @join__implements(graph: CATALOG_STOREFRONT, interface: "Node")  {
+type ProductOptionValue implements Node @join__type(graph: CATALOG_STOREFRONT, key: "id")  @join__type(graph: LISTING_STOREFRONT, key: "id", resolvable: false)  @join__implements(graph: CATALOG_STOREFRONT, interface: "Node")  @join__implements(graph: LISTING_STOREFRONT, interface: "Node")  {
   id: ID!
   handle: String!
   name: String!
@@ -2440,7 +2446,7 @@ type ProductOptionValue implements Node @join__type(graph: CATALOG_STOREFRONT, k
   swatch: ProductOptionValueSwatch
 }
 
-type ProductOptionValueSwatch @join__type(graph: CATALOG_STOREFRONT)  {
+type ProductOptionValueSwatch @join__type(graph: CATALOG_STOREFRONT)  @join__type(graph: LISTING_STOREFRONT)  {
   type: ProductOptionSwatchType!
   color: Color
   secondaryColor: Color
@@ -2451,7 +2457,7 @@ type ProductOptionValueSwatch @join__type(graph: CATALOG_STOREFRONT)  {
 """
 A resolved option/value pair selected by a product variant.
 """
-type SelectedOption @join__type(graph: CATALOG_STOREFRONT)  {
+type SelectedOption @join__type(graph: CATALOG_STOREFRONT)  @join__type(graph: LISTING_STOREFRONT)  {
   option: ProductOption!
   optionValue: ProductOptionValue!
   name: String!
@@ -2476,39 +2482,39 @@ type ProductVariantEdge @join__type(graph: CATALOG_STOREFRONT)  {
 """
 A video hosted on the platform's servers.
 """
-type Video implements Media & Node @join__type(graph: CATALOG_STOREFRONT, key: "id", extension: true)  @join__type(graph: MEDIA_STOREFRONT, key: "id")  @join__implements(graph: CATALOG_STOREFRONT, interface: "Media")  @join__implements(graph: MEDIA_STOREFRONT, interface: "Media")  @join__implements(graph: MEDIA_STOREFRONT, interface: "Node")  {
+type Video implements Media & Node @join__type(graph: CATALOG_STOREFRONT, key: "id", extension: true)  @join__type(graph: LISTING_STOREFRONT, key: "id", resolvable: false)  @join__type(graph: MEDIA_STOREFRONT, key: "id")  @join__implements(graph: CATALOG_STOREFRONT, interface: "Media")  @join__implements(graph: LISTING_STOREFRONT, interface: "Media")  @join__implements(graph: LISTING_STOREFRONT, interface: "Node")  @join__implements(graph: MEDIA_STOREFRONT, interface: "Media")  @join__implements(graph: MEDIA_STOREFRONT, interface: "Node")  {
   id: ID!
-  alt: String @join__field(graph: MEDIA_STOREFRONT)
-  mediaContentType: MediaContentType! @join__field(graph: MEDIA_STOREFRONT)
-  previewImage: Image @join__field(graph: MEDIA_STOREFRONT)
-  sources: [VideoSource!]! @join__field(graph: MEDIA_STOREFRONT)
+  alt: String @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
+  mediaContentType: MediaContentType! @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
+  previewImage: Image @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
+  sources: [VideoSource!]! @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
 }
 
 """
 A video hosted outside of the platform.
 """
-type ExternalVideo implements Media & Node @join__type(graph: CATALOG_STOREFRONT, key: "id", extension: true)  @join__type(graph: MEDIA_STOREFRONT, key: "id")  @join__implements(graph: CATALOG_STOREFRONT, interface: "Media")  @join__implements(graph: MEDIA_STOREFRONT, interface: "Media")  @join__implements(graph: MEDIA_STOREFRONT, interface: "Node")  {
+type ExternalVideo implements Media & Node @join__type(graph: CATALOG_STOREFRONT, key: "id", extension: true)  @join__type(graph: LISTING_STOREFRONT, key: "id", resolvable: false)  @join__type(graph: MEDIA_STOREFRONT, key: "id")  @join__implements(graph: CATALOG_STOREFRONT, interface: "Media")  @join__implements(graph: LISTING_STOREFRONT, interface: "Media")  @join__implements(graph: LISTING_STOREFRONT, interface: "Node")  @join__implements(graph: MEDIA_STOREFRONT, interface: "Media")  @join__implements(graph: MEDIA_STOREFRONT, interface: "Node")  {
   id: ID!
-  alt: String @join__field(graph: MEDIA_STOREFRONT)
+  alt: String @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
   """
   Embed URL when one was supplied by the external media source.
   """
-  embedUrl: URL @join__field(graph: MEDIA_STOREFRONT)
-  host: MediaHost! @join__field(graph: MEDIA_STOREFRONT)
-  mediaContentType: MediaContentType! @join__field(graph: MEDIA_STOREFRONT)
-  originUrl: URL! @join__field(graph: MEDIA_STOREFRONT)
-  previewImage: Image @join__field(graph: MEDIA_STOREFRONT)
+  embedUrl: URL @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
+  host: MediaHost! @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
+  mediaContentType: MediaContentType! @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
+  originUrl: URL! @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
+  previewImage: Image @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
 }
 
 """
 A hosted 3D model.
 """
-type Model3d implements Media & Node @join__type(graph: CATALOG_STOREFRONT, key: "id", extension: true)  @join__type(graph: MEDIA_STOREFRONT, key: "id")  @join__implements(graph: CATALOG_STOREFRONT, interface: "Media")  @join__implements(graph: MEDIA_STOREFRONT, interface: "Media")  @join__implements(graph: MEDIA_STOREFRONT, interface: "Node")  {
+type Model3d implements Media & Node @join__type(graph: CATALOG_STOREFRONT, key: "id", extension: true)  @join__type(graph: LISTING_STOREFRONT, key: "id", resolvable: false)  @join__type(graph: MEDIA_STOREFRONT, key: "id")  @join__implements(graph: CATALOG_STOREFRONT, interface: "Media")  @join__implements(graph: LISTING_STOREFRONT, interface: "Media")  @join__implements(graph: LISTING_STOREFRONT, interface: "Node")  @join__implements(graph: MEDIA_STOREFRONT, interface: "Media")  @join__implements(graph: MEDIA_STOREFRONT, interface: "Node")  {
   id: ID!
-  alt: String @join__field(graph: MEDIA_STOREFRONT)
-  mediaContentType: MediaContentType! @join__field(graph: MEDIA_STOREFRONT)
-  previewImage: Image @join__field(graph: MEDIA_STOREFRONT)
-  sources: [Model3dSource!]! @join__field(graph: MEDIA_STOREFRONT)
+  alt: String @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
+  mediaContentType: MediaContentType! @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
+  previewImage: Image @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
+  sources: [Model3dSource!]! @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
 }
 
 """
@@ -3662,43 +3668,44 @@ type CheckoutAppliedPromotion @join__type(graph: CHECKOUT_STOREFRONT)  {
 """
 A buyer-facing promotion owned and resolved by the Pricing subgraph.
 """
-type StorefrontPromotion @join__type(graph: CHECKOUT_STOREFRONT, key: "key", resolvable: false)  @join__type(graph: LISTING_STOREFRONT, key: "key", resolvable: false)  @join__type(graph: PRICING_STOREFRONT, key: "key")  {
+type StorefrontPromotion @join__type(graph: CHECKOUT_STOREFRONT, key: "key", resolvable: false)  @join__type(graph: LISTING_STOREFRONT, key: "key", resolvable: false)  @join__type(graph: LOYALTY_STOREFRONT, key: "key", resolvable: false)  @join__type(graph: PRICING_STOREFRONT, key: "key")  {
   """
   Stable opaque key of the promotion.
   """
   key: ID!
-  kind: StorefrontPromotionKind! @join__field(graph: PRICING_STOREFRONT)
-  presentation: StorefrontPromotionCopy! @join__field(graph: PRICING_STOREFRONT)
+  kind: StorefrontPromotionKind! @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: PRICING_STOREFRONT)
+  presentation: StorefrontPromotionCopy! @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: PRICING_STOREFRONT)
   """
   Rule value; null for a discount computed by a function.
   """
-  value: StorefrontPromotionValue @join__field(graph: PRICING_STOREFRONT)
-  minimumSubtotal: Money @join__field(graph: PRICING_STOREFRONT)
-  minimumQuantity: Int @join__field(graph: PRICING_STOREFRONT)
-  appliesOnOneTimePurchase: Boolean! @join__field(graph: PRICING_STOREFRONT)
-  appliesOnSubscription: Boolean! @join__field(graph: PRICING_STOREFRONT)
-  startsAt: DateTime! @join__field(graph: PRICING_STOREFRONT)
-  endsAt: DateTime @join__field(graph: PRICING_STOREFRONT)
+  value: StorefrontPromotionValue @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: PRICING_STOREFRONT)
+  minimumSubtotal: Money @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: PRICING_STOREFRONT)
+  minimumQuantity: Int @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: PRICING_STOREFRONT)
+  appliesOnOneTimePurchase: Boolean! @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: PRICING_STOREFRONT)
+  appliesOnSubscription: Boolean! @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: PRICING_STOREFRONT)
+  startsAt: DateTime! @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: PRICING_STOREFRONT)
+  endsAt: DateTime @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: PRICING_STOREFRONT)
   """
   Storefront places the merchant chose for the promotion, in the enum order; at least one.
   """
-  placements: [StorefrontPromotionPlacement!]! @join__field(graph: PRICING_STOREFRONT)
+  placements: [StorefrontPromotionPlacement!]! @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: PRICING_STOREFRONT)
   """
   What a buy X get Y promotion gives its benefit to; null for any other kind.
   """
-  benefitScope: StorefrontPromotionBenefitScope @join__field(graph: PRICING_STOREFRONT)
+  benefitScope: StorefrontPromotionBenefitScope @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: PRICING_STOREFRONT)
   """
-  Variants a buy X get Y promotion gives its benefit to when the merchant chose variants, such as
-  the gifts to choose from; only variants the storefront shows and the promotion does not exclude.
-  Null when the benefit is chosen otherwise or for any other kind.
+  Product cards of the variants a buy X get Y promotion gives its benefit to when the merchant chose
+  variants, such as the gifts to choose from; each card shows its gift variant. Only variants the
+  storefront shows and the promotion does not exclude; an item is null for a variant the listing
+  index does not have. Null when the benefit is chosen otherwise or for any other kind.
   """
-  benefitVariants: [ProductVariant!] @join__field(graph: PRICING_STOREFRONT)
+  benefitVariantCards: [ProductCard] @join__field(graph: PRICING_STOREFRONT)
   """
-  Products a buy X get Y promotion gives its benefit to when the merchant chose products; an item is
-  null for a product the storefront does not show. Null when the benefit is chosen otherwise or for
-  any other kind.
+  Product cards of the products a buy X get Y promotion gives its benefit to when the merchant chose
+  products; the listing picks each card variant. An item is null for a product the storefront does
+  not show. Null when the benefit is chosen otherwise or for any other kind.
   """
-  benefitProducts: [Product] @join__field(graph: PRICING_STOREFRONT)
+  benefitProductCards: [ProductCard] @join__field(graph: PRICING_STOREFRONT)
 }
 
 """
@@ -4043,13 +4050,14 @@ type CustomerWishlistItem implements Node @join__type(graph: CUSTOMERS_STOREFRON
   """
   wishlist: CustomerWishlist!
   """
-  The currently published storefront product represented by this item.
+  Storefront product card of the saved product, filled by the Listing subgraph.
 
-  The saved item remains present when the product is unpublished. This field
+  The card has no fixed variant: Listing picks it as on a category page. The
+  saved item remains present when the product leaves the storefront. This field
   is null when the product is unpublished, deleted, belongs to another store,
-  or its federated reference cannot be resolved.
+  or is not in the storefront listing index.
   """
-  product: Product
+  card: ProductCard
   """
   Date and time when the product was added to the wishlist.
   """
@@ -4319,9 +4327,9 @@ type ProductConnection implements Connection @join__type(graph: LISTING_STOREFRO
   """
   edges: [ProductEdge!]!
   """
-  The products contained in the returned edges.
+  The product cards contained in the returned edges.
   """
-  nodes: [Product!]!
+  nodes: [ProductCard!]!
   """
   Page boundaries and availability of adjacent pages. Use the returned cursors with the pagination
   arguments.
@@ -4399,18 +4407,11 @@ type ProductEdge @join__type(graph: LISTING_STOREFRONT)  {
   """
   cursor: Cursor!
   """
-  The product at the end of the edge.
+  The product card at the end of the edge. A product whose card is not available (it
+  was unpublished and the index is not updated yet) leaves no edge: the page can be
+  shorter than first while totalCount is unchanged.
   """
-  node: Product!
-  """
-  The product variant that satisfies the variant conditions of this listing:
-  collection rules, option, price, sale, promotion and availability filters. Available
-  variants come first, then the lower price in the context currency, then the
-  index order. With a price or discount sort it is always the variant that
-  ordered the product. Null with other sorts when the listing has no variant
-  conditions; clients then fall back to their default variant selection.
-  """
-  matchedVariant: ProductVariant
+  node: ProductCard!
 }
 
 """
@@ -4562,6 +4563,290 @@ type FacetSwatch implements Node @join__type(graph: LISTING_STOREFRONT, key: "id
 }
 
 """
+A product as listing surfaces show it: content from Catalog at request time, price,
+availability, rating and media links as of the last listing indexing. The price is
+informational: the cart prices the line again.
+"""
+type ProductCard @join__type(graph: CUSTOMERS_STOREFRONT, key: "id", resolvable: false) @join__type(graph: LISTING_STOREFRONT, key: "id") @join__type(graph: PRICING_STOREFRONT, key: "id", resolvable: false)  {
+  """
+  Opaque id of the card: the product and, when the source fixed one, the variant.
+  A card without a variant and a card of the same product with a variant are
+  different records of the client cache.
+  """
+  id: ID!
+  """
+  Global id of the product.
+  """
+  productId: ID!
+  handle: String!
+  title: String!
+  vendor: Vendor @join__field(graph: LISTING_STOREFRONT, provides: "name")
+  tags: [Tag!]! @join__field(graph: LISTING_STOREFRONT, provides: "handle name")
+  options: [ProductOption!]!
+  """
+  Media of the product gallery. Cursors of ProductCard.media and Product.media are
+  not interchangeable.
+  """
+  media(first: Int, after: Cursor, last: Int, before: Cursor) : ProductMediaConnection!
+  """
+  The first media of the product gallery.
+  """
+  featuredMedia: Media
+  """
+  At least one variant of the product is available for sale.
+  """
+  availableForSale: Boolean!
+  publishedAt: DateTime!
+  createdAt: DateTime!
+  reviewSummary: ProductCardReviewSummary!
+  """
+  The variant of the card: the one matching the variant conditions or the price sort
+  of the listing; otherwise the default variant, then the first available one, then
+  the first one.
+  """
+  variant: ProductCardVariant!
+}
+
+type ProductCardReviewSummary @join__type(graph: LISTING_STOREFRONT)  {
+  reviewCount: Int!
+  """
+  Zero without reviews.
+  """
+  averageRating: Float!
+}
+
+"""
+The variant of a product card. Price fields come from the listing offer price index,
+the same row ProductVariant price fields read.
+"""
+type ProductCardVariant @join__type(graph: LISTING_STOREFRONT)  {
+  id: ID!
+  handle: String!
+  title: String!
+  sku: String
+  isDefault: Boolean!
+  selectedOptions: [SelectedOption!]!
+  availableForSale: Boolean!
+  inventoryItem: InventoryItem
+  """
+  The variant cover; the first media of the product gallery without one.
+  """
+  featuredMedia: Media
+  """
+  Null when the variant is not in the offer price index yet.
+  """
+  price: Money
+  compareAtPrice: Money
+  appliedDiscountIds: [ID!]!
+  cartOnlyDiscountIds: [ID!]!
+  benefitPrice(promotionKey: ID!) : Money
+  """
+  Storefront promotions of the variant offer: a subset of ProductVariant.promotions.
+  """
+  promotions: StorefrontPromotionPresentation!
+  """
+  The loyalty reward of the general audience. Null when the variant is not available,
+  has no offer price or no reward applies.
+  """
+  loyalty: ProductCardLoyalty
+}
+
+type ProductCardLoyalty @join__type(graph: LISTING_STOREFRONT)  {
+  primaryOpportunity: ProductCardLoyaltyOpportunity
+}
+
+type ProductCardLoyaltyOpportunity @join__type(graph: LISTING_STOREFRONT)  {
+  key: String!
+  type: LoyaltyOpportunityType!
+  audience: ProductCardLoyaltyAudience!
+  reward: LoyaltyRewardPresentation!
+  presentation: LoyaltyOpportunityCopy!
+}
+
+"""
+An image resource with URL, dimensions, and transformation options.
+"""
+type Image @join__type(graph: LISTING_STOREFRONT, key: "id", resolvable: false)  @join__type(graph: MEDIA_STOREFRONT, key: "id")  {
+  id: ID!
+  altText: String
+  height: Int
+  thumbhash: String
+  url(transform: ImageTransformInput) : URL!
+  width: Int
+}
+
+"""
+A source for a hosted video.
+"""
+type VideoSource @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: MEDIA_STOREFRONT)  {
+  format: String!
+  height: Int
+  mimeType: String
+  url: URL!
+  width: Int
+}
+
+"""
+A source for a hosted 3D model.
+"""
+type Model3dSource @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: MEDIA_STOREFRONT)  {
+  filesize: UnsignedInt64!
+  format: String!
+  mimeType: String
+  url: URL!
+}
+
+"""
+Storefront promotions with the nearest change of the promotion set.
+"""
+type StorefrontPromotionPresentation @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: PRICING_STOREFRONT)  {
+  """
+  Ordered by sort order, then by discount priority.
+  """
+  promotions: [StorefrontPromotion!]!
+  """
+  Nearest start or end of a published promotion; the set may change after it.
+  """
+  validUntil: DateTime
+  """
+  Changes whenever the visible promotions or their texts change.
+  """
+  revision: String!
+}
+
+"""
+Localized texts; an empty headline is generated from the rule and an empty badge is the standard
+promotion word.
+"""
+type StorefrontPromotionCopy @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: PRICING_STOREFRONT)  {
+  headline: String!
+  badge: String!
+  """
+  Up to 12 characters for the product card, written by the merchant; null when empty.
+  """
+  shortBadge: String
+  description: RichText
+  accessibilityLabel: String!
+  terms: String
+}
+
+type StorefrontPromotionValue @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: PRICING_STOREFRONT)  {
+  type: StorefrontPromotionValueType!
+  """
+  Percentage such as 15 or 12.5.
+  """
+  percentage: Decimal
+  amount: Money
+  maximumDiscount: Money
+  maximumShippingPrice: Money
+  """
+  Items to buy for a Buy X Get Y promotion with a quantity requirement.
+  """
+  buyQuantity: Int
+  """
+  Items received for a Buy X Get Y promotion.
+  """
+  getQuantity: Int
+}
+
+"""
+Localized server-authored copy for one opportunity or issued reward.
+"""
+type LoyaltyOpportunityCopy @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: LOYALTY_STOREFRONT)  {
+  """
+  Primary text, for example `Earn 300 points for a review`.
+  """
+  headline: String!
+  """
+  Optional explanatory text for a detail surface.
+  """
+  description: String
+  """
+  Short text suitable for a product-card badge.
+  """
+  badge: String
+  """
+  Complete localized text for assistive technology.
+  """
+  accessibilityLabel: String!
+  """
+  Already localized customer-facing terms selected by the server.
+  """
+  terms: [String!]!
+}
+
+"""
+Minimum and maximum unsigned values calculated by the server.
+"""
+type LoyaltyUnsignedRange @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: LOYALTY_STOREFRONT)  {
+  minimum: UnsignedInt64!
+  maximum: UnsignedInt64!
+}
+
+"""
+Minimum and maximum monetary values in one storefront currency.
+"""
+type LoyaltyMoneyRange @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: LOYALTY_STOREFRONT)  {
+  minimum: Money!
+  maximum: Money!
+}
+
+type LoyaltyPointsRewardPresentation implements LoyaltyRewardPresentation @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: LOYALTY_STOREFRONT)  @join__implements(graph: LISTING_STOREFRONT, interface: "LoyaltyRewardPresentation")  @join__implements(graph: LOYALTY_STOREFRONT, interface: "LoyaltyRewardPresentation")  {
+  kind: LoyaltyRewardKind!
+  copy: LoyaltyOpportunityCopy!
+  points: LoyaltyUnsignedRange!
+  """
+  The points in money at the program redemption rate, rounded down, in the program currency.
+  Null when the program does not let points pay for orders.
+  """
+  value: LoyaltyMoneyRange
+  accuracy: LoyaltyValueAccuracy!
+}
+
+"""
+Cashback or store credit.
+"""
+type LoyaltyMoneyRewardPresentation implements LoyaltyRewardPresentation @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: LOYALTY_STOREFRONT)  @join__implements(graph: LISTING_STOREFRONT, interface: "LoyaltyRewardPresentation")  @join__implements(graph: LOYALTY_STOREFRONT, interface: "LoyaltyRewardPresentation")  {
+  kind: LoyaltyRewardKind!
+  copy: LoyaltyOpportunityCopy!
+  amount: LoyaltyMoneyRange!
+  accuracy: LoyaltyValueAccuracy!
+}
+
+"""
+A reward applied as a Pricing discount: a voucher, a fixed or percentage discount, or a free
+product. Its value and gifts belong to the discount and are read from `promotion`.
+"""
+type LoyaltyDiscountRewardPresentation implements LoyaltyRewardPresentation @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: LOYALTY_STOREFRONT)  @join__implements(graph: LISTING_STOREFRONT, interface: "LoyaltyRewardPresentation")  @join__implements(graph: LOYALTY_STOREFRONT, interface: "LoyaltyRewardPresentation")  {
+  kind: LoyaltyRewardKind!
+  copy: LoyaltyOpportunityCopy!
+  """
+  The Pricing discount the reward applies, with its value and, for a free product, its gifts.
+  """
+  promotion: StorefrontPromotion!
+  """
+  Customer-visible discount code of an issued reward. Null for an opportunity that has not yet
+  issued an entitlement.
+  """
+  code: String
+  """
+  Units of the reward; one for an opportunity.
+  """
+  quantity: UnsignedInt64!
+}
+
+type LoyaltyFreeShippingRewardPresentation implements LoyaltyRewardPresentation @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: LOYALTY_STOREFRONT)  @join__implements(graph: LISTING_STOREFRONT, interface: "LoyaltyRewardPresentation")  @join__implements(graph: LOYALTY_STOREFRONT, interface: "LoyaltyRewardPresentation")  {
+  kind: LoyaltyRewardKind!
+  copy: LoyaltyOpportunityCopy!
+}
+
+type LoyaltyMemberBenefitRewardPresentation implements LoyaltyRewardPresentation @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: LOYALTY_STOREFRONT)  @join__implements(graph: LISTING_STOREFRONT, interface: "LoyaltyRewardPresentation")  @join__implements(graph: LOYALTY_STOREFRONT, interface: "LoyaltyRewardPresentation")  {
+  kind: LoyaltyRewardKind!
+  copy: LoyaltyOpportunityCopy!
+  code: String
+}
+
+"""
 A forward-only Relay connection over the product's own recommendations from its
 immutable snapshot, followed by a popularity reserve when own recommendations
 fall short of the placement minimum.
@@ -4578,7 +4863,8 @@ type ProductRecommendationConnection implements Connection @join__type(graph: LI
   """
   edges: [ProductRecommendationEdge!]!
   """
-  Recommendations contained in the returned edges.
+  Recommendations contained in the returned edges. A recommendation whose product has
+  no card is left out.
   """
   nodes: [ProductRecommendation!]!
   """
@@ -4611,9 +4897,10 @@ of the storefront contract.
 """
 type ProductRecommendation @join__type(graph: LISTING_STOREFRONT)  {
   """
-  Current federated Product presentation resolved by Catalog.
+  The recommended product card. The card has no variant in its id: the variant is the
+  default one, then the first available one, then the first one.
   """
-  product: Product!
+  product: ProductCard!
   """
   Primary source that contributed this recommendation.
   """
@@ -4640,18 +4927,18 @@ One merged cart recommendation and its public provenance.
 """
 type CartRecommendation @join__type(graph: LISTING_STOREFRONT)  {
   """
-  Current federated Product presentation resolved by Catalog.
+  The recommended product card, without a variant in its id.
   """
-  product: Product!
+  product: ProductCard!
   """
   Strongest source among the cart products that contributed this item.
   """
   source: ProductRecommendationSource!
   """
-  Cart products that contributed this item, most significant first; at most
-  three. Empty for a store-level fallback item.
+  Global ids of the cart products that contributed this item, most significant
+  first; at most three. Empty for a store-level fallback item.
   """
-  anchors: [Product!]!
+  anchorProductIds: [ID!]!
 }
 
 """
@@ -4873,10 +5160,6 @@ type ProductLoyaltyPresentation @join__type(graph: LOYALTY_STOREFRONT)  {
   """
   engagementOpportunities: [LoyaltyOpportunity!]!
   """
-  When this complete presentation snapshot was calculated.
-  """
-  evaluatedAt: DateTime!
-  """
   Earliest time at which a schedule, price, customer state, usage limit, or
   program version can invalidate this snapshot. Null means no known time-based
   invalidation; normal server cache policy still applies.
@@ -4925,115 +5208,12 @@ type LoyaltyOpportunity @join__type(graph: LOYALTY_STOREFRONT)  {
 }
 
 """
-Localized server-authored copy for one opportunity or issued reward.
-"""
-type LoyaltyOpportunityCopy @join__type(graph: LOYALTY_STOREFRONT)  {
-  """
-  Primary text, for example `Earn 300 points for a review`.
-  """
-  headline: String!
-  """
-  Optional explanatory text for a detail surface.
-  """
-  description: String
-  """
-  Short text suitable for a product-card badge.
-  """
-  badge: String
-  """
-  Complete localized text for assistive technology.
-  """
-  accessibilityLabel: String!
-  """
-  Already localized customer-facing terms selected by the server.
-  """
-  terms: [String!]!
-}
-
-"""
-Minimum and maximum unsigned values calculated by the server.
-"""
-type LoyaltyUnsignedRange @join__type(graph: LOYALTY_STOREFRONT)  {
-  minimum: UnsignedInt64!
-  maximum: UnsignedInt64!
-}
-
-"""
-Minimum and maximum monetary values in one storefront currency.
-"""
-type LoyaltyMoneyRange @join__type(graph: LOYALTY_STOREFRONT)  {
-  minimum: Money!
-  maximum: Money!
-}
-
-type LoyaltyPointsRewardPresentation implements LoyaltyRewardPresentation @join__type(graph: LOYALTY_STOREFRONT)  @join__implements(graph: LOYALTY_STOREFRONT, interface: "LoyaltyRewardPresentation")  {
-  kind: LoyaltyRewardKind!
-  copy: LoyaltyOpportunityCopy!
-  points: LoyaltyUnsignedRange!
-  """
-  The points in money at the program redemption rate, rounded down, in the program currency.
-  Null when the program does not let points pay for orders.
-  """
-  value: LoyaltyMoneyRange
-  accuracy: LoyaltyValueAccuracy!
-}
-
-"""
-Cashback, store credit, or a fixed monetary discount.
-"""
-type LoyaltyMoneyRewardPresentation implements LoyaltyRewardPresentation @join__type(graph: LOYALTY_STOREFRONT)  @join__implements(graph: LOYALTY_STOREFRONT, interface: "LoyaltyRewardPresentation")  {
-  kind: LoyaltyRewardKind!
-  copy: LoyaltyOpportunityCopy!
-  amount: LoyaltyMoneyRange!
-  accuracy: LoyaltyValueAccuracy!
-}
-
-type LoyaltyPercentageRewardPresentation implements LoyaltyRewardPresentation @join__type(graph: LOYALTY_STOREFRONT)  @join__implements(graph: LOYALTY_STOREFRONT, interface: "LoyaltyRewardPresentation")  {
-  kind: LoyaltyRewardKind!
-  copy: LoyaltyOpportunityCopy!
-  """
-  Percentage expressed as a decimal value, for example `5` for five percent.
-  """
-  percentage: Decimal!
-}
-
-type LoyaltyVoucherRewardPresentation implements LoyaltyRewardPresentation @join__type(graph: LOYALTY_STOREFRONT)  @join__implements(graph: LOYALTY_STOREFRONT, interface: "LoyaltyRewardPresentation")  {
-  kind: LoyaltyRewardKind!
-  copy: LoyaltyOpportunityCopy!
-  """
-  Customer-visible voucher code. Null for an opportunity that has not yet issued
-  an entitlement.
-  """
-  code: String
-}
-
-type LoyaltyFreeShippingRewardPresentation implements LoyaltyRewardPresentation @join__type(graph: LOYALTY_STOREFRONT)  @join__implements(graph: LOYALTY_STOREFRONT, interface: "LoyaltyRewardPresentation")  {
-  kind: LoyaltyRewardKind!
-  copy: LoyaltyOpportunityCopy!
-}
-
-type LoyaltyFreeProductRewardPresentation implements LoyaltyRewardPresentation @join__type(graph: LOYALTY_STOREFRONT)  @join__implements(graph: LOYALTY_STOREFRONT, interface: "LoyaltyRewardPresentation")  {
-  kind: LoyaltyRewardKind!
-  copy: LoyaltyOpportunityCopy!
-  product: Product!
-  variant: ProductVariant
-  quantity: UnsignedInt64!
-}
-
-type LoyaltyMemberBenefitRewardPresentation implements LoyaltyRewardPresentation @join__type(graph: LOYALTY_STOREFRONT)  @join__implements(graph: LOYALTY_STOREFRONT, interface: "LoyaltyRewardPresentation")  {
-  kind: LoyaltyRewardKind!
-  copy: LoyaltyOpportunityCopy!
-  code: String
-}
-
-"""
 Account-level opportunities selected and ranked for the authenticated customer.
 Product-scoped opportunities remain available through Product.loyalty.
 """
 type LoyaltyAccountOpportunityPresentation @join__type(graph: LOYALTY_STOREFRONT)  {
   primaryOpportunity: LoyaltyOpportunity
   opportunities: [LoyaltyOpportunity!]!
-  evaluatedAt: DateTime!
   validUntil: DateTime
   revision: String!
 }
@@ -5163,39 +5343,6 @@ type CustomerMediaUploadPayload @join__type(graph: MEDIA_STOREFRONT)  {
   """
   media: MediaImage
   userErrors: [CustomerMediaUploadUserError!]!
-}
-
-"""
-An image resource with URL, dimensions, and transformation options.
-"""
-type Image @join__type(graph: MEDIA_STOREFRONT, key: "id")  {
-  id: ID!
-  altText: String
-  height: Int
-  thumbhash: String
-  url(transform: ImageTransformInput) : URL!
-  width: Int
-}
-
-"""
-A source for a hosted video.
-"""
-type VideoSource @join__type(graph: MEDIA_STOREFRONT)  {
-  format: String!
-  height: Int
-  mimeType: String
-  url: URL!
-  width: Int
-}
-
-"""
-A source for a hosted 3D model.
-"""
-type Model3dSource @join__type(graph: MEDIA_STOREFRONT)  {
-  filesize: UnsignedInt64!
-  format: String!
-  mimeType: String
-  url: URL!
 }
 
 """
@@ -5603,60 +5750,6 @@ type OrderReturnRequestCreatePayload @join__type(graph: ORDERS_STOREFRONT)  {
 type OrderReturnRequestCancelPayload @join__type(graph: ORDERS_STOREFRONT)  {
   returnRequest: OrderReturnRequest
   userErrors: [OrderUserError!]!
-}
-
-"""
-A set of promotions with cache hints for the storefront.
-"""
-type StorefrontPromotionPresentation @join__type(graph: PRICING_STOREFRONT)  {
-  """
-  Ordered by sort order, then by discount priority.
-  """
-  promotions: [StorefrontPromotion!]!
-  evaluatedAt: DateTime!
-  """
-  Nearest start or end of a published promotion; the set may change after it.
-  """
-  validUntil: DateTime
-  """
-  Changes whenever the visible promotions or their texts change.
-  """
-  revision: String!
-}
-
-"""
-Localized texts; an empty headline is generated from the rule and an empty badge is the standard
-promotion word.
-"""
-type StorefrontPromotionCopy @join__type(graph: PRICING_STOREFRONT)  {
-  headline: String!
-  badge: String!
-  """
-  Up to 12 characters for the product card, written by the merchant; null when empty.
-  """
-  shortBadge: String
-  description: RichText
-  accessibilityLabel: String!
-  terms: String
-}
-
-type StorefrontPromotionValue @join__type(graph: PRICING_STOREFRONT)  {
-  type: StorefrontPromotionValueType!
-  """
-  Percentage such as 15 or 12.5.
-  """
-  percentage: Decimal
-  amount: Money
-  maximumDiscount: Money
-  maximumShippingPrice: Money
-  """
-  Items to buy for a Buy X Get Y promotion with a quantity requirement.
-  """
-  buyQuantity: Int
-  """
-  Items received for a Buy X Get Y promotion.
-  """
-  getQuantity: Int
 }
 
 type StoreBrand @join__type(graph: PROJECT_STOREFRONT)  {
@@ -6499,11 +6592,11 @@ interface Connection @join__type(graph: APPS_CONTACT_REQUESTS_STOREFRONT)  @join
 """
 A common set of fields for media content associated with products.
 """
-interface Media @join__type(graph: CATALOG_STOREFRONT)  @join__type(graph: MEDIA_STOREFRONT)  @join__type(graph: REVIEWS_STOREFRONT)  {
+interface Media @join__type(graph: CATALOG_STOREFRONT)  @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: MEDIA_STOREFRONT)  @join__type(graph: REVIEWS_STOREFRONT)  {
   id: ID!
-  alt: String @join__field(graph: MEDIA_STOREFRONT)
-  mediaContentType: MediaContentType! @join__field(graph: MEDIA_STOREFRONT)
-  previewImage: Image @join__field(graph: MEDIA_STOREFRONT)
+  alt: String @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
+  mediaContentType: MediaContentType! @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
+  previewImage: Image @join__field(graph: LISTING_STOREFRONT)  @join__field(graph: MEDIA_STOREFRONT)
 }
 
 """
@@ -6513,7 +6606,7 @@ All implementations expose common server-authored copy. Clients can render that
 copy without inspecting the concrete reward type; typed fields are available for
 richer native presentation and analytics.
 """
-interface LoyaltyRewardPresentation @join__type(graph: LOYALTY_STOREFRONT)  {
+interface LoyaltyRewardPresentation @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: LOYALTY_STOREFRONT)  {
   kind: LoyaltyRewardKind!
   copy: LoyaltyOpportunityCopy!
 }
@@ -8235,15 +8328,15 @@ enum CollectionSortDirection @join__type(graph: CATALOG_STOREFRONT)  {
 """
 The policy applied when a tracked variant has no sellable inventory.
 """
-enum ProductVariantInventoryPolicy @join__type(graph: CATALOG_STOREFRONT)  {
+enum ProductVariantInventoryPolicy @join__type(graph: CATALOG_STOREFRONT)  @join__type(graph: LISTING_STOREFRONT)  {
   """
   The variant cannot be purchased when inventory is unavailable.
   """
-  DENY @join__enumValue(graph: CATALOG_STOREFRONT)
+  DENY @join__enumValue(graph: CATALOG_STOREFRONT)  @join__enumValue(graph: LISTING_STOREFRONT)
   """
   The variant can be purchased when inventory is unavailable.
   """
-  CONTINUE @join__enumValue(graph: CATALOG_STOREFRONT)
+  CONTINUE @join__enumValue(graph: CATALOG_STOREFRONT)  @join__enumValue(graph: LISTING_STOREFRONT)
 }
 
 """
@@ -8281,10 +8374,10 @@ enum ProductComponentDisplayStyle @join__type(graph: CATALOG_STOREFRONT)  {
 """
 The visual representation used for an option value.
 """
-enum ProductOptionSwatchType @join__type(graph: CATALOG_STOREFRONT)  {
-  COLOR @join__enumValue(graph: CATALOG_STOREFRONT)
-  GRADIENT @join__enumValue(graph: CATALOG_STOREFRONT)
-  IMAGE @join__enumValue(graph: CATALOG_STOREFRONT)
+enum ProductOptionSwatchType @join__type(graph: CATALOG_STOREFRONT)  @join__type(graph: LISTING_STOREFRONT)  {
+  COLOR @join__enumValue(graph: CATALOG_STOREFRONT)  @join__enumValue(graph: LISTING_STOREFRONT)
+  GRADIENT @join__enumValue(graph: CATALOG_STOREFRONT)  @join__enumValue(graph: LISTING_STOREFRONT)
+  IMAGE @join__enumValue(graph: CATALOG_STOREFRONT)  @join__enumValue(graph: LISTING_STOREFRONT)
 }
 
 """
@@ -9064,6 +9157,151 @@ enum SwatchType @join__type(graph: LISTING_STOREFRONT)  {
   GRADIENT @join__enumValue(graph: LISTING_STOREFRONT)
 }
 
+enum LoyaltyOpportunityType @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: LOYALTY_STOREFRONT)  {
+  PURCHASE @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+  SIGNUP @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+  REVIEW @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+  REFERRAL @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+  BIRTHDAY @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+  LOGIN @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+  SUBSCRIPTION_RENEWAL @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+  CUSTOM @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+}
+
+"""
+Audience the card reward is calculated for. Segment programs are not shown on cards.
+"""
+enum ProductCardLoyaltyAudience @join__type(graph: LISTING_STOREFRONT)  {
+  """
+  Every buyer of the store, signed in or not.
+  """
+  GENERAL @join__enumValue(graph: LISTING_STOREFRONT)
+}
+
+"""
+How the image is resized to fit the requested box.
+"""
+enum ImageFitMode @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: MEDIA_STOREFRONT)  {
+  COVER @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  CONTAIN @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  FILL @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  INSIDE @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  OUTSIDE @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+}
+
+"""
+Anchor used when the selected fit mode crops or pads the image.
+"""
+enum ImageGravity @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: MEDIA_STOREFRONT)  {
+  CENTER @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  TOP @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  BOTTOM @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  LEFT @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  RIGHT @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  TOP_LEFT @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  TOP_RIGHT @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  BOTTOM_LEFT @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  BOTTOM_RIGHT @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  AUTO @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+}
+
+"""
+List of supported image content types.
+"""
+enum ImageContentType @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: MEDIA_STOREFRONT)  {
+  JPG @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  PNG @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  WEBP @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  AVIF @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+}
+
+"""
+The possible content types for a media object.
+"""
+enum MediaContentType @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: MEDIA_STOREFRONT)  {
+  EXTERNAL_VIDEO @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  IMAGE @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  MODEL_3D @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  VIDEO @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+}
+
+"""
+Host for a media resource.
+"""
+enum MediaHost @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: MEDIA_STOREFRONT)  {
+  VIMEO @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+  YOUTUBE @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: MEDIA_STOREFRONT)
+}
+
+enum StorefrontPromotionKind @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: PRICING_STOREFRONT)  {
+  PRODUCT_DISCOUNT @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: PRICING_STOREFRONT)
+  ORDER_DISCOUNT @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: PRICING_STOREFRONT)
+  BUY_X_GET_Y @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: PRICING_STOREFRONT)
+  FREE_SHIPPING @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: PRICING_STOREFRONT)
+}
+
+"""
+A storefront place where a promotion is shown.
+"""
+enum StorefrontPromotionPlacement @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: PRICING_STOREFRONT)  {
+  """
+  Product page and product cards of the variants the promotion relates to.
+  """
+  PRODUCT @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: PRICING_STOREFRONT)
+  """
+  Cart hints on how much is left to the minimum requirement of the promotion.
+  """
+  CART @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: PRICING_STOREFRONT)
+  """
+  The list of the store promotions.
+  """
+  PROMOTION_LIST @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: PRICING_STOREFRONT)
+}
+
+"""
+What a buy X get Y promotion gives its benefit to.
+"""
+enum StorefrontPromotionBenefitScope @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: PRICING_STOREFRONT)  {
+  """
+  The items of the requirement themselves, such as the third item for the price of two.
+  """
+  SAME_AS_QUALIFIER @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: PRICING_STOREFRONT)
+  """
+  Other items, such as a gift or a bowl at half price with food.
+  """
+  OTHER @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: PRICING_STOREFRONT)
+}
+
+enum StorefrontPromotionValueType @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: PRICING_STOREFRONT)  {
+  PERCENTAGE @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: PRICING_STOREFRONT)
+  FIXED_AMOUNT @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: PRICING_STOREFRONT)
+  FREE_ITEM @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: PRICING_STOREFRONT)
+  FREE_SHIPPING @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: PRICING_STOREFRONT)
+}
+
+enum LoyaltyRewardKind @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: LOYALTY_STOREFRONT)  {
+  POINTS @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+  CASHBACK @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+  STORE_CREDIT @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+  VOUCHER @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+  FIXED_DISCOUNT @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+  PERCENTAGE_DISCOUNT @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+  FREE_SHIPPING @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+  FREE_PRODUCT @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+  MEMBER_BENEFIT @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+}
+
+enum LoyaltyValueAccuracy @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: LOYALTY_STOREFRONT)  {
+  """
+  The value cannot change for the evaluated subject and context.
+  """
+  EXACT @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+  """
+  The value can change after cart, Pricing, or final eligibility evaluation.
+  """
+  ESTIMATED @join__enumValue(graph: LISTING_STOREFRONT)  @join__enumValue(graph: LOYALTY_STOREFRONT)
+}
+
 enum ProductRecommendationSource @join__type(graph: LISTING_STOREFRONT)  {
   """
   Explicit merchant recommendation.
@@ -9124,17 +9362,6 @@ enum OrderLoyaltyEarningStatus @join__type(graph: LOYALTY_STOREFRONT)  {
   REVERSED @join__enumValue(graph: LOYALTY_STOREFRONT)
 }
 
-enum LoyaltyOpportunityType @join__type(graph: LOYALTY_STOREFRONT)  {
-  PURCHASE @join__enumValue(graph: LOYALTY_STOREFRONT)
-  SIGNUP @join__enumValue(graph: LOYALTY_STOREFRONT)
-  REVIEW @join__enumValue(graph: LOYALTY_STOREFRONT)
-  REFERRAL @join__enumValue(graph: LOYALTY_STOREFRONT)
-  BIRTHDAY @join__enumValue(graph: LOYALTY_STOREFRONT)
-  LOGIN @join__enumValue(graph: LOYALTY_STOREFRONT)
-  SUBSCRIPTION_RENEWAL @join__enumValue(graph: LOYALTY_STOREFRONT)
-  CUSTOM @join__enumValue(graph: LOYALTY_STOREFRONT)
-}
-
 """
 Presentation state, not a command authorization.
 
@@ -9149,29 +9376,6 @@ enum LoyaltyOpportunityState @join__type(graph: LOYALTY_STOREFRONT)  {
   BUDGET_EXHAUSTED @join__enumValue(graph: LOYALTY_STOREFRONT)
 }
 
-enum LoyaltyRewardKind @join__type(graph: LOYALTY_STOREFRONT)  {
-  POINTS @join__enumValue(graph: LOYALTY_STOREFRONT)
-  CASHBACK @join__enumValue(graph: LOYALTY_STOREFRONT)
-  STORE_CREDIT @join__enumValue(graph: LOYALTY_STOREFRONT)
-  VOUCHER @join__enumValue(graph: LOYALTY_STOREFRONT)
-  FIXED_DISCOUNT @join__enumValue(graph: LOYALTY_STOREFRONT)
-  PERCENTAGE_DISCOUNT @join__enumValue(graph: LOYALTY_STOREFRONT)
-  FREE_SHIPPING @join__enumValue(graph: LOYALTY_STOREFRONT)
-  FREE_PRODUCT @join__enumValue(graph: LOYALTY_STOREFRONT)
-  MEMBER_BENEFIT @join__enumValue(graph: LOYALTY_STOREFRONT)
-}
-
-enum LoyaltyValueAccuracy @join__type(graph: LOYALTY_STOREFRONT)  {
-  """
-  The value cannot change for the evaluated subject and context.
-  """
-  EXACT @join__enumValue(graph: LOYALTY_STOREFRONT)
-  """
-  The value can change after cart, Pricing, or final eligibility evaluation.
-  """
-  ESTIMATED @join__enumValue(graph: LOYALTY_STOREFRONT)
-}
-
 """
 Feature the uploaded media is intended for. It limits the accepted content and
 the entities that may later reference the file.
@@ -9181,61 +9385,6 @@ enum CustomerMediaPurpose @join__type(graph: MEDIA_STOREFRONT)  {
   Photo attached by the uploading customer to their own product review.
   """
   REVIEW @join__enumValue(graph: MEDIA_STOREFRONT)
-}
-
-"""
-How the image is resized to fit the requested box.
-"""
-enum ImageFitMode @join__type(graph: MEDIA_STOREFRONT)  {
-  COVER @join__enumValue(graph: MEDIA_STOREFRONT)
-  CONTAIN @join__enumValue(graph: MEDIA_STOREFRONT)
-  FILL @join__enumValue(graph: MEDIA_STOREFRONT)
-  INSIDE @join__enumValue(graph: MEDIA_STOREFRONT)
-  OUTSIDE @join__enumValue(graph: MEDIA_STOREFRONT)
-}
-
-"""
-Anchor used when the selected fit mode crops or pads the image.
-"""
-enum ImageGravity @join__type(graph: MEDIA_STOREFRONT)  {
-  CENTER @join__enumValue(graph: MEDIA_STOREFRONT)
-  TOP @join__enumValue(graph: MEDIA_STOREFRONT)
-  BOTTOM @join__enumValue(graph: MEDIA_STOREFRONT)
-  LEFT @join__enumValue(graph: MEDIA_STOREFRONT)
-  RIGHT @join__enumValue(graph: MEDIA_STOREFRONT)
-  TOP_LEFT @join__enumValue(graph: MEDIA_STOREFRONT)
-  TOP_RIGHT @join__enumValue(graph: MEDIA_STOREFRONT)
-  BOTTOM_LEFT @join__enumValue(graph: MEDIA_STOREFRONT)
-  BOTTOM_RIGHT @join__enumValue(graph: MEDIA_STOREFRONT)
-  AUTO @join__enumValue(graph: MEDIA_STOREFRONT)
-}
-
-"""
-List of supported image content types.
-"""
-enum ImageContentType @join__type(graph: MEDIA_STOREFRONT)  {
-  JPG @join__enumValue(graph: MEDIA_STOREFRONT)
-  PNG @join__enumValue(graph: MEDIA_STOREFRONT)
-  WEBP @join__enumValue(graph: MEDIA_STOREFRONT)
-  AVIF @join__enumValue(graph: MEDIA_STOREFRONT)
-}
-
-"""
-The possible content types for a media object.
-"""
-enum MediaContentType @join__type(graph: MEDIA_STOREFRONT)  {
-  EXTERNAL_VIDEO @join__enumValue(graph: MEDIA_STOREFRONT)
-  IMAGE @join__enumValue(graph: MEDIA_STOREFRONT)
-  MODEL_3D @join__enumValue(graph: MEDIA_STOREFRONT)
-  VIDEO @join__enumValue(graph: MEDIA_STOREFRONT)
-}
-
-"""
-Host for a media resource.
-"""
-enum MediaHost @join__type(graph: MEDIA_STOREFRONT)  {
-  VIMEO @join__enumValue(graph: MEDIA_STOREFRONT)
-  YOUTUBE @join__enumValue(graph: MEDIA_STOREFRONT)
 }
 
 """
@@ -9452,52 +9601,6 @@ enum OrderReturnReason @join__type(graph: ORDERS_STOREFRONT)  {
 enum OrderLoyaltyRedemptionSource @join__type(graph: ORDERS_STOREFRONT)  {
   POINTS @join__enumValue(graph: ORDERS_STOREFRONT)
   STORE_CREDIT @join__enumValue(graph: ORDERS_STOREFRONT)
-}
-
-enum StorefrontPromotionKind @join__type(graph: PRICING_STOREFRONT)  {
-  PRODUCT_DISCOUNT @join__enumValue(graph: PRICING_STOREFRONT)
-  ORDER_DISCOUNT @join__enumValue(graph: PRICING_STOREFRONT)
-  BUY_X_GET_Y @join__enumValue(graph: PRICING_STOREFRONT)
-  FREE_SHIPPING @join__enumValue(graph: PRICING_STOREFRONT)
-}
-
-"""
-A storefront place where a promotion is shown.
-"""
-enum StorefrontPromotionPlacement @join__type(graph: PRICING_STOREFRONT)  {
-  """
-  Product page and product cards of the variants the promotion relates to.
-  """
-  PRODUCT @join__enumValue(graph: PRICING_STOREFRONT)
-  """
-  Cart hints on how much is left to the minimum requirement of the promotion.
-  """
-  CART @join__enumValue(graph: PRICING_STOREFRONT)
-  """
-  The list of the store promotions.
-  """
-  PROMOTION_LIST @join__enumValue(graph: PRICING_STOREFRONT)
-}
-
-"""
-What a buy X get Y promotion gives its benefit to.
-"""
-enum StorefrontPromotionBenefitScope @join__type(graph: PRICING_STOREFRONT)  {
-  """
-  The items of the requirement themselves, such as the third item for the price of two.
-  """
-  SAME_AS_QUALIFIER @join__enumValue(graph: PRICING_STOREFRONT)
-  """
-  Other items, such as a gift or a bowl at half price with food.
-  """
-  OTHER @join__enumValue(graph: PRICING_STOREFRONT)
-}
-
-enum StorefrontPromotionValueType @join__type(graph: PRICING_STOREFRONT)  {
-  PERCENTAGE @join__enumValue(graph: PRICING_STOREFRONT)
-  FIXED_AMOUNT @join__enumValue(graph: PRICING_STOREFRONT)
-  FREE_ITEM @join__enumValue(graph: PRICING_STOREFRONT)
-  FREE_SHIPPING @join__enumValue(graph: PRICING_STOREFRONT)
 }
 
 enum ReviewModerationMode @join__type(graph: REVIEWS_STOREFRONT)  {
@@ -10970,7 +11073,8 @@ input ListingFilterInput @join__type(graph: LISTING_STOREFRONT)  {
   sale: ListingSaleFilter
   """
   Products with a variant that is a target of the storefront promotion, by
-  StorefrontPromotion.key. Repeated promotion filters are combined with OR. Evaluated
+  StorefrontPromotion.key; for a Buy X Get Y promotion only the products to buy, not the
+  items it gives. Repeated promotion filters are combined with OR. Evaluated
   against the same variant as price and availability. Not applied (OUTSIDE_SCOPE) when
   the store's PROMOTION facet is outside the facet set of the scope. A promotion that is
   not published to the storefront matches no product.
@@ -11023,6 +11127,22 @@ input PriceRangeFilterInput @join__type(graph: LISTING_STOREFRONT)  {
   max: Decimal
 }
 
+"""
+The available options for transforming an image.
+"""
+input ImageTransformInput @join__type(graph: LISTING_STOREFRONT)  @join__type(graph: MEDIA_STOREFRONT)  {
+  fit: ImageFitMode
+  gravity: ImageGravity
+  maxHeight: Int
+  maxWidth: Int
+  preferredContentType: ImageContentType
+  scale: Int = 1
+  """
+  Output quality, 1-100. Bounded by the selected CdnConfiguration's minQuality/maxQuality when configured.
+  """
+  quality: Int
+}
+
 input CartRecommendationsInput @join__type(graph: LISTING_STOREFRONT)  {
   """
   Cart lines in order of significance, most recently added first. Between 1
@@ -11056,22 +11176,6 @@ input CustomerMediaUploadInput @join__type(graph: MEDIA_STOREFRONT)  {
   Alternative text, limited to 512 characters.
   """
   alt: String
-}
-
-"""
-The available options for transforming an image.
-"""
-input ImageTransformInput @join__type(graph: MEDIA_STOREFRONT)  {
-  fit: ImageFitMode
-  gravity: ImageGravity
-  maxHeight: Int
-  maxWidth: Int
-  preferredContentType: ImageContentType
-  scale: Int = 1
-  """
-  Output quality, 1-100. Bounded by the selected CdnConfiguration's minQuality/maxQuality when configured.
-  """
-  quality: Int
 }
 
 """

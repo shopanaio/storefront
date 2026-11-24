@@ -120,11 +120,12 @@ export const loyaltyAccount = (store, customer) => {
       reward: {
         __typename:
           reward.kind === 'VOUCHER'
-            ? 'LoyaltyVoucherRewardPresentation'
+            ? 'LoyaltyDiscountRewardPresentation'
             : 'LoyaltyFreeShippingRewardPresentation',
         kind: reward.kind,
         copy: copy(reward.headline),
-        ...(reward.kind === 'VOUCHER' ? { code: reward.code } : {}),
+        // The voucher discount itself (`promotion`) is not in the fixture.
+        ...(reward.kind === 'VOUCHER' ? { code: reward.code, quantity: '1' } : {}),
       },
       presentation: copy(reward.headline, reward.description),
       issuedAt: store.initialNow,

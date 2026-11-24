@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { buildSchema, graphql, parse, validate } from 'graphql';
 
-import { gid } from '../src/fixture-helpers.js';
+import { gid, money } from '../src/fixture-helpers.js';
 import { createMockStore } from '../src/mock-store.js';
 import { applyResolvers } from '../src/resolvers.js';
 
@@ -62,6 +62,93 @@ const setup = () => {
   };
   return { store, schema, run };
 };
+
+// Listing surfaces return ready product cards (ADR-023): the card variant is the default one,
+// then the first available one; a variant fixed by the source goes into the card id.
+const cardSetup = () => {
+  const product = {
+    id: gid('Product', 'card'),
+    handle: 'card',
+    title: 'Card',
+    categoryIds: [],
+    collectionIds: [],
+    tags: [],
+    options: [],
+    variantIds: [gid('ProductVariant', 'sold-out'), gid('ProductVariant', 'in-stock')],
+    availableForSale: true,
+    publishedAt: '2026-08-01T00:00:00.000Z',
+    createdAt: '2026-08-01T00:00:00.000Z',
+    features: [],
+  };
+  const variant = (key, availableForSale) => ({
+    id: gid('ProductVariant', key),
+    productId: product.id,
+    handle: key,
+    title: key,
+    availableForSale,
+    selectedOptions: [],
+    mediaIds: [],
+    price: money(10),
+  });
+  const store = createMockStore({
+    now: '2026-08-03T12:00:00.000Z',
+    data: {
+      customers: [],
+      products: [product],
+      productVariants: [variant('sold-out', false), variant('in-stock', true)],
+      checkouts: [],
+      reviews: [],
+      reviewRatingCriteria: [],
+    },
+  });
+  const schema = applyResolvers(buildSchema(typeDefs), store);
+  return async (source, variableValues = {}) => {
+    const result = await graphql({ schema, source, variableValues });
+    assert.equal(result.errors, undefined, JSON.stringify(result.errors));
+    return JSON.parse(JSON.stringify(result.data));
+  };
+};
+
+test('a listing edge is a product card with the variant the listing picked', async () => {
+  const run = cardSetup();
+  const { products } = await run(`{
+    products(first: 1) { edges { node {
+      __typename id productId handle title availableForSale
+      reviewSummary { reviewCount averageRating }
+      variant { __typename id handle isDefault availableForSale }
+    } } }
+  }`);
+  const [{ node }] = products.edges;
+  assert.equal(node.__typename, 'ProductCard');
+  assert.equal(node.productId, gid('Product', 'card'));
+  assert.notEqual(node.id, node.productId);
+  assert.deepEqual(node.reviewSummary, { reviewCount: 0, averageRating: 0 });
+  assert.deepEqual(node.variant, {
+    __typename: 'ProductCardVariant',
+    id: gid('ProductVariant', 'in-stock'),
+    handle: 'in-stock',
+    isDefault: false,
+    availableForSale: true,
+  });
+});
+
+test('productCards reads cards back by id, in order, null for an unknown one', async () => {
+  const run = cardSetup();
+  const { products } = await run('{ products(first: 1) { nodes { id } } }');
+  const [{ id }] = products.nodes;
+  const { productCards } = await run(
+    'query ($ids: [ID!]!) { productCards(ids: $ids) { id productId variant { id } } }',
+    { ids: ['unknown', id] }
+  );
+  assert.deepEqual(productCards, [
+    null,
+    {
+      id,
+      productId: gid('Product', 'card'),
+      variant: { id: gid('ProductVariant', 'in-stock') },
+    },
+  ]);
+});
 
 // A guest checkout: a signed-in buyer adds to the account cart instead of opening another (S3).
 const newCheckout = async (run) => {
@@ -171,6 +258,12 @@ test('removed fields are rejected by GraphQL validation', () => {
     '{ onlineStorePageByHandle(handle: "test") { content { body { text } } } }',
     'mutation { checkoutCustomerNoteUpdate(input: { checkoutId: "test", note: "test", expectedCheckoutVersion: 1 }) { userErrors { code } } }',
     '{ checkout(id: "test") { appliedPromoCodes { code } } }',
+    '{ products(first: 1) { edges { matchedVariant { id } } } }',
+    '{ products(first: 1) { edges { defaultVariantProduct { id } } } }',
+    '{ products(first: 1) { nodes { selectedOrFirstAvailableVariant { id } } } }',
+    '{ cartRecommendations(input: { lines: [] }, first: 1) { items { anchors { id } } } }',
+    '{ customer { defaultWishlist { items(first: 1) { nodes { product { id } } } } } }',
+    '{ storefrontPromotions { promotions { benefitProducts { id } benefitVariants { id } } } }',
   ])
     assert.ok(validate(schema, parse(source)).length > 0, source);
 });
