@@ -93,6 +93,22 @@ yarn storybook      # Storybook of the packages
 yarn codegen        # regenerates GraphQL and OpenAPI types from schema.shopana.graphql
 ```
 
+### Updating the GraphQL schema
+
+The backend composes the storefront API into `infra/federation/supergraph-storefront.graphql`
+of the platform repository (`yarn build` in `infra/federation`). Two files here are taken from
+it, and nothing else is edited by hand:
+
+1. `schema.shopana.graphql` (git-ignored) is the public API schema of the supergraph: the
+   output of `transformSupergraphToPublicSchema` from `@theguild/federation-composition`,
+   printed with `printSchema`, without the Mesh `@merge` directive. Codegen of the SDK, the
+   active theme and checkout reads only this file.
+2. `mockServer/schema.graphql` is the supergraph itself; only the `join__Graph` URLs keep the
+   local `127.0.0.1` addresses of the mock.
+
+Then run `yarn codegen` and update the documents, the mock resolvers and the tests until
+`yarn typecheck` and `yarn test` pass. There is no compatibility layer for removed fields.
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
 ## License
