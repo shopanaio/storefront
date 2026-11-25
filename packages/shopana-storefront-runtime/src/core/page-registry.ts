@@ -24,6 +24,10 @@ interface ErasedRenderableDefinition {
     context: RuntimePageContext<RuntimeRenderablePageType>,
     data: any
   ): Promise<RuntimePageDataResult<any>>;
+  prefetch?(
+    context: RuntimePageContext<RuntimeRenderablePageType>,
+    data: any
+  ): void;
   loadTemplate(): Promise<PageTemplate<any>>;
   generateMetadata?(
     context: RuntimePageContext<RuntimeRenderablePageType>,
@@ -54,6 +58,8 @@ function isDefinition(value: unknown): value is ErasedDefinition {
     typeof candidate.loadTemplate === 'function' &&
     (candidate.preload === undefined ||
       typeof candidate.preload === 'function') &&
+    (candidate.prefetch === undefined ||
+      typeof candidate.prefetch === 'function') &&
     (candidate.generateMetadata === undefined ||
       typeof candidate.generateMetadata === 'function') &&
     (candidate.Provider === undefined ||

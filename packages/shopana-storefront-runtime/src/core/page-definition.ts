@@ -90,6 +90,15 @@ export interface RuntimePageDefinition<
     data: TData
   ): Promise<RuntimePageDataResult<TData>>;
 
+  /**
+   * Client only: starts the Apollo queries the sections read, with the data `loadData`
+   * answered at once, as soon as the definition is loaded and before the template: they run
+   * while the template loads and the page renders, and the sections find them in flight or in
+   * the cache instead of sending them once rendered. Fire and forget: the sections report
+   * failures.
+   */
+  prefetch?(context: RuntimePageContext<TPageType>, data: TData): void;
+
   loadTemplate(): Promise<PageTemplate<TData>>;
 
   /**

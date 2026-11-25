@@ -60,7 +60,7 @@ resource "cloudflare_workers_script" "static" {
   bindings = [
     { name = "SITE_ORIGIN", type = "plain_text", text = var.site_origin },
     { name = "SITE_PREFIX", type = "plain_text", text = "site" },
-    { name = "PAGE_TTL", type = "plain_text", text = "60" },
+    { name = "PAGE_TTL", type = "plain_text", text = "600" },
     { name = "NOINDEX", type = "plain_text", text = tostring(var.noindex) },
     { name = "COORDINATOR_URL", type = "plain_text", text = "https://${var.hostname}" },
     { name = "COORDINATOR_TOKEN", type = "secret_text", text = var.coordinator_token },

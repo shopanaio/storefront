@@ -47,9 +47,9 @@ terraform -chdir=deploy/terraform/cdn apply .state/deploy.tfplan
 
 ## Кэш и проверки
 
-- HTML хранится на edge 60 секунд; браузеру выставляется `max-age=0` и на MISS, и на HIT.
-- TTL выбран коротким, поскольку автоматический purge после генерации пока не подключён.
-  Смена объекта в S3 сама по себе не очищает уже сохранённый HTML CDN.
+- HTML хранится на edge 600 секунд; браузеру выставляется `max-age=0` и на MISS, и на HIT.
+- Смена объекта в S3 сама по себе не очищает уже сохранённый HTML CDN. После выката
+  выполняется purge страниц; без него действует TTL.
 - `x-shopana-cdn: MISS | HIT` показывает результат Cache API.
   `x-shopana-static-server: worker` показывает выдачу объекта Worker-ом.
 - Авторизация, аккаунт, корзина, checkout, API, поиск и локализованные варианты этих путей
@@ -75,6 +75,9 @@ curl -sSI 'https://pet.shopana.dev/?sort=NEWEST'
 
 - Выкладка: сначала `cdn_mode = "off"` (Worker только пересылает POST как есть), затем
   `cdn_mode = "on"` и в окружении шлюза `CACHE_CDN_ENABLED=true`.
+- `SHOPANA_COMMIT` storefront-шлюза должен совпадать с API-процессом его подграфов: иначе
+  шлюз отвечает `bypass:stage-build-mismatch`. При выкате заменой файлов выравнивайте этот
+  маркер между шлюзом и Storefront API, сохраняя `SHOPANA_VERSION` версии исполняемых файлов.
 - `key_contract` равен `CDN_KEY_CONTRACT` шлюза (`internal/infra/federation/cdn/contract.ts`):
   хеш состава ключа и белого списка заголовков подзапроса. При несовпадении шлюз отвечает
   `Shopana-Cdn-Bypass: contract-mismatch`, и ответы не кешируются.

@@ -23,6 +23,7 @@ import type {
   PageType,
 } from '@shopana/storefront-sdk/core/types';
 import type {
+  RuntimePageContext,
   RuntimePageDataResult,
   RuntimePageModuleMap,
   RuntimePageServices,
@@ -120,6 +121,27 @@ export function loadPageModules(
     loads.set(pageType, load);
   }
   return load;
+}
+
+/**
+ * Starts the queries of a client page load as soon as its definition is loaded, before its
+ * template: the definition's `prefetch` with the data its `loadData` answers at once (none
+ * for data that needs a promise). The page's sections then find them in flight or in the
+ * cache. Failures are left to the sections.
+ */
+export function prefetchPageData(
+  pages: RuntimePageModuleMap,
+  pageType: RuntimeRenderablePageType,
+  context: RuntimePageContext<RuntimeRenderablePageType>
+): void {
+  loadRenderableDefinition(pages, pageType)
+    .then((definition) => {
+      if (!definition.prefetch) return;
+      const loaded = definition.loadData(context);
+      if (isPromise(loaded) || loaded.status !== 'ready') return;
+      definition.prefetch(context, loaded.data);
+    })
+    .catch(() => {});
 }
 
 /**

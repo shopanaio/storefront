@@ -46,6 +46,7 @@ import { getServerRequestScope } from '@shopana/storefront-sdk/server/requestSco
 import {
   createClientPageServices,
   loadPageModules,
+  prefetchPageData,
   renderPageElement,
   toSearchRecord,
   track,
@@ -610,11 +611,15 @@ export function resolveRuntimePageNow(
   const { pageType } = resolution.route;
   if (pageType === '404') return null;
   const modules = loadPageModules(pages, pageType);
-  if (modules.status !== 'fulfilled' || !modules.value) return null;
+  const context = pageContext(address, pageType, services);
+  if (modules.status !== 'fulfilled' || !modules.value) {
+    // The screen waits for the modules on its skeleton: the page's queries run meanwhile.
+    prefetchPageData(pages, pageType, context);
+    return null;
+  }
   const { definition } = modules.value;
   // A call started for this address already (the screen rendered again) is still pending.
   if (startedDataLoad(client, url)) return null;
-  const context = pageContext(address, pageType, services);
   const loaded = definition.loadData(context);
   if (isPromise(loaded)) {
     // Not lost: the client loader of the address takes it over.
@@ -623,6 +628,30 @@ export function resolveRuntimePageNow(
   }
   if (loaded.status === 'not-found') return null;
   return readyPageData(pageType, definition, context, loaded.data);
+}
+
+/**
+ * Gets the page of an address ready before the move to it (a link under the finger or the
+ * pointer): its modules load and its definition's `prefetch` sends its queries, so the page
+ * that opens finds its code loaded and its data in flight or in the cache. Module pages and
+ * missing ones are left alone.
+ */
+export function prefetchRuntimePage(
+  pages: RuntimePageModuleMap,
+  url: URL,
+  client: ApolloClient
+): void {
+  const address = clientAddress(url);
+  const { resolution } = address;
+  if (resolution.kind === 'module') return;
+  const { pageType } = resolution.route;
+  if (pageType === '404') return;
+  loadPageModules(pages, pageType).catch(() => {});
+  prefetchPageData(
+    pages,
+    pageType,
+    pageContext(address, pageType, createClientPageServices(client))
+  );
 }
 
 /**
@@ -761,11 +790,13 @@ export function createRuntimePageRoute(options: CreateRuntimePageRouteOptions) {
     const { pageType } = resolution.route;
     if (pageType === '404') return clientNotFound(request, services);
 
+    const context = pageContext(address, pageType, services);
+    // The page's queries run while its modules and layout load.
+    prefetchPageData(route.pages, pageType, context);
     const [{ definition }] = await Promise.all([
       loadPageModules(route.pages, pageType),
       loadRouteLayout(route, pageType, { isModule: false }),
     ]);
-    const context = pageContext(address, pageType, services);
     const loaded = await (takeStartedDataLoad(client, url) ??
       definition.loadData(context));
     if (loaded.status === 'not-found') return clientNotFound(request, services);
