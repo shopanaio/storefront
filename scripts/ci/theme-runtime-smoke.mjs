@@ -160,7 +160,8 @@ await server.listen({ host: '0.0.0.0', port: 4105 });
     gatewayRequests.length = 0;
     await fetch(origin, {
       headers: {
-        'x-forwarded-for': '198.51.100.66, 203.0.113.7',
+        'cf-connecting-ip': '203.0.113.7',
+        'x-forwarded-for': '198.51.100.66',
         'user-agent': 'theme-smoke-agent',
       },
     }).then((page) => page.text());
@@ -168,7 +169,8 @@ await server.listen({ host: '0.0.0.0', port: 4105 });
       (headers) => headers['user-agent'] === 'theme-smoke-agent'
     );
     assert(direct, 'SSR did not forward the visitor to the gateway');
-    assert.equal(direct['x-forwarded-for'], '203.0.113.7, storefront-server');
+    assert.equal(direct['cf-connecting-ip'], '203.0.113.7');
+    assert.equal(direct['x-forwarded-for'], undefined);
     assert(!html.includes('private-oauth-must-not-reach-html'));
     assert(!html.includes('private-session-must-not-reach-html'));
     const moduleScript = html.search(/<script[^>]*type="module"/);
