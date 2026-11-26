@@ -35,12 +35,10 @@ ARG STOREFRONT_THEME=brand-bite-crunch
 COPY --from=build /app/themes/${STOREFRONT_THEME}/package.json ./themes/${STOREFRONT_THEME}/package.json
 COPY --from=production-dependencies /app/themes/${STOREFRONT_THEME}/node_modules ./themes/${STOREFRONT_THEME}/node_modules
 COPY --from=build /app/themes/${STOREFRONT_THEME}/.runtime/build ./themes/${STOREFRONT_THEME}/.runtime/build
-# The hybrid server (`storefront-runtime start`): the workspace link of @shopana/storefront in
-# node_modules points here.
-COPY --from=build /app/packages/shopana-storefront-runtime/package.json ./packages/shopana-storefront-runtime/package.json
-COPY --from=build /app/packages/shopana-storefront-runtime/bin ./packages/shopana-storefront-runtime/bin
-COPY --from=build /app/packages/shopana-storefront-runtime/dist ./packages/shopana-storefront-runtime/dist
-COPY --from=build /app/packages/shopana-storefront-runtime/src/init.js ./packages/shopana-storefront-runtime/src/init.js
+# Keep the production workspace targets of the node_modules links used by the hybrid server.
+COPY --from=production-dependencies /app/packages/shopana-storefront-runtime ./packages/shopana-storefront-runtime
+COPY --from=production-dependencies /app/packages/shopana-storefront-sdk ./packages/shopana-storefront-sdk
+COPY --from=production-dependencies /app/packages/storefront-auth ./packages/storefront-auth
 # The volume of the coordinator of the static site (theme-static): a new named volume takes the
 # owner of the directory it is mounted on.
 RUN mkdir -p /data && chown node:node /data
