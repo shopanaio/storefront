@@ -12,7 +12,8 @@ ARG BUILD_NODE_OPTIONS=--max-old-space-size=4096
 ENV NODE_ENV=production
 # The static site is no part of the image: the coordinator (theme-static) renders it with this
 # build into the bucket of the environment.
-RUN NODE_OPTIONS="$BUILD_NODE_OPTIONS" STOREFRONT_THEME="$STOREFRONT_THEME" yarn build && \
+RUN yarn build:carrier && \
+    NODE_OPTIONS="$BUILD_NODE_OPTIONS" STOREFRONT_THEME="$STOREFRONT_THEME" yarn build && \
     rm -rf "themes/$STOREFRONT_THEME/.runtime/build/static" && \
     test -f "themes/$STOREFRONT_THEME/.runtime/build/server/index.js"
 
