@@ -7,6 +7,7 @@ import { createHash, createHmac } from 'node:crypto';
 export interface S3Credentials {
   accessKeyId: string;
   secretAccessKey: string;
+  sessionToken?: string;
 }
 
 export interface S3ClientOptions {
@@ -15,7 +16,7 @@ export interface S3ClientOptions {
   /** `auto` for R2. */
   region: string;
   bucket: string;
-  credentials: S3Credentials;
+  credentials: S3Credentials | (() => Promise<S3Credentials>);
   fetch?: typeof fetch;
   /** The clock of the signatures. */
   now?: () => Date;
@@ -58,7 +59,7 @@ const WRITE_TIMEOUT_MS = 60_000;
 
 /** Signature V4 headers of a request: `Authorization`, `x-amz-date`, `x-amz-content-sha256`. */
 export function signS3Request(
-  options: Pick<S3ClientOptions, 'region' | 'credentials'>,
+  options: { region: string; credentials: S3Credentials },
   request: { method: string; url: URL; headers: Record<string, string> },
   date: Date,
   payloadHash: string
@@ -74,6 +75,9 @@ export function signS3Request(
     host: request.url.host,
     'x-amz-date': stamp,
     'x-amz-content-sha256': payloadHash,
+    ...(options.credentials.sessionToken
+      ? { 'x-amz-security-token': options.credentials.sessionToken }
+      : {}),
   };
   const names = Object.keys(headers).sort();
   const canonicalQuery = [...request.url.searchParams.entries()]
@@ -147,8 +151,13 @@ export class S3Client {
       typeof request.body === 'string'
         ? new TextEncoder().encode(request.body)
         : request.body;
+    const { credentials, region } = this.#options;
     const headers = signS3Request(
-      this.#options,
+      {
+        region,
+        credentials:
+          typeof credentials === 'function' ? await credentials() : credentials,
+      },
       { method: request.method, url, headers: request.headers ?? {} },
       (this.#options.now ?? (() => new Date()))(),
       body ? sha256(body) : sha256('')

@@ -14,6 +14,7 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import path from 'node:path';
+import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 import { S3Client } from './s3';
 
 export interface StaticObject {
@@ -267,22 +268,28 @@ export async function isDirectory(dir: string): Promise<boolean> {
  * The credentials and the endpoint of the S3 API, from the environment:
  * `STOREFRONT_STATIC_S3_ENDPOINT` (`https://<account>.r2.cloudflarestorage.com`),
  * `STOREFRONT_STATIC_S3_REGION` (`auto` by default), `STOREFRONT_STATIC_S3_ACCESS_KEY_ID`,
- * `STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY`.
+ * `STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY`. AWS can use the default SDK credentials chain
+ * with `STOREFRONT_STATIC_S3_AUTH=aws-role`.
  */
 function s3Settings(env: Record<string, string | undefined>) {
   const endpoint = env.STOREFRONT_STATIC_S3_ENDPOINT?.trim();
   const accessKeyId = env.STOREFRONT_STATIC_S3_ACCESS_KEY_ID?.trim();
   const secretAccessKey = env.STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY?.trim();
-  if (!endpoint || !accessKeyId || !secretAccessKey) {
+  const role = env.STOREFRONT_STATIC_S3_AUTH === 'aws-role';
+  const accessKey =
+    accessKeyId && secretAccessKey
+      ? { accessKeyId, secretAccessKey }
+      : undefined;
+  const credentials = role ? fromNodeProviderChain() : accessKey;
+  if (!endpoint || !credentials) {
     throw new Error(
-      'An s3:// static store needs STOREFRONT_STATIC_S3_ENDPOINT, ' +
-        'STOREFRONT_STATIC_S3_ACCESS_KEY_ID and STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY'
+      'An s3:// static store needs STOREFRONT_STATIC_S3_ENDPOINT and S3 credentials'
     );
   }
   return {
     endpoint,
     region: env.STOREFRONT_STATIC_S3_REGION?.trim() || 'auto',
-    credentials: { accessKeyId, secretAccessKey },
+    credentials,
   };
 }
 

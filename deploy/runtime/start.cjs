@@ -60,12 +60,13 @@ if (
   process.env.STOREFRONT_STATIC_STORE?.startsWith('s3://') &&
   !(
     process.env.STOREFRONT_STATIC_S3_ENDPOINT &&
-    process.env.STOREFRONT_STATIC_S3_ACCESS_KEY_ID &&
-    process.env.STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY
+    (process.env.STOREFRONT_STATIC_S3_AUTH === 'aws-role' ||
+      (process.env.STOREFRONT_STATIC_S3_ACCESS_KEY_ID &&
+        process.env.STOREFRONT_STATIC_S3_SECRET_ACCESS_KEY))
   )
 ) {
   throw new Error(
-    'An s3:// STOREFRONT_STATIC_STORE needs STOREFRONT_STATIC_S3_ENDPOINT and its read key'
+    'An s3:// STOREFRONT_STATIC_STORE needs STOREFRONT_STATIC_S3_ENDPOINT and S3 read credentials'
   );
 }
 // The hybrid server of the theme image (its working directory is the theme): the static site

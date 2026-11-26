@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { signS3Request } from './s3';
+import { S3Client, signS3Request } from './s3';
 import { createS3Store, StaticWriteConflict } from './store';
 
 const env = {
@@ -9,6 +9,41 @@ const env = {
 };
 
 describe('S3 signature V4', () => {
+  it('signs each request with the session token from the credential provider', async () => {
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValue(new Response());
+    const credentials = vi
+      .fn()
+      .mockResolvedValueOnce({
+        accessKeyId: 'first',
+        secretAccessKey: 'first-secret',
+        sessionToken: 'first-session',
+      })
+      .mockResolvedValueOnce({
+        accessKeyId: 'second',
+        secretAccessKey: 'second-secret',
+        sessionToken: 'second-session',
+      });
+    const client = new S3Client({
+      endpoint: 'https://s3.eu-north-1.amazonaws.com',
+      region: 'eu-north-1',
+      bucket: 'test-bucket',
+      fetch,
+      credentials,
+    });
+    await client.send({ method: 'GET', key: 'site/index.html' });
+    await client.send({ method: 'HEAD', key: 'site/index.html' });
+    for (const [i, identity] of ['first', 'second'].entries()) {
+      const headers = fetch.mock.calls[i][1]?.headers as Record<string, string>;
+      expect(headers['x-amz-security-token']).toBe(identity + '-session');
+      expect(headers.authorization).toContain('Credential=' + identity + '/');
+      expect(headers.authorization).toContain(
+        'x-amz-date;x-amz-security-token'
+      );
+    }
+  });
+
   it('signs the example request of the S3 documentation', () => {
     // "Example: GET Object" of the Signature V4 documentation of Amazon S3.
     const headers = signS3Request(
